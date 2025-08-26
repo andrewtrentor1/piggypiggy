@@ -303,6 +303,32 @@
             font-weight: bold;
             color: #8B4513;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        
+        .ctp-flag {
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            opacity: 0.7;
+        }
+        
+        .ctp-flag:hover {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        
+        .ctp-flag.won {
+            opacity: 1;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
         
         .hole-input {
@@ -595,6 +621,39 @@
         </div>
     </div>
     
+    <!-- CTP Modal -->
+    <div class="modal" id="ctpModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCtpModal()">&times;</span>
+            <h2 id="ctpModalTitle">🏌️ CLOSEST TO PIN 🏌️</h2>
+            <p id="ctpHoleInfo" style="margin-bottom: 20px; font-weight: bold; color: #8B4513;"></p>
+            
+            <div class="form-group">
+                <label>Winning Team:</label>
+                <select id="ctpWinningTeam">
+                    <option value="">Select winning team...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Pig Points to Award:</label>
+                <input type="number" id="ctpPoints" min="1" max="50" value="5" placeholder="Points per player">
+                <small style="color: #666;">Points will be taken from losing teams and given to winning team players</small>
+            </div>
+            
+            <div style="margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+                <h4 style="margin-bottom: 10px; color: #8B4513;">How CTP Works:</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #666;">
+                    <li>Each losing team pays the points</li>
+                    <li>Points split equally among winning team players</li>
+                    <li>Updates pig points in real-time</li>
+                </ul>
+            </div>
+            
+            <button class="transfer-btn" onclick="awardCtpPoints()">🏆 AWARD CTP POINTS</button>
+        </div>
+    </div>
+    
     <!-- Firebase SDK -->
     <script type="module">
         // Import Firebase modules
@@ -631,6 +690,11 @@
         let isFirebaseReady = false;
         let currentSessionTeams = [];
         let currentSessionId = null;
+        let currentCtpHole = null;
+        let players = {}; // Will be loaded from pig points system
+        
+        // Par 3 holes (typically holes 3, 6, 9 for a 9-hole course)
+        const par3Holes = [3, 6, 9];
         
         // Initialize bubbles
         function createBubbles() {
@@ -659,6 +723,7 @@
         // Initialize Firebase
         function initializeFirebase() {
             const sessionsRef = window.firebaseRef(window.firebaseDB, 'golfSessions');
+            const playersRef = window.firebaseRef(window.firebaseDB, 'players');
             
             // Listen for session changes in real-time
             window.firebaseOnValue(sessionsRef, (snapshot) => {
@@ -672,6 +737,15 @@
                     loadSessions();
                 }
                 isFirebaseReady = true;
+            });
+            
+            // Listen for pig points changes
+            window.firebaseOnValue(playersRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    players = data;
+                    console.log('🐷 Pig points loaded:', players);
+                }
             });
         }
         
@@ -921,6 +995,24 @@
                     label.className = 'hole-label';
                     label.textContent = i.toString();
                     
+                    // Add CTP flag for par 3 holes
+                    if (par3Holes.includes(i)) {
+                        const ctpFlag = document.createElement('span');
+                        ctpFlag.className = 'ctp-flag';
+                        ctpFlag.textContent = '🚩';
+                        ctpFlag.title = 'Closest to Pin';
+                        ctpFlag.onclick = () => openCtpModal(sessionId, i);
+                        
+                        // Check if CTP has been won for this hole
+                        const session = golfSessions[sessionId];
+                        if (session && session.ctpWinners && session.ctpWinners[i]) {
+                            ctpFlag.classList.add('won');
+                            ctpFlag.title = `CTP Won by: ${session.ctpWinners[i].teamName}`;
+                        }
+                        
+                        label.appendChild(ctpFlag);
+                    }
+                    
                     const input = document.createElement('input');
                     input.type = 'number';
                     input.className = 'hole-input';
@@ -984,6 +1076,108 @@
             window.firebaseSet(sessionsRef, golfSessions)
                 .then(() => console.log('🏌️ Golf sessions saved to Firebase'))
                 .catch(error => console.error('Golf sessions save error:', error));
+        }
+        
+        // CTP Functions
+        function openCtpModal(sessionId, holeNumber) {
+            currentSessionId = sessionId;
+            currentCtpHole = holeNumber;
+            
+            const session = golfSessions[sessionId];
+            if (!session) return;
+            
+            document.getElementById('ctpHoleInfo').textContent = `${session.title} - Hole ${holeNumber} (Par 3)`;
+            
+            // Populate team dropdown
+            const teamSelect = document.getElementById('ctpWinningTeam');
+            teamSelect.innerHTML = '<option value="">Select winning team...</option>';
+            
+            session.teams.forEach((team, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${team.name} (${team.players.join(' & ')})`;
+                teamSelect.appendChild(option);
+            });
+            
+            // Check if CTP already awarded
+            if (session.ctpWinners && session.ctpWinners[holeNumber]) {
+                const winner = session.ctpWinners[holeNumber];
+                document.getElementById('ctpHoleInfo').innerHTML += `<br><span style="color: #28a745;">✅ Already won by: ${winner.teamName} (${winner.points} points)</span>`;
+            }
+            
+            document.getElementById('ctpModal').style.display = 'flex';
+        }
+        
+        function closeCtpModal() {
+            document.getElementById('ctpModal').style.display = 'none';
+            currentSessionId = null;
+            currentCtpHole = null;
+        }
+        
+        function awardCtpPoints() {
+            if (!currentSessionId || !currentCtpHole) return;
+            
+            const teamIndex = parseInt(document.getElementById('ctpWinningTeam').value);
+            const points = parseInt(document.getElementById('ctpPoints').value);
+            
+            if (isNaN(teamIndex) || !points) {
+                alert('🚫 Please select a winning team and enter points!');
+                return;
+            }
+            
+            const session = golfSessions[currentSessionId];
+            const winningTeam = session.teams[teamIndex];
+            const losingTeams = session.teams.filter((_, index) => index !== teamIndex);
+            
+            // Calculate points per player
+            const pointsPerWinner = Math.floor(points / winningTeam.players.length);
+            const pointsPerLoser = Math.floor(points / losingTeams.reduce((total, team) => total + team.players.length, 0));
+            
+            // Update pig points
+            winningTeam.players.forEach(playerName => {
+                if (players[playerName] !== undefined) {
+                    players[playerName] += pointsPerWinner;
+                }
+            });
+            
+            losingTeams.forEach(team => {
+                team.players.forEach(playerName => {
+                    if (players[playerName] !== undefined) {
+                        players[playerName] -= pointsPerLoser;
+                    }
+                });
+            });
+            
+            // Save CTP winner info
+            if (!session.ctpWinners) {
+                session.ctpWinners = {};
+            }
+            
+            session.ctpWinners[currentCtpHole] = {
+                teamName: winningTeam.name,
+                teamPlayers: winningTeam.players,
+                points: points,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save to Firebase
+            saveSessions();
+            savePigPoints();
+            
+            // Refresh the score modal
+            openScoreModal(currentSessionId);
+            closeCtpModal();
+            
+            alert(`🏆 CTP awarded to ${winningTeam.name}!\n🐷 ${pointsPerWinner} points per player\n💰 Total points transferred: ${points}`);
+        }
+        
+        function savePigPoints() {
+            if (!window.firebaseDB) return;
+            
+            const playersRef = window.firebaseRef(window.firebaseDB, 'players');
+            window.firebaseSet(playersRef, players)
+                .then(() => console.log('🐷 Pig points updated from CTP'))
+                .catch(error => console.error('Pig points save error:', error));
         }
         
         // Add shake animation for shame modal
