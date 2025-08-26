@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐷 MBE PIG POINTS EXTRAVAGANZA 🐷</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            background: linear-gradient(135deg, #f5f5dc, #fff8dc);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .beer-bubbles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 8s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            20% { opacity: 0.3; }
+            80% { opacity: 0.3; }
+            100% { transform: translateY(-100px) scale(1); opacity: 0; }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #8B4513;
+            text-shadow: 2px 2px 0px #FFD700;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            color: #654321;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .pig-emoji {
+            font-size: 4rem;
+            display: inline-block;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #DDD;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 2rem;
+            color: #8B4513;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        .leaderboard {
+            list-style: none;
+        }
+        
+        .player {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: linear-gradient(90deg, #f0e68c, #daa520);
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .player:hover {
+            transform: translateY(-2px);
+        }
+        
+        .player.pig {
+            background: linear-gradient(90deg, #ffb6c1, #ff69b4);
+        }
+        
+        .player.god-player {
+            background: linear-gradient(90deg, #ffd700, #fff8dc, #ffd700);
+            border: 2px solid #daa520;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .divine-icon {
+            font-size: 1.2rem;
+            margin: 0 3px;
+        }
+        
+        .player-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .crown {
+            font-size: 1.5rem;
+        }
+        
+        .points {
+            font-size: 1.5rem;
+            color: #8B4513;
+        }
+        
+        .login-section {
+            text-align: center;
+        }
+        
+        .login-btn, .god-btn, .transfer-btn {
+            background: linear-gradient(45deg, #daa520, #f0e68c);
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .login-btn:hover, .god-btn:hover, .transfer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .god-btn {
+            background: linear-gradient(45deg, #9370db, #dda0dd);
+        }
+        
+        .bookkeeper-panel {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 2px solid #daa520;
+        }
+        
+        .transfer-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-group label {
+            font-weight: 700;
+            color: #8B4513;
+        }
+        
+        .form-group select, .form-group input {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: 'Comic Neue', cursive;
+        }
+        
+
+        
+        .bed-icon {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 3rem;
+            z-index: 100;
+            opacity: 0.7;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            border: 2px solid #daa520;
+        }
+        
+        .close {
+            float: right;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #8B4513;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tab {
+            background: linear-gradient(45deg, #daa520, #f0e68c);
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-family: 'Comic Neue', cursive;
+        }
+        
+        .nav-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(45deg, #8B4513, #daa520);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139,69,19,0.3);
+        }
+        
+
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .title {
+                font-size: 2.5rem;
+            }
+            
+            .pig-emoji {
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="beer-bubbles" id="bubbles"></div>
+    
+
+    
+    <div class="bed-icon">🛏️</div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="pig-emoji">🐷</div>
+            <h1 class="title">MBE PIG POINTS</h1>
+            <p class="subtitle">Male Bonding Extravaganza</p>
+            <div class="pig-emoji">🏌️‍♂️</div>
+            
+            <!-- Navigation Links -->
+            <div class="nav-tabs">
+                <a href="index.html" class="nav-tab active">🏆 PIG POINTS</a>
+                <a href="golf.html" class="nav-tab">🏌️ GOLF SESSIONS</a>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title">🏆 LEADERBOARD 🏆</h2>
+                <ul class="leaderboard" id="leaderboard">
+                    <!-- Leaderboard will be populated by JavaScript -->
+                </ul>
+                
+                <!-- Login button for non-logged users -->
+                <div class="login-section" id="loginSection" style="text-align: center; margin-top: 20px;">
+                    <button class="login-btn" onclick="toggleBookkeeper()">📊 BOOKKEEPER LOGIN</button>
+                </div>
+            </div>
+            
+            <!-- Bookkeeper Controls (hidden by default) -->
+            <div class="card" id="bookkeeperCard" style="display: none;">
+                <h2 class="card-title">🐷 BOOKKEEPER CONTROLS 🐷</h2>
+                
+                <!-- God Points and Reset buttons -->
+                <div class="login-section" style="margin-bottom: 20px;">
+                    <button class="god-btn" onclick="pigPointsFromGod()">✨ PIG POINTS FROM GOD ✨</button>
+                    <button class="transfer-btn" onclick="resetAllPoints()" style="background: linear-gradient(45deg, #ff6b6b, #ffa500);">🔄 RESET ALL POINTS</button>
+                    <button class="login-btn" onclick="toggleBookkeeper()" style="background: linear-gradient(45deg, #666, #999);">👋 LOGOUT</button>
+                </div>
+                
+                <!-- Point Transfer Form -->
+                <div class="bookkeeper-panel" style="display: block; margin-top: 0;">
+                    <h3>🔄 TRANSFER PIG POINTS 🔄</h3>
+                    <div class="transfer-form">
+                        <div class="form-group">
+                            <label>From Player:</label>
+                            <select id="fromPlayer">
+                                <option value="Evan">Evan</option>
+                                <option value="Ian">Ian</option>
+                                <option value="Andrew">Andrew</option>
+                                <option value="Zack">Zack</option>
+                                <option value="Brian">Brian</option>
+                                <option value="Alex">Alex</option>
+                                <option value="GOD">✝️ GOD ALMIGHTY ✝️</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>To Player:</label>
+                            <select id="toPlayer">
+                                <option value="Evan">Evan</option>
+                                <option value="Ian">Ian</option>
+                                <option value="Andrew">Andrew</option>
+                                <option value="Zack">Zack</option>
+                                <option value="Brian">Brian</option>
+                                <option value="Alex">Alex</option>
+                                <option value="GOD">✝️ GOD ALMIGHTY ✝️</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Points to Transfer:</label>
+                            <input type="number" id="pointsAmount" min="1" value="1">
+                        </div>
+                        <button class="transfer-btn" onclick="transferPoints()">🔄 TRANSFER POINTS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- God Points Modal -->
+    <div class="modal" id="godModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeGodModal()">&times;</span>
+            <h2>✨ THE PIG GODS HAVE SPOKEN ✨</h2>
+            <p id="godMessage"></p>
+            <div style="font-size: 3rem; margin: 20px 0;">🐷✨🍺</div>
+        </div>
+    </div>
+    
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLoginModal()">&times;</span>
+            <h2>🐷 BOOKKEEPER LOGIN 🐷</h2>
+            <div class="login-form">
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password">
+                </div>
+                <button class="transfer-btn" onclick="attemptLogin()">🔐 LOGIN</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shame Modal -->
+    <div class="modal" id="shameModal" onclick="closeShameModal()">
+        <div class="modal-content" style="background: linear-gradient(45deg, #ff6b6b, #ff4757); color: white; border: 5px solid #ff3838;" onclick="event.stopPropagation()">
+            <span class="close" onclick="closeShameModal()" style="color: white; font-weight: bold; font-size: 2.5rem;">&times;</span>
+            <h2 style="font-size: 3rem; animation: shake 0.5s infinite;">🐷 SHAME! 🐷</h2>
+            <p style="font-size: 2rem; font-weight: bold; text-transform: uppercase; letter-spacing: 3px;">
+                YOU GROSS PIG!<br>
+                SHAME! SHAME! SHAME!
+            </p>
+            <div style="font-size: 4rem; margin: 20px 0; animation: spin 2s linear infinite;">🐷</div>
+            <p style="font-size: 1.5rem;">Wrong credentials, you filthy swine!</p>
+            <button class="transfer-btn" onclick="closeShameModal()" style="margin-top: 20px; background: linear-gradient(45deg, #fff, #ddd); color: #333;">
+                🐷 ACCEPT SHAME 🐷
+            </button>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAp-3U1m7fw9DQ6KmtGx5e1jmYofMdAYM",
+            authDomain: "mbepiggy.firebaseapp.com",
+            databaseURL: "https://mbepiggy-default-rtdb.firebaseio.com",
+            projectId: "mbepiggy",
+            storageBucket: "mbepiggy.firebasestorage.app",
+            messagingSenderId: "638797749409",
+            appId: "1:638797749409:web:1ec0514b592c2b489f64e0"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Make Firebase functions available globally
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseUpdate = update;
+        window.firebaseOnValue = onValue;
+    </script>
+    
+    <script>
+        // Player data with Firebase persistence
+        let players = {
+            'Evan': 100,
+            'Ian': 100,
+            'Andrew': 100,
+            'Zack': 100,
+            'Brian': 100,
+            'Alex': 100,
+            'GOD': 1000
+        };
+        
+        let isBookkeeperLoggedIn = false;
+        let isFirebaseReady = false;
+        
+        // Initialize Firebase data
+        function initializeFirebase() {
+            const playersRef = window.firebaseRef(window.firebaseDB, 'players');
+            
+            // Listen for player changes in real-time
+            window.firebaseOnValue(playersRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // Merge Firebase data with default structure to ensure GOD exists
+                    players = {
+                        'Evan': data.Evan || 100,
+                        'Ian': data.Ian || 100,
+                        'Andrew': data.Andrew || 100,
+                        'Zack': data.Zack || 100,
+                        'Brian': data.Brian || 100,
+                        'Alex': data.Alex || 100,
+                        'GOD': data.GOD || 1000
+                    };
+                    
+                    // If GOD wasn't in the Firebase data, save the updated structure
+                    if (!data.GOD) {
+                        console.log('🙏 Adding GOD to Firebase data');
+                        savePlayers();
+                    }
+                    
+                    updateLeaderboard();
+                    console.log('🔥 Firebase players updated:', players);
+                } else {
+                    // First time - set default values
+                    savePlayers();
+                }
+                isFirebaseReady = true;
+            });
+        }
+        
+        function savePlayers() {
+            if (!isFirebaseReady && !window.firebaseDB) {
+                console.log('Firebase not ready, using localStorage fallback');
+                localStorage.setItem('mbePlayerPoints', JSON.stringify(players));
+                return;
+            }
+            
+            const playersRef = window.firebaseRef(window.firebaseDB, 'players');
+            window.firebaseSet(playersRef, players)
+                .then(() => {
+                    console.log('🔥 Points saved to Firebase!');
+                })
+                .catch((error) => {
+                    console.error('Firebase save error:', error);
+                    // Fallback to localStorage
+                    localStorage.setItem('mbePlayerPoints', JSON.stringify(players));
+                });
+        }
+        
+        // Initialize Firebase when page loads
+        setTimeout(initializeFirebase, 1000);
+        
+        // Initialize bubbles (reduced frequency)
+        function createBubbles() {
+            const bubblesContainer = document.getElementById('bubbles');
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    bubble.style.left = Math.random() * 100 + '%';
+                    bubble.style.width = bubble.style.height = Math.random() * 20 + 8 + 'px';
+                    bubble.style.animationDelay = Math.random() * 8 + 's';
+                    bubble.style.animationDuration = (Math.random() * 4 + 6) + 's';
+                    bubblesContainer.appendChild(bubble);
+                    
+                    setTimeout(() => {
+                        bubble.remove();
+                    }, 10000);
+                }, i * 500);
+            }
+        }
+        
+        // Create bubbles continuously (less frequent)
+        setInterval(createBubbles, 5000);
+        createBubbles();
+        
+        function updateLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            
+            // Separate GOD from regular players
+            const regularPlayers = Object.entries(players).filter(player => player[0] !== 'GOD');
+            const godPlayer = Object.entries(players).find(player => player[0] === 'GOD');
+            
+            // Sort regular players by points (highest first)
+            const sortedPlayers = regularPlayers.sort((a, b) => b[1] - a[1]);
+            
+            // Calculate max/min for regular players only (exclude GOD from pig/crown logic)
+            const regularPoints = regularPlayers.map(p => p[1]);
+            const maxPoints = Math.max(...regularPoints);
+            const minPoints = Math.min(...regularPoints);
+            
+            // Check if all regular players have the same points (tie situation)
+            const allSamePoints = maxPoints === minPoints;
+            
+            leaderboard.innerHTML = '';
+            
+            // Add regular players first
+            sortedPlayers.forEach((player, index) => {
+                const li = document.createElement('li');
+                li.className = 'player';
+                
+                // Only show pig styling if there's actually a lowest score (not a tie)
+                if (!allSamePoints && player[1] === minPoints) {
+                    li.classList.add('pig');
+                }
+                
+                li.innerHTML = `
+                    <div class="player-name">
+                        ${!allSamePoints && player[1] === maxPoints ? '<span class="crown">👑</span>' : ''}
+                        ${!allSamePoints && player[1] === minPoints ? '<span>🐷 THE PIG 🐷</span>' : ''}
+                        <span>${player[0]}</span>
+                    </div>
+                    <div class="points">${player[1]} 🐷</div>
+                `;
+                
+                leaderboard.appendChild(li);
+            });
+            
+            // Add GOD at the bottom with special styling
+            if (godPlayer) {
+                const li = document.createElement('li');
+                li.className = 'player god-player';
+                
+                li.innerHTML = `
+                    <div class="player-name">
+                        <span class="divine-icon">✝️</span>
+                        <span class="divine-icon">🙏</span>
+                        <span style="font-weight: bold; color: #8B4513;">GOD ALMIGHTY</span>
+                        <span class="divine-icon">⛪</span>
+                        <span class="divine-icon">✨</span>
+                    </div>
+                    <div class="points" style="color: #8B4513; font-weight: bold;">${godPlayer[1]} 🙏</div>
+                `;
+                
+                leaderboard.appendChild(li);
+            }
+        }
+        
+        function toggleBookkeeper() {
+            if (isBookkeeperLoggedIn) {
+                // Log out
+                isBookkeeperLoggedIn = false;
+                document.getElementById('bookkeeperCard').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+                alert('👋 Bookkeeper logged out!');
+            } else {
+                // Show login modal
+                document.getElementById('loginModal').style.display = 'flex';
+            }
+        }
+        
+        function attemptLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (username === 'PIG' && password === 'PIG') {
+                // Successful login
+                isBookkeeperLoggedIn = true;
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('bookkeeperCard').style.display = 'block';
+                document.getElementById('loginSection').style.display = 'none';
+                
+                // Clear the form
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+                
+                alert('🐷 BOOKKEEPER ACTIVATED! 🐷\nYou now have the power to control all pig points!');
+            } else {
+                // Wrong credentials - SHAME!
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('shameModal').style.display = 'flex';
+                
+                // Clear the form
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+            }
+        }
+        
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+        
+        function closeShameModal() {
+            document.getElementById('shameModal').style.display = 'none';
+        }
+        
+        function transferPoints() {
+            if (!isBookkeeperLoggedIn) {
+                alert('🚫 You must be logged in as bookkeeper!');
+                return;
+            }
+            
+            const fromPlayer = document.getElementById('fromPlayer').value;
+            const toPlayer = document.getElementById('toPlayer').value;
+            const points = parseInt(document.getElementById('pointsAmount').value);
+            
+            if (fromPlayer === toPlayer) {
+                alert('🤪 You cannot transfer points to yourself, silly!');
+                return;
+            }
+            
+            if (players[fromPlayer] < points) {
+                alert('🚫 Not enough pig points to transfer!');
+                return;
+            }
+            
+            players[fromPlayer] -= points;
+            players[toPlayer] += points;
+            
+            savePlayers(); // Save to localStorage
+            updateLeaderboard();
+            
+            alert(`🔄 Transferred ${points} pig points from ${fromPlayer} to ${toPlayer}!\n🐷 OINK OINK! 🐷`);
+        }
+        
+        function pigPointsFromGod() {
+            const messages = [
+                "The Pig Gods smile upon you! +10 points!",
+                "Divine porcine intervention! +15 points!",
+                "The Great Pig in the Sky blesses you! +5 points!",
+                "Bacon-flavored miracles! +20 points!",
+                "The Pig Gods are feeling generous! +25 points!",
+                "Oink! The heavens open! +8 points!",
+                "A golden pig appears! +12 points!",
+                "The Pig Gods have spoken through beer! +7 points!"
+            ];
+            
+            const randomPlayer = Object.keys(players)[Math.floor(Math.random() * Object.keys(players).length)];
+            const randomPoints = Math.floor(Math.random() * 20) + 5;
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            
+            players[randomPlayer] += randomPoints;
+            
+            savePlayers(); // Save to localStorage
+            
+            document.getElementById('godMessage').innerHTML = `
+                <strong>${randomPlayer}</strong> has been blessed!<br>
+                ${randomMessage.replace(/\+\d+/, `+${randomPoints}`)}
+            `;
+            
+            document.getElementById('godModal').style.display = 'flex';
+            updateLeaderboard();
+        }
+        
+        function closeGodModal() {
+            document.getElementById('godModal').style.display = 'none';
+        }
+        
+        function resetAllPoints() {
+            if (confirm('🐷 Are you sure you want to reset ALL pig points back to starting values? This cannot be undone!\n\nThis will reset points for EVERYONE using this app!\n\nPlayers: 100 points\nGOD: 1000 points')) {
+                players = {
+                    'Evan': 100,
+                    'Ian': 100,
+                    'Andrew': 100,
+                    'Zack': 100,
+                    'Brian': 100,
+                    'Alex': 100,
+                    'GOD': 1000
+                };
+                savePlayers();
+                alert('🔄 All pig points have been reset!\n🐷 Players: 100 points\n✝️ GOD: 1000 points\n\nLet the divine games begin! 🙏');
+            }
+        }
+        
+
+        
+
+        
+        // Initialize the leaderboard
+        updateLeaderboard();
+        
+        // Add some random pig sounds
+        const pigSounds = ['🐷 OINK!', '🐷 SNORT!', '🐷 SQUEAL!'];
+        setInterval(() => {
+            if (Math.random() < 0.1) {
+                const sound = pigSounds[Math.floor(Math.random() * pigSounds.length)];
+                console.log(sound);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
