@@ -288,16 +288,32 @@
         .hole-inputs {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
-            gap: 5px;
+            gap: 8px;
+        }
+        
+        .hole-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .hole-label {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #8B4513;
+            text-align: center;
         }
         
         .hole-input {
-            padding: 8px;
+            padding: 6px 4px;
             border: 2px solid #ddd;
             border-radius: 5px;
             text-align: center;
             font-weight: bold;
             width: 100%;
+            font-size: 1rem;
+            min-width: 40px;
         }
         
         .hole-input:focus {
@@ -376,10 +392,21 @@
             
             .hole-inputs {
                 grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+            
+            .hole-input {
+                padding: 8px 4px;
+                font-size: 1.1rem;
+            }
+            
+            .hole-label {
+                font-size: 0.8rem;
             }
             
             .team-score-input {
                 grid-template-columns: 1fr;
+                gap: 8px;
             }
             
             .sessions-list {
@@ -408,6 +435,18 @@
             .nav-link {
                 margin: 5px;
                 padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .modal-content {
+                margin: 10px;
+                padding: 15px;
+                max-height: 90vh;
+            }
+            
+            .scorecard-table th,
+            .scorecard-table td {
+                padding: 6px 4px;
                 font-size: 0.9rem;
             }
         }
@@ -875,10 +914,17 @@
                 holeInputsDiv.className = 'hole-inputs';
                 
                 for (let i = 1; i <= 9; i++) {
+                    const holeGroup = document.createElement('div');
+                    holeGroup.className = 'hole-input-group';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'hole-label';
+                    label.textContent = i.toString();
+                    
                     const input = document.createElement('input');
                     input.type = 'number';
                     input.className = 'hole-input';
-                    input.placeholder = i.toString();
+                    input.placeholder = '';
                     input.min = '1';
                     input.max = '15';
                     input.id = `score-${sessionId}-${teamIndex}-${i}`;
@@ -888,7 +934,9 @@
                         input.value = currentScore;
                     }
                     
-                    holeInputsDiv.appendChild(input);
+                    holeGroup.appendChild(label);
+                    holeGroup.appendChild(input);
+                    holeInputsDiv.appendChild(holeGroup);
                 }
                 
                 teamInputDiv.appendChild(label);
