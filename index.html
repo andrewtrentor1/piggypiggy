@@ -849,6 +849,7 @@
         let recaptchaVerifier = null;
         let confirmationResult = null;
         let isRecaptchaReady = false;
+        let isRecaptchaInitializing = false;
 
         // Phone number to player name mapping
         const phoneToPlayer = {
@@ -1483,12 +1484,27 @@
                 return;
             }
             
+            // Prevent multiple simultaneous initializations
+            if (isRecaptchaInitializing) {
+                console.log('🔄 reCAPTCHA initialization already in progress');
+                return;
+            }
+            
+            isRecaptchaInitializing = true;
+            
+            // Check if reCAPTCHA container already has content
+            const recaptchaContainer = document.getElementById('send-code-button');
+            if (recaptchaContainer && recaptchaContainer.hasChildNodes()) {
+                console.log('🔧 reCAPTCHA container already has content, clearing...');
+                recaptchaContainer.innerHTML = '';
+            }
+            
             // Clear any existing reCAPTCHA first
             if (recaptchaVerifier) {
                 try {
                     recaptchaVerifier.clear();
                 } catch (e) {
-                    console.log('🧹 Cleared old reCAPTCHA');
+                    console.log('🧹 Cleared old reCAPTCHA verifier');
                 }
                 recaptchaVerifier = null;
                 isRecaptchaReady = false;
@@ -1517,16 +1533,26 @@
                 recaptchaVerifier.render().then(() => {
                     console.log('✅ reCAPTCHA rendered and ready');
                     isRecaptchaReady = true;
+                    isRecaptchaInitializing = false;
                 }).catch((error) => {
                     console.error('❌ reCAPTCHA render error:', error);
-                    recaptchaVerifier = null;
-                    isRecaptchaReady = false;
+                    
+                    // If it's already rendered error, mark as ready anyway
+                    if (error.message && error.message.includes('already been rendered')) {
+                        console.log('🔧 reCAPTCHA already rendered, marking as ready');
+                        isRecaptchaReady = true;
+                    } else {
+                        recaptchaVerifier = null;
+                        isRecaptchaReady = false;
+                    }
+                    isRecaptchaInitializing = false;
                 });
                 
             } catch (error) {
                 console.error('❌ reCAPTCHA initialization error:', error);
                 recaptchaVerifier = null;
                 isRecaptchaReady = false;
+                isRecaptchaInitializing = false;
             }
         }
 
