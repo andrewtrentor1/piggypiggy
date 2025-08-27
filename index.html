@@ -157,6 +157,28 @@
             color: #8B4513;
             font-weight: bold;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .edit-score-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            opacity: 0.8;
+        }
+        
+        .edit-score-btn:hover {
+            opacity: 1;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         
         .login-section {
@@ -665,6 +687,23 @@
         </div>
     </div>
 
+    <!-- Score Edit Modal -->
+    <div class="modal" id="scoreEditModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeScoreEditModal()">&times;</span>
+            <h2 id="scoreEditTitle">✏️ EDIT PLAYER SCORE ✏️</h2>
+            <div class="form-group">
+                <label id="scoreEditLabel">New Score:</label>
+                <input type="number" id="scoreEditInput" min="0" max="9999" placeholder="Enter new score" onkeypress="if(event.key==='Enter') saveScoreEdit()">
+                <small style="color: #666; margin-top: 5px; display: block;">Enter the new total score for this player (Press Enter to save)</small>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="transfer-btn" onclick="saveScoreEdit()">💾 SAVE SCORE</button>
+                <button class="login-btn" onclick="closeScoreEditModal()" style="background: linear-gradient(45deg, #666, #999);">❌ CANCEL</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Player Login Modal -->
     <div class="modal" id="playerLoginModal">
         <div class="modal-content">
@@ -1058,7 +1097,10 @@
                         ${!allSamePoints && player[1] === minPoints ? '<span>🐷 THE PIG 🐷</span>' : ''}
                         <span>${player[0]}</span>
                     </div>
-                    <div class="points">${player[1]} 🐷</div>
+                    <div class="points">
+                        ${player[1]} 🐷
+                        ${isBookkeeperLoggedIn ? `<button class="edit-score-btn" onclick="openScoreEditModal('${player[0]}', ${player[1]})" title="Edit ${player[0]}'s score">✏️</button>` : ''}
+                    </div>
                 `;
                 
                 leaderboard.appendChild(li);
@@ -1077,7 +1119,10 @@
                         <span class="divine-icon">⛪</span>
                         <span class="divine-icon">✨</span>
                     </div>
-                    <div class="points" style="color: #8B4513; font-weight: bold;">${godPlayer[1]} 🙏</div>
+                    <div class="points" style="color: #8B4513; font-weight: bold;">
+                        ${godPlayer[1]} 🙏
+                        ${isBookkeeperLoggedIn ? `<button class="edit-score-btn" onclick="openScoreEditModal('GOD', ${godPlayer[1]})" title="Edit GOD's score">✏️</button>` : ''}
+                    </div>
                 `;
                 
                 leaderboard.appendChild(li);
@@ -1849,6 +1894,80 @@
 
             // Log activity
             addActivity('hogwash', '🎲', resultText);
+        }
+
+        // Score Edit Functions
+        let currentEditPlayer = '';
+        let currentEditScore = 0;
+        
+        function openScoreEditModal(playerName, currentScore) {
+            if (!isBookkeeperLoggedIn) {
+                alert('🚫 You must be logged in as Ham Handler to edit scores!');
+                return;
+            }
+            
+            currentEditPlayer = playerName;
+            currentEditScore = currentScore;
+            
+            document.getElementById('scoreEditTitle').textContent = `✏️ EDIT ${playerName.toUpperCase()}'S SCORE ✏️`;
+            document.getElementById('scoreEditLabel').textContent = `New Score for ${playerName}:`;
+            document.getElementById('scoreEditInput').value = currentScore;
+            document.getElementById('scoreEditModal').style.display = 'flex';
+            
+            // Focus on input field for quick editing
+            setTimeout(() => {
+                document.getElementById('scoreEditInput').focus();
+                document.getElementById('scoreEditInput').select();
+            }, 100);
+        }
+        
+        function closeScoreEditModal() {
+            document.getElementById('scoreEditModal').style.display = 'none';
+            currentEditPlayer = '';
+            currentEditScore = 0;
+            document.getElementById('scoreEditInput').value = '';
+        }
+        
+        function saveScoreEdit() {
+            const newScore = parseInt(document.getElementById('scoreEditInput').value);
+            
+            if (isNaN(newScore) || newScore < 0) {
+                alert('🚫 Please enter a valid score (0 or higher)!');
+                return;
+            }
+            
+            if (!currentEditPlayer) {
+                alert('🚫 Error: No player selected for editing!');
+                return;
+            }
+            
+            const oldScore = players[currentEditPlayer];
+            const scoreDifference = newScore - oldScore;
+            
+            // Confirm the change
+            if (!confirm(`🐷 CONFIRM SCORE EDIT 🐷\n\nPlayer: ${currentEditPlayer}\nOld Score: ${oldScore}\nNew Score: ${newScore}\nDifference: ${scoreDifference > 0 ? '+' : ''}${scoreDifference}\n\nAre you sure you want to make this change?`)) {
+                return;
+            }
+            
+            // Update the player's score
+            players[currentEditPlayer] = newScore;
+            
+            // Save to Firebase
+            savePlayers();
+            
+            // Update UI
+            updateLeaderboard();
+            if (isPlayerLoggedIn && currentPlayer === currentEditPlayer) {
+                updatePlayerUI();
+            }
+            
+            // Log activity
+            addActivity('admin', '✏️', `Ham Handler edited ${currentEditPlayer}'s score from ${oldScore} to ${newScore} (${scoreDifference > 0 ? '+' : ''}${scoreDifference})`);
+            
+            // Close modal
+            closeScoreEditModal();
+            
+            alert(`✅ Score updated successfully!\n🐷 ${currentEditPlayer}: ${oldScore} → ${newScore} (${scoreDifference > 0 ? '+' : ''}${scoreDifference})`);
         }
 
         // Add some random pig sounds
