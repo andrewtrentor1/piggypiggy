@@ -181,6 +181,113 @@
         .god-btn {
             background: linear-gradient(45deg, #9370db, #dda0dd);
         }
+
+        .hogwash-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        .hogwash-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .hogwash-result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(255, 107, 107, 0.8); }
+            100% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
+        }
+
+        .player-login-btn {
+            background: linear-gradient(45deg, #4834d4, #686de0);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .player-login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .activity-feed {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .activity-item {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-left: 4px solid #daa520;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .activity-item.hogwash {
+            border-left-color: #ff6b6b;
+        }
+
+        .activity-item.transfer {
+            border-left-color: #4834d4;
+        }
+
+        .activity-item.admin {
+            border-left-color: #8B4513;
+        }
+
+        .activity-time {
+            font-size: 0.8em;
+            color: #666;
+            float: right;
+        }
+
+        .activity-text {
+            font-size: 0.95em;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .activity-emoji {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
         
         .bookkeeper-panel {
             display: none;
@@ -358,9 +465,16 @@
                     <!-- Leaderboard will be populated by JavaScript -->
                 </ul>
                 
-                <!-- Login button for non-logged users -->
+                <!-- HOGWASH Gambling Button (always visible) -->
+                <div style="text-align: center; margin: 20px 0;">
+                    <button class="hogwash-btn" onclick="showHogwashModal()">🎲 HOGWASH 🎲</button>
+                    <p style="font-size: 0.8em; color: #666; margin-top: 5px;">Risk it all with the pig gods!</p>
+                </div>
+
+                <!-- Login buttons for non-logged users -->
                 <div class="login-section" id="loginSection" style="text-align: center; margin-top: 20px;">
-                    <button class="login-btn" onclick="toggleBookkeeper()">📊 BOOKKEEPER LOGIN</button>
+                    <button class="login-btn" onclick="toggleBookkeeper()">🐷 HAM HANDLER ACCESS</button>
+                    <button class="player-login-btn" onclick="showPlayerLoginModal()">👤 PLAYER LOGIN</button>
                 </div>
             </div>
             
@@ -459,6 +573,117 @@
             </button>
         </div>
     </div>
+
+    <!-- Activity Feed -->
+    <div class="card">
+        <h2 class="card-title">📜 ACTIVITY FEED 📜</h2>
+        <div id="activityLoadingIndicator" style="text-align: center; padding: 20px; color: #8B4513;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">📜</div>
+            <div style="font-size: 1rem;">Loading activities...</div>
+        </div>
+        <div class="activity-feed" id="activityFeed" style="display: none;">
+            <!-- Activity items will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Player Controls (hidden by default) -->
+    <div class="card" id="playerCard" style="display: none;">
+        <h2 class="card-title" id="playerCardTitle">👤 PLAYER CONTROLS 👤</h2>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <p id="playerWelcome" style="font-size: 1.1em; color: #8B4513; font-weight: bold;"></p>
+            <p id="playerPoints" style="font-size: 1.3em; color: #daa520; font-weight: bold;"></p>
+        </div>
+
+        <!-- Point Transfer Form -->
+        <div class="bookkeeper-panel" style="display: block; margin-top: 0;">
+            <h3>💸 SEND YOUR POINTS 💸</h3>
+            <div class="transfer-form">
+                <div class="form-group">
+                    <label>Send To:</label>
+                    <select id="playerTransferTo">
+                        <option value="Evan">Evan</option>
+                        <option value="Ian">Ian</option>
+                        <option value="Andrew">Andrew</option>
+                        <option value="Zack">Zack</option>
+                        <option value="Brian">Brian</option>
+                        <option value="Alex">Alex</option>
+                        <option value="GOD">GOD</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Points to Send:</label>
+                    <input type="number" id="playerTransferAmount" min="1" placeholder="Enter points">
+                </div>
+                <button class="transfer-btn" onclick="playerTransferPoints()">💸 SEND POINTS</button>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="login-btn" onclick="logoutPlayer()" style="background: linear-gradient(45deg, #666, #999);">👋 LOGOUT</button>
+        </div>
+    </div>
+
+    <!-- HOGWASH Modal -->
+    <div class="modal" id="hogwashModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHogwashModal()">&times;</span>
+            <h2 id="hogwashTitle">🎲 HOGWASH 🎲</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Choose your player and risk it with the pig gods!</p>
+            
+            <div class="form-group">
+                <label>Who's gambling?</label>
+                <select id="hogwashPlayer" required>
+                    <option value="">Select your name...</option>
+                    <option value="Evan">Evan</option>
+                    <option value="Ian">Ian</option>
+                    <option value="Andrew">Andrew</option>
+                    <option value="Zack">Zack</option>
+                    <option value="Brian">Brian</option>
+                    <option value="Alex">Alex</option>
+                </select>
+            </div>
+            
+            <button class="hogwash-btn" onclick="rollHogwash()" style="width: 100%; margin-top: 20px;">
+                🐷 ROLL THE DICE 🐷
+            </button>
+        </div>
+    </div>
+
+    <!-- HOGWASH Result Modal -->
+    <div class="modal" id="hogwashResultModal">
+        <div class="modal-content hogwash-result">
+            <h2 id="hogwashResultTitle">🎲 HOGWASH RESULT 🎲</h2>
+            <div id="hogwashResultContent" style="text-align: center; font-size: 1.5em; margin: 30px 0;"></div>
+            <button class="transfer-btn" onclick="closeHogwashResult()">🐷 ACCEPT FATE 🐷</button>
+        </div>
+    </div>
+
+    <!-- Player Login Modal -->
+    <div class="modal" id="playerLoginModal">
+        <div class="modal-content">
+            <span class="close" onclick="closePlayerLoginModal()">&times;</span>
+            <h2>👤 PLAYER LOGIN 👤</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Select your name to access your pig points!</p>
+            
+            <div class="form-group">
+                <label>Choose Your Player:</label>
+                <select id="playerLoginSelect" required>
+                    <option value="">Select your name...</option>
+                    <option value="Evan">Evan</option>
+                    <option value="Ian">Ian</option>
+                    <option value="Andrew">Andrew</option>
+                    <option value="Zack">Zack</option>
+                    <option value="Brian">Brian</option>
+                    <option value="Alex">Alex</option>
+                </select>
+            </div>
+            
+            <button class="transfer-btn" onclick="attemptPlayerLogin()" style="width: 100%; margin-top: 20px;">
+                👤 LOGIN AS PLAYER
+            </button>
+        </div>
+    </div>
     
     <!-- Firebase SDK -->
     <script type="module">
@@ -502,11 +727,15 @@
         };
         
         let isBookkeeperLoggedIn = localStorage.getItem('bookkeeperLoggedIn') === 'true';
+        let isPlayerLoggedIn = localStorage.getItem('playerLoggedIn') === 'true';
+        let currentPlayer = localStorage.getItem('currentPlayer') || '';
         let isFirebaseReady = false;
+        let activities = [];
         
         // Initialize Firebase data
         function initializeFirebase() {
             const playersRef = window.firebaseRef(window.firebaseDB, 'players');
+            const activitiesRef = window.firebaseRef(window.firebaseDB, 'activities');
             
             // Listen for player changes in real-time
             window.firebaseOnValue(playersRef, (snapshot) => {
@@ -530,12 +759,29 @@
                     }
                     
                     updateLeaderboard();
+                    if (isPlayerLoggedIn) {
+                        updatePlayerUI();
+                    }
                     console.log('🔥 Firebase players updated:', players);
                 } else {
                     // First time - set default values
                     savePlayers();
                 }
                 isFirebaseReady = true;
+            });
+
+            // Listen for activity feed changes in real-time
+            window.firebaseOnValue(activitiesRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const firebaseActivities = snapshot.val();
+                    activities = Object.values(firebaseActivities).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    loadActivityFeed();
+                    console.log('📜 Activities loaded from Firebase:', activities);
+                } else {
+                    activities = [];
+                    loadActivityFeed();
+                    console.log('📜 No existing activities');
+                }
             });
         }
         
@@ -661,7 +907,7 @@
                 localStorage.removeItem('bookkeeperLoggedIn');
                 document.getElementById('bookkeeperCard').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'block';
-                alert('👋 Bookkeeper logged out!');
+                alert('👋 Ham Handler logged out!');
             } else {
                 // Show login modal
                 document.getElementById('loginModal').style.display = 'flex';
@@ -732,6 +978,9 @@
             savePlayers(); // Save to localStorage
             updateLeaderboard();
             
+            // Log activity
+            addActivity('admin', '🔄', `Ham Handler transferred ${points} points from ${fromPlayer} to ${toPlayer}`);
+            
             alert(`🔄 Transferred ${points} pig points from ${fromPlayer} to ${toPlayer}!\n🐷 OINK OINK! 🐷`);
         }
         
@@ -754,6 +1003,9 @@
             players[randomPlayer] += randomPoints;
             
             savePlayers(); // Save to localStorage
+            
+            // Log activity
+            addActivity('admin', '✨', `${randomPlayer} received ${randomPoints} points from GOD!`);
             
             document.getElementById('godMessage').innerHTML = `
                 <strong>${randomPlayer}</strong> has been blessed!<br>
@@ -780,6 +1032,10 @@
                     'GOD': 1000
                 };
                 savePlayers();
+                
+                // Log activity
+                addActivity('admin', '🔄', 'Ham Handler reset all points to starting values');
+                
                 alert('🔄 All pig points have been reset!\n🐷 Players: 100 points\n✝️ GOD: 1000 points\n\nLet the divine games begin! 🙏');
             }
         }
@@ -792,9 +1048,16 @@
         function checkLoginState() {
             if (isBookkeeperLoggedIn) {
                 document.getElementById('bookkeeperCard').style.display = 'block';
+                document.getElementById('playerCard').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'none';
+            } else if (isPlayerLoggedIn && currentPlayer) {
+                document.getElementById('bookkeeperCard').style.display = 'none';
+                document.getElementById('playerCard').style.display = 'block';
+                document.getElementById('loginSection').style.display = 'none';
+                updatePlayerUI();
             } else {
                 document.getElementById('bookkeeperCard').style.display = 'none';
+                document.getElementById('playerCard').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'block';
             }
         }
@@ -805,6 +1068,271 @@
         // Don't initialize leaderboard until Firebase loads
         // updateLeaderboard(); // Removed to prevent showing default data
         
+        // Activity Feed Functions
+        function loadActivityFeed() {
+            const activityFeed = document.getElementById('activityFeed');
+            const loadingIndicator = document.getElementById('activityLoadingIndicator');
+            
+            // Hide loading indicator and show feed
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            activityFeed.style.display = 'block';
+            
+            activityFeed.innerHTML = '';
+            
+            if (activities.length === 0) {
+                activityFeed.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No activities yet. Start gambling and transferring points!</p>';
+                return;
+            }
+            
+            // Show last 20 activities
+            const recentActivities = activities.slice(0, 20);
+            
+            recentActivities.forEach(activity => {
+                const activityItem = document.createElement('div');
+                activityItem.className = `activity-item ${activity.type}`;
+                
+                const timeString = new Date(activity.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                activityItem.innerHTML = `
+                    <div class="activity-time">${timeString}</div>
+                    <div class="activity-text">
+                        <span class="activity-emoji">${activity.emoji}</span>
+                        ${activity.message}
+                    </div>
+                `;
+                
+                activityFeed.appendChild(activityItem);
+            });
+        }
+
+        function addActivity(type, emoji, message) {
+            const activity = {
+                id: Date.now() + Math.random(), // Simple unique ID
+                type: type,
+                emoji: emoji,
+                message: message,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Add to local array
+            activities.unshift(activity);
+            
+            // Save to Firebase
+            saveActivities();
+            
+            // Update display
+            loadActivityFeed();
+        }
+
+        function saveActivities() {
+            if (!window.firebaseDB) return;
+            
+            const activitiesRef = window.firebaseRef(window.firebaseDB, 'activities');
+            
+            // Convert array to object for Firebase
+            const activitiesObj = {};
+            activities.forEach(activity => {
+                activitiesObj[activity.id] = activity;
+            });
+            
+            window.firebaseSet(activitiesRef, activitiesObj)
+                .then(() => console.log('📜 Activities saved to Firebase'))
+                .catch(error => console.error('Activities save error:', error));
+        }
+
+        // Player Login Functions
+        function showPlayerLoginModal() {
+            document.getElementById('playerLoginModal').style.display = 'flex';
+        }
+
+        function closePlayerLoginModal() {
+            document.getElementById('playerLoginModal').style.display = 'none';
+            document.getElementById('playerLoginSelect').value = '';
+        }
+
+        function attemptPlayerLogin() {
+            const selectedPlayer = document.getElementById('playerLoginSelect').value;
+            if (!selectedPlayer) {
+                alert('🚫 Please select your name!');
+                return;
+            }
+
+            // Set player login state
+            isPlayerLoggedIn = true;
+            currentPlayer = selectedPlayer;
+            localStorage.setItem('playerLoggedIn', 'true');
+            localStorage.setItem('currentPlayer', selectedPlayer);
+
+            closePlayerLoginModal();
+            checkLoginState();
+            
+            alert(`🐷 Welcome ${selectedPlayer}! 🐷\nYou can now send your pig points to other players!`);
+        }
+
+        function logoutPlayer() {
+            isPlayerLoggedIn = false;
+            currentPlayer = '';
+            localStorage.removeItem('playerLoggedIn');
+            localStorage.removeItem('currentPlayer');
+            checkLoginState();
+            alert('👋 Player logged out!');
+        }
+
+        function updatePlayerUI() {
+            if (!currentPlayer) return;
+            
+            document.getElementById('playerWelcome').textContent = `Welcome, ${currentPlayer}!`;
+            document.getElementById('playerPoints').textContent = `Your Points: ${players[currentPlayer] || 0} 🐷`;
+            
+            // Remove current player from transfer dropdown
+            const transferSelect = document.getElementById('playerTransferTo');
+            Array.from(transferSelect.options).forEach(option => {
+                if (option.value === currentPlayer) {
+                    option.style.display = 'none';
+                } else {
+                    option.style.display = 'block';
+                }
+            });
+        }
+
+        function playerTransferPoints() {
+            if (!currentPlayer) return;
+            
+            const toPlayer = document.getElementById('playerTransferTo').value;
+            const amount = parseInt(document.getElementById('playerTransferAmount').value);
+            
+            if (!toPlayer || !amount) {
+                alert('🚫 Please select a player and enter an amount!');
+                return;
+            }
+            
+            if (toPlayer === currentPlayer) {
+                alert('🚫 You cannot send points to yourself, silly pig!');
+                return;
+            }
+            
+            if (players[currentPlayer] < amount) {
+                alert(`🚫 You only have ${players[currentPlayer]} points! You cannot send ${amount} points.`);
+                return;
+            }
+            
+            // Transfer points
+            players[currentPlayer] -= amount;
+            players[toPlayer] += amount;
+            
+            // Save to Firebase
+            savePlayers();
+            
+            // Update UI
+            updateLeaderboard();
+            updatePlayerUI();
+            
+            // Clear form
+            document.getElementById('playerTransferTo').value = '';
+            document.getElementById('playerTransferAmount').value = '';
+            
+            // Log activity
+            addActivity('transfer', '💸', `${currentPlayer} sent ${amount} points to ${toPlayer}`);
+            
+            alert(`💸 Successfully sent ${amount} points to ${toPlayer}! 💸`);
+        }
+
+        // HOGWASH Functions
+        function showHogwashModal() {
+            document.getElementById('hogwashModal').style.display = 'flex';
+        }
+
+        function closeHogwashModal() {
+            document.getElementById('hogwashModal').style.display = 'none';
+            document.getElementById('hogwashPlayer').value = '';
+        }
+
+        function closeHogwashResult() {
+            document.getElementById('hogwashResultModal').style.display = 'none';
+        }
+
+        function rollHogwash() {
+            const playerName = document.getElementById('hogwashPlayer').value;
+            if (!playerName) {
+                alert('🚫 Select a player first, you pig!');
+                return;
+            }
+
+            // Close the selection modal
+            closeHogwashModal();
+
+            // Define possible outcomes
+            const outcomes = [
+                {
+                    type: 'drink',
+                    title: '🍺 TAKE A DRINK YOU PIG! 🍺',
+                    action: () => {
+                        const drinks = Math.floor(Math.random() * 9) + 1; // 1-9
+                        const drinkType = drinks === 9 ? 'FULL DRINK' : `${drinks} DRINK${drinks > 1 ? 'S' : ''}`;
+                        return `${playerName} must take ${drinkType}!`;
+                    },
+                    color: '#ff6b6b'
+                },
+                {
+                    type: 'danger',
+                    title: '⚠️ DANGER ZONE ⚠️',
+                    action: () => `${playerName} is in the DANGER ZONE! 💀`,
+                    color: '#ff4757'
+                },
+                {
+                    type: 'win',
+                    title: '🎉 WIN POINTS FROM GOD! 🎉',
+                    action: () => {
+                        const points = Math.floor(Math.random() * 10) + 1; // 1-10
+                        players[playerName] += points;
+                        players['GOD'] -= points;
+                        savePlayers();
+                        return `${playerName} wins ${points} points from GOD! 🙏`;
+                    },
+                    color: '#2ed573'
+                },
+                {
+                    type: 'lose',
+                    title: '😈 LOSE POINTS TO GOD! 😈',
+                    action: () => {
+                        const points = Math.floor(Math.random() * 10) + 1; // 1-10
+                        players[playerName] -= points;
+                        players['GOD'] += points;
+                        savePlayers();
+                        return `${playerName} loses ${points} points to GOD! 💸`;
+                    },
+                    color: '#ff3838'
+                }
+            ];
+
+            // Random outcome
+            const outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+            const resultText = outcome.action();
+
+            // Show result modal
+            document.getElementById('hogwashResultTitle').textContent = outcome.title;
+            document.getElementById('hogwashResultContent').innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 20px;">🎲</div>
+                <div style="color: ${outcome.color}; font-weight: bold;">${resultText}</div>
+            `;
+            document.querySelector('.hogwash-result').style.background = `linear-gradient(135deg, ${outcome.color}, #764ba2)`;
+            
+            document.getElementById('hogwashResultModal').style.display = 'flex';
+
+            // Update leaderboard if points changed
+            if (outcome.type === 'win' || outcome.type === 'lose') {
+                updateLeaderboard();
+                if (isPlayerLoggedIn) {
+                    updatePlayerUI();
+                }
+            }
+
+            // Log activity
+            addActivity('hogwash', '🎲', resultText);
+        }
+
         // Add some random pig sounds
         const pigSounds = ['🐷 OINK!', '🐷 SNORT!', '🐷 SQUEAL!'];
         setInterval(() => {

@@ -510,8 +510,8 @@
             
             <!-- Login button for non-logged users -->
             <div class="login-section" id="loginSection" style="text-align: center; margin-top: 20px;">
-                <button class="login-btn" onclick="showLoginModal()">📊 BOOKKEEPER LOGIN</button>
-                <p style="margin-top: 10px; color: #666;">Golf sessions will appear here once the bookkeeper creates them!</p>
+                <button class="login-btn" onclick="showLoginModal()">🐷 HAM HANDLER ACCESS</button>
+                <p style="margin-top: 10px; color: #666;">Golf sessions will appear here once the Ham Handler creates them!</p>
             </div>
             
             <!-- Bookkeeper Controls (hidden by default) -->
@@ -625,28 +625,28 @@
         </div>
     </div>
     
-    <!-- CTP Modal -->
-    <div class="modal" id="ctpModal">
+    <!-- Golf Sidebets Modal -->
+    <div class="modal" id="sidebetsModal">
         <div class="modal-content">
-            <span class="close" onclick="closeCtpModal()">&times;</span>
-            <h2 id="ctpModalTitle">🏌️ CLOSEST TO PIN 🏌️</h2>
-            <p id="ctpHoleInfo" style="margin-bottom: 20px; font-weight: bold; color: #8B4513;"></p>
+            <span class="close" onclick="closeSidebetsModal()">&times;</span>
+            <h2 id="sidebetsModalTitle">🏌️ GOLF SIDEBETS 🏌️</h2>
+            <p id="sidebetsHoleInfo" style="margin-bottom: 20px; font-weight: bold; color: #8B4513;"></p>
             
             <div class="form-group">
                 <label>Winning Team:</label>
-                <select id="ctpWinningTeam">
+                <select id="sidebetsWinningTeam">
                     <option value="">Select winning team...</option>
                 </select>
             </div>
             
             <div class="form-group">
                 <label>Points Each Losing Player Pays:</label>
-                <input type="number" id="ctpPoints" min="1" max="50" value="10" placeholder="Points per losing player">
+                <input type="number" id="sidebetsPoints" min="1" max="50" value="10" placeholder="Points per losing player">
                 <small style="color: #666;">Each non-winning player pays this amount to the winning team</small>
             </div>
             
             <div style="margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 8px;">
-                <h4 style="margin-bottom: 10px; color: #8B4513;">How CTP Works:</h4>
+                <h4 style="margin-bottom: 10px; color: #8B4513;">How Golf Sidebets Work:</h4>
                 <ul style="margin: 0; padding-left: 20px; color: #666;">
                     <li>Each losing player pays the full amount</li>
                     <li>Total collected points split among winning team players</li>
@@ -654,7 +654,7 @@
                 </ul>
             </div>
             
-            <button class="transfer-btn" onclick="awardCtpPoints()">🏆 AWARD CTP POINTS</button>
+            <button class="transfer-btn" onclick="awardSidebetsPoints()">🏆 AWARD SIDEBET POINTS</button>
         </div>
     </div>
     
@@ -795,7 +795,7 @@
                 document.getElementById('loginUsername').value = '';
                 document.getElementById('loginPassword').value = '';
                 
-                alert('🐷 BOOKKEEPER ACTIVATED! 🐷\nYou can now create golf sessions!');
+                alert('🐷 HAM HANDLER ACTIVATED! 🐷\nYou can now create golf sessions!');
             } else {
                 document.getElementById('loginModal').style.display = 'none';
                 document.getElementById('shameModal').style.display = 'flex';
@@ -1022,18 +1022,18 @@
                     label.className = 'hole-label';
                     label.textContent = i.toString();
                     
-                    // Add CTP flag for all holes
+                    // Add sidebet flag for all holes
                     const ctpFlag = document.createElement('span');
                     ctpFlag.className = 'ctp-flag';
                     ctpFlag.textContent = '⛳';
-                    ctpFlag.title = 'Closest to Pin';
-                    ctpFlag.onclick = () => openCtpModal(sessionId, i);
+                    ctpFlag.title = 'Golf Sidebets';
+                    ctpFlag.onclick = () => openSidebetsModal(sessionId, i);
                     
-                    // Check if CTP has been won for this hole
+                    // Check if sidebet has been won for this hole
                     const session = golfSessions[sessionId];
                     if (session && session.ctpWinners && session.ctpWinners[i]) {
                         ctpFlag.classList.add('won');
-                        ctpFlag.title = `CTP Won by: ${session.ctpWinners[i].teamName}`;
+                        ctpFlag.title = `Sidebet Won by: ${session.ctpWinners[i].teamName}`;
                     }
                     
                     label.appendChild(ctpFlag);
@@ -1103,18 +1103,18 @@
                 .catch(error => console.error('Golf sessions save error:', error));
         }
         
-        // CTP Functions
-        function openCtpModal(sessionId, holeNumber) {
+        // Golf Sidebets Functions
+        function openSidebetsModal(sessionId, holeNumber) {
             currentSessionId = sessionId;
             currentCtpHole = holeNumber;
             
             const session = golfSessions[sessionId];
             if (!session) return;
             
-            document.getElementById('ctpHoleInfo').textContent = `${session.title} - Hole ${holeNumber} CTP`;
+            document.getElementById('sidebetsHoleInfo').textContent = `${session.title} - Hole ${holeNumber} Sidebet`;
             
             // Populate team dropdown
-            const teamSelect = document.getElementById('ctpWinningTeam');
+            const teamSelect = document.getElementById('sidebetsWinningTeam');
             teamSelect.innerHTML = '<option value="">Select winning team...</option>';
             
             session.teams.forEach((team, index) => {
@@ -1124,26 +1124,26 @@
                 teamSelect.appendChild(option);
             });
             
-            // Check if CTP already awarded
+            // Check if sidebet already awarded
             if (session.ctpWinners && session.ctpWinners[holeNumber]) {
                 const winner = session.ctpWinners[holeNumber];
-                document.getElementById('ctpHoleInfo').innerHTML += `<br><span style="color: #28a745;">✅ Already won by: ${winner.teamName} (${winner.points} points)</span>`;
+                document.getElementById('sidebetsHoleInfo').innerHTML += `<br><span style="color: #28a745;">✅ Already won by: ${winner.teamName} (${winner.pointsPerWinner} points each)</span>`;
             }
             
-            document.getElementById('ctpModal').style.display = 'flex';
+            document.getElementById('sidebetsModal').style.display = 'flex';
         }
         
-        function closeCtpModal() {
-            document.getElementById('ctpModal').style.display = 'none';
+        function closeSidebetsModal() {
+            document.getElementById('sidebetsModal').style.display = 'none';
             currentSessionId = null;
             currentCtpHole = null;
         }
         
-        function awardCtpPoints() {
+        function awardSidebetsPoints() {
             if (!currentSessionId || !currentCtpHole) return;
             
-            const teamIndex = parseInt(document.getElementById('ctpWinningTeam').value);
-            const points = parseInt(document.getElementById('ctpPoints').value);
+            const teamIndex = parseInt(document.getElementById('sidebetsWinningTeam').value);
+            const points = parseInt(document.getElementById('sidebetsPoints').value);
             
             if (isNaN(teamIndex) || !points) {
                 alert('🚫 Please select a winning team and enter points!');
@@ -1195,9 +1195,9 @@
             
             // Refresh the score modal
             openScoreModal(currentSessionId);
-            closeCtpModal();
+            closeSidebetsModal();
             
-            alert(`🏆 CTP awarded to ${winningTeam.name}!\n🐷 ${pointsPerWinner} points per winner\n💰 Total points collected: ${totalPointsCollected}\n📊 Each losing player paid: ${points}`);
+            alert(`🏆 Sidebet awarded to ${winningTeam.name}!\n🐷 ${pointsPerWinner} points per winner\n💰 Total points collected: ${totalPointsCollected}\n📊 Each losing player paid: ${points}`);
         }
         
         function savePigPoints() {
