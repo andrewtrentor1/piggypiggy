@@ -831,6 +831,7 @@
                     const playerName = phoneToPlayer[phoneNumber];
                     
                     if (playerName) {
+                        const wasLoggedIn = isPlayerLoggedIn;
                         isPlayerLoggedIn = true;
                         currentPlayer = playerName;
                         
@@ -842,6 +843,20 @@
                         }
                         
                         console.log(`🔐 Player authenticated: ${playerName} (${phoneNumber})`);
+                        
+                        // Only show welcome message if this is a new login (not a page refresh)
+                        if (!wasLoggedIn) {
+                            if (playerName === 'Evan') {
+                                alert(`🐷 Welcome Ham Handler ${playerName}! 🐷\nYou now have FULL admin access AND player controls!`);
+                                // Log activity
+                                addActivity('admin', '🔐', `${playerName} logged in as Ham Handler`);
+                            } else {
+                                alert(`🐷 Welcome ${playerName}! 🐷\nYou are now securely logged in!`);
+                                // Log activity
+                                addActivity('admin', '🔐', `${playerName} logged in securely`);
+                            }
+                        }
+                        
                         checkLoginState();
                     } else {
                         console.error('Phone number not recognized:', phoneNumber);
@@ -850,6 +865,7 @@
                     }
                 } else {
                     // User is signed out
+                    const wasLoggedIn = isPlayerLoggedIn;
                     isPlayerLoggedIn = false;
                     currentPlayer = '';
                     
@@ -1270,6 +1286,9 @@
             
             // Reset confirmation result but keep reCAPTCHA ready
             confirmationResult = null;
+            
+            // Don't re-initialize reCAPTCHA if user is already logged in
+            // This prevents unnecessary Firebase calls after successful login
         }
 
         function initializeRecaptcha() {
@@ -1436,20 +1455,11 @@
             confirmationResult.confirm(code)
                 .then((result) => {
                     // User signed in successfully
-                    const user = result.user;
-                    const playerName = phoneToPlayer[user.phoneNumber];
-                    
+                    console.log('✅ SMS verification successful');
                     closePlayerLoginModal();
                     
-                    if (playerName === 'Evan') {
-                        alert(`🐷 Welcome Ham Handler ${playerName}! 🐷\nYou now have FULL admin access AND player controls!`);
-                        // Log activity
-                        addActivity('admin', '🔐', `${playerName} logged in as Ham Handler`);
-                    } else {
-                        alert(`🐷 Welcome ${playerName}! 🐷\nYou are now securely logged in!`);
-                        // Log activity
-                        addActivity('admin', '🔐', `${playerName} logged in securely`);
-                    }
+                    // Don't show success message here - let onAuthStateChanged handle it
+                    // This prevents duplicate processing and rate limit issues
                 })
                 .catch((error) => {
                     console.error('Code verification error:', error);
@@ -1465,13 +1475,31 @@
 
         function logoutPlayer() {
             if (confirm('👋 Are you sure you want to logout?\nYou will need to verify your phone number again to login.')) {
+                console.log('🔐 Logging out player...');
+                
+                // Clear reCAPTCHA state to prevent issues
+                isRecaptchaReady = false;
+                
                 window.firebaseAuth.signOut()
                     .then(() => {
+                        console.log('✅ Logout successful');
                         alert('👋 Logged out successfully!');
                     })
                     .catch((error) => {
                         console.error('Logout error:', error);
-                        alert('Error logging out. Please try again.');
+                        
+                        // Even if logout fails, clear local state
+                        isPlayerLoggedIn = false;
+                        currentPlayer = '';
+                        isBookkeeperLoggedIn = false;
+                        localStorage.removeItem('bookkeeperLoggedIn');
+                        checkLoginState();
+                        
+                        if (error.code === 'auth/too-many-requests') {
+                            alert('⚠️ Rate limit reached. You have been logged out locally.\nWait a few minutes before trying to login again.');
+                        } else {
+                            alert('⚠️ Logout error, but you have been logged out locally.\nIf you continue to see issues, refresh the page.');
+                        }
                     });
             }
         }
@@ -1516,7 +1544,9 @@
             }
 
             if (confirm(`🚀 TESTING BYPASS\n\nThis will log you in as ${selectedPlayer} without SMS verification.\n\n⚠️ This is for development/testing only!\n\nContinue?`)) {
-                // Simulate successful login
+                console.log(`🚀 Bypass login for ${selectedPlayer}`);
+                
+                // Simulate successful login without triggering Firebase Auth
                 isPlayerLoggedIn = true;
                 currentPlayer = selectedPlayer;
                 
@@ -1529,6 +1559,7 @@
                 closePlayerLoginModal();
                 checkLoginState();
                 
+                // Show success message
                 if (selectedPlayer === 'Evan') {
                     alert(`🐷 Welcome Ham Handler ${selectedPlayer}! 🐷\n[TESTING MODE - No SMS]\nYou now have FULL admin access AND player controls!`);
                     addActivity('admin', '🔐', `${selectedPlayer} logged in as Ham Handler (TESTING)`);

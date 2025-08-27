@@ -2,7 +2,7 @@
 
 /* Base Styles */
 body {
-    font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
     background: linear-gradient(135deg, #f5deb3 0%, #deb887 100%);
     margin: 0;
     padding: 20px;
@@ -24,7 +24,7 @@ body {
     text-decoration: none !important;
     color: #333 !important;
     display: inline-block !important;
-    font-family: 'Comic Sans MS', cursive, sans-serif !important;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
 }
 
 .nav-btn:hover, .nav-link:hover, .nav-tab:hover {
@@ -39,7 +39,7 @@ body {
 
 /* Action Buttons - CONSISTENT STYLE */
 .transfer-btn, .login-btn, .god-btn, .session-btn, .hogwash-btn, .player-login-btn, .filter-btn, .add-year-btn {
-    font-family: 'Comic Sans MS', cursive, sans-serif !important;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
     border: none !important;
     padding: 12px 24px !important;
     font-size: 1rem !important;
@@ -119,7 +119,7 @@ body {
     display: none; /* Hidden by default */
     justify-content: space-between;
     align-items: center;
-    font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
 }
 
 .status-bar.visible {
@@ -145,7 +145,7 @@ body {
     border-radius: 4px;
     font-size: 0.8rem;
     cursor: pointer;
-    font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
 }
 
 .status-logout:hover {
