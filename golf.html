@@ -15,7 +15,7 @@
         }
         
         body {
-            font-family: 'Comic Neue', cursive;
+            font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
             background: linear-gradient(135deg, #f5f5dc, #fff8dc);
             min-height: 100vh;
             overflow-x: hidden;
@@ -94,7 +94,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            font-family: 'Comic Neue', cursive;
+            font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
             text-decoration: none;
             color: #8B4513;
             margin: 0 10px;
@@ -159,7 +159,7 @@
             border: 2px solid #ddd;
             border-radius: 6px;
             font-size: 1rem;
-            font-family: 'Comic Neue', cursive;
+            font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
         }
         
         .sessions-list {
@@ -794,22 +794,39 @@
         
         // Initialize Firebase
         function initializeFirebase() {
+            console.log('🏌️ Initializing Firebase for golf sessions...');
+            console.log('🏌️ Firebase DB:', window.firebaseDB);
+            
+            if (!window.firebaseDB) {
+                console.error('❌ Firebase database not available for golf!');
+                alert('❌ Firebase connection failed for golf sessions! Check console.');
+                return;
+            }
+            
             const sessionsRef = window.firebaseRef(window.firebaseDB, 'golfSessions');
             const playersRef = window.firebaseRef(window.firebaseDB, 'players');
             const activitiesRef = window.firebaseRef(window.firebaseDB, 'activities');
             
+            console.log('🏌️ Setting up golf sessions listener...');
+            
             // Listen for session changes in real-time
             window.firebaseOnValue(sessionsRef, (snapshot) => {
+                console.log('🏌️ Golf sessions snapshot received:', snapshot.exists());
                 const data = snapshot.val();
                 if (data) {
                     golfSessions = data;
-                    console.log('🏌️ Firebase golf sessions updated:', golfSessions);
+                    console.log('🏌️ Firebase golf sessions loaded:', Object.keys(golfSessions).length, 'sessions');
+                    console.log('🏌️ Golf sessions data:', golfSessions);
                     loadSessions();
                 } else {
                     golfSessions = {};
+                    console.log('🏌️ No existing golf sessions in Firebase');
                     loadSessions();
                 }
                 isFirebaseReady = true;
+            }, (error) => {
+                console.error('❌ Firebase golf sessions listener error:', error);
+                alert('❌ Failed to load golf sessions: ' + error.message);
             });
             
             // Listen for pig points changes
@@ -853,6 +870,12 @@
             const statusPlayerName = document.getElementById('statusPlayerName');
             const statusPlayerPoints = document.getElementById('statusPlayerPoints');
             
+            // Check if elements exist before trying to use them
+            if (!statusBar || !statusPlayerName || !statusPlayerPoints) {
+                console.log('⚠️ Status bar elements not found, skipping update');
+                return;
+            }
+            
             if (isBookkeeperLoggedIn) {
                 statusBar.classList.add('visible');
                 statusPlayerName.textContent = `👑 Ham Handler`;
@@ -868,11 +891,11 @@
             }
         }
         
-        // Initialize login state
-        checkLoginState();
-        
-        // Initialize Firebase when page loads
-        setTimeout(initializeFirebase, 1000);
+        // Initialize Firebase and login state when page loads
+        setTimeout(() => {
+            initializeFirebase();
+            checkLoginState(); // Check login state after DOM is ready
+        }, 1000);
         
         // Authentication functions
         function showLoginModal() {
@@ -1199,12 +1222,25 @@
         }
         
         function saveSessions() {
-            if (!window.firebaseDB) return;
+            console.log('💾 Attempting to save golf sessions:', golfSessions);
+            
+            if (!window.firebaseDB) {
+                console.error('❌ Firebase DB not available for golf sessions save');
+                alert('❌ Cannot save golf sessions - Firebase not connected');
+                return;
+            }
             
             const sessionsRef = window.firebaseRef(window.firebaseDB, 'golfSessions');
             window.firebaseSet(sessionsRef, golfSessions)
-                .then(() => console.log('🏌️ Golf sessions saved to Firebase'))
-                .catch(error => console.error('Golf sessions save error:', error));
+                .then(() => {
+                    console.log('✅ Golf sessions saved to Firebase successfully');
+                })
+                .catch(error => {
+                    console.error('❌ Golf sessions save error:', error);
+                    console.error('❌ Error code:', error.code);
+                    console.error('❌ Error message:', error.message);
+                    alert('❌ Failed to save golf sessions: ' + error.message);
+                });
         }
         
         // Golf Sidebets Functions
@@ -1319,7 +1355,7 @@
         // Activity Feed Functions (shared with index.html)
         function addActivity(type, emoji, message) {
             const activity = {
-                id: Date.now() + Math.random(), // Simple unique ID
+                id: Date.now() + '_' + Math.floor(Math.random() * 10000), // Firebase-safe unique ID
                 type: type,
                 emoji: emoji,
                 message: message,
