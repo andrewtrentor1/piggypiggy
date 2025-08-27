@@ -1033,6 +1033,12 @@ function logoutPlayer() {
     if (confirm('👋 Are you sure you want to logout?\nYou will need to verify your phone number again to login.')) {
         console.log('🔐 Logging out player...');
         
+        // Clear Alex's drink countdown timer if running
+        if (window.alexDrinkCountdownTimer) {
+            clearInterval(window.alexDrinkCountdownTimer);
+            window.alexDrinkCountdownTimer = null;
+        }
+        
         // Clear reCAPTCHA state to prevent issues
         isRecaptchaReady = false;
         
@@ -1873,10 +1879,11 @@ function loadAlexDrinkCredits() {
                     updateAlexDrinkUI();
                 }
             } else {
-                // Initialize with starting credits
-                alexDrinkCredits = ALEX_DRINKS_PER_HOUR;
+                // Initialize with starting credits (20 to start)
+                alexDrinkCredits = ALEX_MAX_DRINKS;
                 alexLastDrinkRefill = Date.now();
                 saveAlexDrinkCredits();
+                console.log(`🍺 Alex initialized with ${ALEX_MAX_DRINKS} starting drink credits`);
             }
         });
     }
@@ -1918,7 +1925,16 @@ function refillAlexDrinks() {
             // Notify Alex if he's logged in
             if (isPlayerLoggedIn && currentPlayer === 'Alex') {
                 updateAlexDrinkUI();
-                alert(`🍺 DRINK REFILL! 🍺\n\nYou received ${addedCredits} new drink credits!\nTotal available: ${alexDrinkCredits}`);
+                alert(`🍺 DRINK DELIVERY! 🍺\n\nYou received ${addedCredits} new drink credits!\nTotal available: ${alexDrinkCredits}\n\nNext delivery in 1 hour! ⏰`);
+            }
+        } else if (alexDrinkCredits >= ALEX_MAX_DRINKS) {
+            // Alex is at max capacity
+            alexLastDrinkRefill = now; // Reset timer even if no drinks added
+            saveAlexDrinkCredits();
+            
+            if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                updateAlexDrinkUI();
+                console.log(`🍺 Alex is at max capacity (${ALEX_MAX_DRINKS} drinks)`);
             }
         }
     }
@@ -1927,6 +1943,8 @@ function refillAlexDrinks() {
 function showAlexDrinkButton() {
     // Only show for Alex when he's logged in
     if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+        const nextRefillTime = getNextDrinkRefillCountdown();
+        
         return `
             <div style="text-align: center; margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #4CAF50, #45a049); border-radius: 10px;">
                 <h4 style="color: white; margin: 0 0 10px 0;">🍺 ALEX'S DRINK ASSIGNMENT 🍺</h4>
@@ -1934,7 +1952,15 @@ function showAlexDrinkButton() {
                 <button class="transfer-btn" onclick="showDrinkAssignmentModal()" style="background: linear-gradient(45deg, #FF9800, #F57C00); color: white; font-weight: bold;">
                     🍻 ASSIGN DRINKS 🍻
                 </button>
-                <p style="font-size: 0.8em; color: #E8F5E8; margin: 5px 0 0 0;">
+                <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.2); border-radius: 5px;">
+                    <div style="font-size: 0.9em; color: #E8F5E8; margin-bottom: 3px;">
+                        ⏰ Next Drink Delivery:
+                    </div>
+                    <div id="alexDrinkCountdown" style="font-size: 1.1em; color: #FFEB3B; font-weight: bold;">
+                        ${nextRefillTime}
+                    </div>
+                </div>
+                <p style="font-size: 0.8em; color: #E8F5E8; margin: 8px 0 0 0;">
                     You get 10 drinks per hour (max 20). Keep the boys accountable! 🍺
                 </p>
             </div>
@@ -1943,12 +1969,58 @@ function showAlexDrinkButton() {
     return '';
 }
 
+function getNextDrinkRefillCountdown() {
+    const now = Date.now();
+    const nextRefill = alexLastDrinkRefill + (60 * 60 * 1000); // 1 hour from last refill
+    const timeUntilRefill = nextRefill - now;
+    
+    if (timeUntilRefill <= 0) {
+        return 'Ready Now! 🍺';
+    }
+    
+    const minutes = Math.floor(timeUntilRefill / (1000 * 60));
+    const seconds = Math.floor((timeUntilRefill % (1000 * 60)) / 1000);
+    
+    return `${minutes}m ${seconds}s`;
+}
+
 function updateAlexDrinkUI() {
     // Update the drink button if it exists
     const alexDrinkSection = document.getElementById('alexDrinkSection');
     if (alexDrinkSection) {
         alexDrinkSection.innerHTML = showAlexDrinkButton();
+        
+        // Start live countdown timer if Alex is logged in
+        if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+            startAlexDrinkCountdownTimer();
+        }
     }
+}
+
+function startAlexDrinkCountdownTimer() {
+    // Clear any existing timer
+    if (window.alexDrinkCountdownTimer) {
+        clearInterval(window.alexDrinkCountdownTimer);
+    }
+    
+    // Start new timer that updates every second
+    window.alexDrinkCountdownTimer = setInterval(() => {
+        const countdownElement = document.getElementById('alexDrinkCountdown');
+        if (countdownElement && isPlayerLoggedIn && currentPlayer === 'Alex') {
+            const nextRefillTime = getNextDrinkRefillCountdown();
+            countdownElement.textContent = nextRefillTime;
+            
+            // Check if it's time for a refill
+            if (nextRefillTime === 'Ready Now! 🍺') {
+                // Trigger refill check
+                refillAlexDrinks();
+            }
+        } else {
+            // Stop timer if Alex is no longer logged in or element doesn't exist
+            clearInterval(window.alexDrinkCountdownTimer);
+            window.alexDrinkCountdownTimer = null;
+        }
+    }, 1000);
 }
 
 // Drink Assignment Modal Functions
