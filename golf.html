@@ -499,7 +499,11 @@
             
             <!-- Sessions Display -->
             <div id="sessionsDisplay">
-                <div class="sessions-list" id="sessionsList">
+                <div id="sessionsLoadingIndicator" style="text-align: center; padding: 40px; color: #8B4513;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🏌️‍♂️</div>
+                    <div style="font-size: 1.2rem; font-weight: bold;">Loading golf sessions...</div>
+                </div>
+                <div class="sessions-list" id="sessionsList" style="display: none;">
                     <!-- Sessions will be populated by JavaScript -->
                 </div>
             </div>
@@ -686,7 +690,7 @@
     <script>
         // Golf sessions data
         let golfSessions = {};
-        let isBookkeeperLoggedIn = false;
+        let isBookkeeperLoggedIn = localStorage.getItem('bookkeeperLoggedIn') === 'true';
         let isFirebaseReady = false;
         let currentSessionTeams = [];
         let currentSessionId = null;
@@ -749,6 +753,20 @@
             });
         }
         
+        // Check login state on page load
+        function checkLoginState() {
+            if (isBookkeeperLoggedIn) {
+                document.getElementById('bookkeeperControls').style.display = 'block';
+                document.getElementById('loginSection').style.display = 'none';
+            } else {
+                document.getElementById('bookkeeperControls').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+            }
+        }
+        
+        // Initialize login state
+        checkLoginState();
+        
         // Initialize Firebase when page loads
         setTimeout(initializeFirebase, 1000);
         
@@ -769,6 +787,7 @@
             
             if (username === 'PIG' && password === 'PIG') {
                 isBookkeeperLoggedIn = true;
+                localStorage.setItem('bookkeeperLoggedIn', 'true');
                 document.getElementById('loginModal').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('bookkeeperControls').style.display = 'block';
@@ -900,6 +919,14 @@
         
         function loadSessions() {
             const sessionsList = document.getElementById('sessionsList');
+            const loadingIndicator = document.getElementById('sessionsLoadingIndicator');
+            
+            // Hide loading indicator and show sessions list
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            sessionsList.style.display = 'block';
+            
             sessionsList.innerHTML = '';
             
             if (Object.keys(golfSessions).length === 0) {

@@ -350,7 +350,11 @@
         <div class="main-content">
             <div class="card">
                 <h2 class="card-title">🏆 LEADERBOARD 🏆</h2>
-                <ul class="leaderboard" id="leaderboard">
+                <div id="loadingIndicator" style="text-align: center; padding: 40px; color: #8B4513;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🐷</div>
+                    <div style="font-size: 1.2rem; font-weight: bold;">Loading pig points...</div>
+                </div>
+                <ul class="leaderboard" id="leaderboard" style="display: none;">
                     <!-- Leaderboard will be populated by JavaScript -->
                 </ul>
                 
@@ -497,7 +501,7 @@
             'GOD': 1000
         };
         
-        let isBookkeeperLoggedIn = false;
+        let isBookkeeperLoggedIn = localStorage.getItem('bookkeeperLoggedIn') === 'true';
         let isFirebaseReady = false;
         
         // Initialize Firebase data
@@ -583,6 +587,13 @@
         
         function updateLeaderboard() {
             const leaderboard = document.getElementById('leaderboard');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            // Hide loading indicator and show leaderboard
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            leaderboard.style.display = 'block';
             
             // Separate GOD from regular players
             const regularPlayers = Object.entries(players).filter(player => player[0] !== 'GOD');
@@ -647,6 +658,7 @@
             if (isBookkeeperLoggedIn) {
                 // Log out
                 isBookkeeperLoggedIn = false;
+                localStorage.removeItem('bookkeeperLoggedIn');
                 document.getElementById('bookkeeperCard').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'block';
                 alert('👋 Bookkeeper logged out!');
@@ -663,6 +675,7 @@
             if (username === 'PIG' && password === 'PIG') {
                 // Successful login
                 isBookkeeperLoggedIn = true;
+                localStorage.setItem('bookkeeperLoggedIn', 'true');
                 document.getElementById('loginModal').style.display = 'none';
                 document.getElementById('bookkeeperCard').style.display = 'block';
                 document.getElementById('loginSection').style.display = 'none';
@@ -775,8 +788,22 @@
         
 
         
-        // Initialize the leaderboard
-        updateLeaderboard();
+        // Check login state on page load
+        function checkLoginState() {
+            if (isBookkeeperLoggedIn) {
+                document.getElementById('bookkeeperCard').style.display = 'block';
+                document.getElementById('loginSection').style.display = 'none';
+            } else {
+                document.getElementById('bookkeeperCard').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+            }
+        }
+        
+        // Initialize login state
+        checkLoginState();
+        
+        // Don't initialize leaderboard until Firebase loads
+        // updateLeaderboard(); // Removed to prevent showing default data
         
         // Add some random pig sounds
         const pigSounds = ['🐷 OINK!', '🐷 SNORT!', '🐷 SQUEAL!'];
