@@ -1606,9 +1606,19 @@
             sendButton.disabled = true;
             sendButton.textContent = '📱 SENDING...';
 
+            // Add timeout to prevent hanging
+            const timeoutId = setTimeout(() => {
+                console.error('⏰ SMS sending timeout - operation took too long');
+                sendButton.disabled = false;
+                sendButton.textContent = originalText;
+                alert('🚫 SMS sending timed out. This is likely due to domain authorization issues.\n\nPlease use the BYPASS button for now.');
+            }, 15000); // 15 second timeout
+
             // Send SMS verification code
+            console.log('🚀 Starting signInWithPhoneNumber...');
             window.signInWithPhoneNumber(window.firebaseAuth, phoneNumber, recaptchaVerifier)
                 .then((result) => {
+                    clearTimeout(timeoutId); // Clear timeout on success
                     confirmationResult = result;
                     document.getElementById('playerStep').style.display = 'none';
                     document.getElementById('codeStep').style.display = 'block';
@@ -1620,6 +1630,7 @@
                     console.log('✅ SMS sent successfully');
                 })
                 .catch((error) => {
+                    clearTimeout(timeoutId); // Clear timeout on error
                     console.error('❌ SMS send error:', error);
                     console.error('Error code:', error.code);
                     console.error('Error message:', error.message);
