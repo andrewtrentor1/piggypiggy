@@ -21,6 +21,57 @@ let confirmationResult = null;
 let isRecaptchaReady = false;
 let isRecaptchaInitializing = false;
 
+// HOGWASH cooldown tracking (60 minutes = 3600000 milliseconds)
+const HOGWASH_COOLDOWN_MS = 60 * 60 * 1000; // 60 minutes
+let hogwashCooldowns = {}; // Store last HOGWASH time for each player
+
+// HOGWASH cooldown helper functions
+function getHogwashCooldownKey() {
+    return 'mbeHogwashCooldowns';
+}
+
+function loadHogwashCooldowns() {
+    const saved = localStorage.getItem(getHogwashCooldownKey());
+    if (saved) {
+        try {
+            hogwashCooldowns = JSON.parse(saved);
+        } catch (e) {
+            console.error('Error loading HOGWASH cooldowns:', e);
+            hogwashCooldowns = {};
+        }
+    }
+}
+
+function saveHogwashCooldowns() {
+    localStorage.setItem(getHogwashCooldownKey(), JSON.stringify(hogwashCooldowns));
+}
+
+function isPlayerOnHogwashCooldown(playerName) {
+    if (!hogwashCooldowns[playerName]) return false;
+    const lastHogwash = hogwashCooldowns[playerName];
+    const now = Date.now();
+    return (now - lastHogwash) < HOGWASH_COOLDOWN_MS;
+}
+
+function getHogwashCooldownRemaining(playerName) {
+    if (!hogwashCooldowns[playerName]) return 0;
+    const lastHogwash = hogwashCooldowns[playerName];
+    const now = Date.now();
+    const elapsed = now - lastHogwash;
+    return Math.max(0, HOGWASH_COOLDOWN_MS - elapsed);
+}
+
+function formatCooldownTime(milliseconds) {
+    const minutes = Math.floor(milliseconds / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    return `${minutes}m ${seconds}s`;
+}
+
+function setPlayerHogwashCooldown(playerName) {
+    hogwashCooldowns[playerName] = Date.now();
+    saveHogwashCooldowns();
+}
+
 // Phone number to player name mapping
 const phoneToPlayer = {
     '+12183909017': 'Andrew',
@@ -538,6 +589,9 @@ function checkBypassLoginState() {
 // Initialize login state
 checkBypassLoginState();
 checkLoginState();
+
+// Initialize HOGWASH cooldowns
+loadHogwashCooldowns();
 
 // Activity Feed Functions
 function loadActivityFeed() {
@@ -1067,6 +1121,9 @@ function clearBypassLogin() {
 // Make it available globally for console debugging
 window.clearBypassLogin = clearBypassLogin;
 
+// Make HOGWASH cooldown functions globally accessible
+window.closeHogwashCooldownModal = closeHogwashCooldownModal;
+
 function playerTransferPoints() {
     if (!currentPlayer) return;
     
@@ -1116,8 +1173,18 @@ function showHogwashModal() {
     const playerLabel = document.querySelector('#hogwashModal .form-group label');
     const modalDescription = document.querySelector('#hogwashModal p');
     
+    // Clear any existing cooldown display
+    clearHogwashCooldownDisplay();
+    
     if (isPlayerLoggedIn && currentPlayer) {
-        // User is logged in - auto-select them and make it non-editable
+        // User is logged in - check their cooldown status
+        if (isPlayerOnHogwashCooldown(currentPlayer)) {
+            // Player is on cooldown - show countdown
+            showHogwashCooldownForPlayer(currentPlayer);
+            return; // Don't show the modal, just the cooldown
+        }
+        
+        // User is logged in and not on cooldown - auto-select them
         playerSelect.value = currentPlayer;
         playerSelect.disabled = true;
         playerLabel.textContent = `${currentPlayer} is gambling!`;
@@ -1138,6 +1205,9 @@ function showHogwashModal() {
         playerSelect.style.backgroundColor = '';
         playerSelect.style.color = '';
         playerSelect.style.fontWeight = '';
+        
+        // Add event listener to check cooldown when player is selected
+        playerSelect.addEventListener('change', checkSelectedPlayerCooldown);
     }
     
     modal.style.display = 'flex';
@@ -1156,6 +1226,111 @@ function closeHogwashModal() {
     playerSelect.style.backgroundColor = '';
     playerSelect.style.color = '';
     playerSelect.style.fontWeight = '';
+    
+    // Remove event listeners
+    playerSelect.removeEventListener('change', checkSelectedPlayerCooldown);
+    
+    // Clear cooldown display
+    clearHogwashCooldownDisplay();
+}
+
+function clearHogwashCooldownDisplay() {
+    // Remove any existing cooldown modal
+    const existingCooldownModal = document.getElementById('hogwashCooldownModal');
+    if (existingCooldownModal) {
+        existingCooldownModal.remove();
+    }
+}
+
+function showHogwashCooldownForPlayer(playerName) {
+    const remainingMs = getHogwashCooldownRemaining(playerName);
+    const timeString = formatCooldownTime(remainingMs);
+    
+    // Create cooldown modal
+    const cooldownModal = document.createElement('div');
+    cooldownModal.id = 'hogwashCooldownModal';
+    cooldownModal.className = 'modal';
+    cooldownModal.style.display = 'flex';
+    
+    cooldownModal.innerHTML = `
+        <div class="modal-content" style="background: linear-gradient(45deg, #ff6b6b, #ffa500); color: white; text-align: center;">
+            <span class="close" onclick="closeHogwashCooldownModal()" style="color: white; font-weight: bold;">&times;</span>
+            <h2 style="margin-bottom: 20px;">⏰ HOGWASH COOLDOWN ⏰</h2>
+            <div style="font-size: 3rem; margin: 20px 0;">🐷⏰</div>
+            <p style="font-size: 1.3em; font-weight: bold; margin-bottom: 20px;">
+                ${playerName} must wait before gambling again!
+            </p>
+            <div id="cooldownTimer" style="font-size: 2rem; font-weight: bold; margin: 20px 0; color: #ffff00;">
+                ${timeString}
+            </div>
+            <p style="font-size: 1em; margin-bottom: 20px;">
+                Each player can only HOGWASH once per hour to prevent pig abuse! 🐷
+            </p>
+            <button class="transfer-btn" onclick="closeHogwashCooldownModal()" style="background: linear-gradient(45deg, #fff, #ddd); color: #333;">
+                🐷 ACCEPT FATE 🐷
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(cooldownModal);
+    
+    // Start countdown timer
+    startCooldownTimer(playerName);
+}
+
+function checkSelectedPlayerCooldown() {
+    const playerSelect = document.getElementById('hogwashPlayer');
+    const selectedPlayer = playerSelect.value;
+    
+    if (selectedPlayer && isPlayerOnHogwashCooldown(selectedPlayer)) {
+        // Close the main modal and show cooldown
+        closeHogwashModal();
+        showHogwashCooldownForPlayer(selectedPlayer);
+    }
+}
+
+function closeHogwashCooldownModal() {
+    const cooldownModal = document.getElementById('hogwashCooldownModal');
+    if (cooldownModal) {
+        cooldownModal.remove();
+    }
+    
+    // Clear any running timer
+    if (window.hogwashCooldownTimer) {
+        clearInterval(window.hogwashCooldownTimer);
+        window.hogwashCooldownTimer = null;
+    }
+}
+
+function startCooldownTimer(playerName) {
+    // Clear any existing timer
+    if (window.hogwashCooldownTimer) {
+        clearInterval(window.hogwashCooldownTimer);
+    }
+    
+    window.hogwashCooldownTimer = setInterval(() => {
+        const timerElement = document.getElementById('cooldownTimer');
+        if (!timerElement) {
+            clearInterval(window.hogwashCooldownTimer);
+            return;
+        }
+        
+        const remainingMs = getHogwashCooldownRemaining(playerName);
+        
+        if (remainingMs <= 0) {
+            // Cooldown finished
+            clearInterval(window.hogwashCooldownTimer);
+            timerElement.textContent = 'Ready to HOGWASH! 🎲';
+            timerElement.style.color = '#00ff00';
+            
+            // Auto-close after 2 seconds
+            setTimeout(() => {
+                closeHogwashCooldownModal();
+            }, 2000);
+        } else {
+            timerElement.textContent = formatCooldownTime(remainingMs);
+        }
+    }, 1000);
 }
 
 function closeHogwashResult() {
@@ -1168,6 +1343,16 @@ function rollHogwash() {
         alert('🚫 Select a player first, you pig!');
         return;
     }
+
+    // Check cooldown before allowing gambling
+    if (isPlayerOnHogwashCooldown(playerName)) {
+        closeHogwashModal();
+        showHogwashCooldownForPlayer(playerName);
+        return;
+    }
+
+    // Set cooldown for this player
+    setPlayerHogwashCooldown(playerName);
 
     // Close the selection modal
     closeHogwashModal();
