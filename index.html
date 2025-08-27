@@ -1070,8 +1070,7 @@
             initializeFirebase();
             // Test connection after initialization
             setTimeout(testFirebaseConnection, 2000);
-            // Initialize reCAPTCHA after Firebase is ready
-            setTimeout(initializeRecaptcha, 3000);
+            // reCAPTCHA will be initialized only when needed for SMS sending
         }, 1000);
         
         // Initialize bubbles (reduced frequency)
@@ -1470,10 +1469,7 @@
             console.log('- reCAPTCHA ready:', isRecaptchaReady);
             console.log('- reCAPTCHA verifier:', recaptchaVerifier);
             
-            // Initialize reCAPTCHA if not already done
-            if (!isRecaptchaReady) {
-                initializeRecaptcha();
-            }
+            // reCAPTCHA will be initialized when needed during SMS sending
         }
 
         function closePlayerLoginModal() {
@@ -1491,84 +1487,89 @@
         }
 
         function initializeRecaptcha() {
-            // Only initialize once
+            // Only initialize once - if already ready, don't do anything
             if (isRecaptchaReady && recaptchaVerifier) {
-                console.log('✅ reCAPTCHA already initialized');
-                return;
+                console.log('✅ reCAPTCHA already initialized and ready');
+                return Promise.resolve();
             }
             
             // Prevent multiple simultaneous initializations
             if (isRecaptchaInitializing) {
-                console.log('🔄 reCAPTCHA initialization already in progress');
-                return;
+                console.log('🔄 reCAPTCHA initialization already in progress, waiting...');
+                return new Promise((resolve) => {
+                    const checkReady = () => {
+                        if (isRecaptchaReady || !isRecaptchaInitializing) {
+                            resolve();
+                        } else {
+                            setTimeout(checkReady, 100);
+                        }
+                    };
+                    checkReady();
+                });
             }
             
             isRecaptchaInitializing = true;
             
-            // Check if reCAPTCHA container already has content
-            const recaptchaContainer = document.getElementById('send-code-button');
-            if (recaptchaContainer && recaptchaContainer.hasChildNodes()) {
-                console.log('🔧 reCAPTCHA container already has content, clearing...');
-                recaptchaContainer.innerHTML = '';
-            }
-            
-            // Clear any existing reCAPTCHA first
-            if (recaptchaVerifier) {
+            return new Promise((resolve, reject) => {
                 try {
-                    recaptchaVerifier.clear();
-                } catch (e) {
-                    console.log('🧹 Cleared old reCAPTCHA verifier');
-                }
-                recaptchaVerifier = null;
-                isRecaptchaReady = false;
-            }
-            
-            try {
-                console.log('🔧 Initializing reCAPTCHA...');
-                
-                // Create new reCAPTCHA verifier with better error handling
-                recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
-                    'size': 'invisible',
-                    'callback': (response) => {
-                        console.log('✅ reCAPTCHA solved successfully');
-                    },
-                    'expired-callback': () => {
-                        console.warn('⚠️ reCAPTCHA expired, will refresh');
-                        isRecaptchaReady = false;
-                    },
-                    'error-callback': (error) => {
-                        console.error('❌ reCAPTCHA error:', error);
-                        console.error('❌ reCAPTCHA error type:', typeof error);
-                        console.error('❌ reCAPTCHA error details:', JSON.stringify(error));
-                        isRecaptchaReady = false;
-                    }
-                });
-                
-                // Render the reCAPTCHA
-                recaptchaVerifier.render().then(() => {
-                    console.log('✅ reCAPTCHA rendered and ready');
-                    isRecaptchaReady = true;
-                    isRecaptchaInitializing = false;
-                }).catch((error) => {
-                    console.error('❌ reCAPTCHA render error:', error);
+                    console.log('🔧 Initializing reCAPTCHA...');
                     
-                    // If it's already rendered error, mark as ready anyway
-                    if (error.message && error.message.includes('already been rendered')) {
-                        console.log('🔧 reCAPTCHA already rendered, marking as ready');
-                        isRecaptchaReady = true;
-                    } else {
+                    // Clear any existing reCAPTCHA first
+                    if (recaptchaVerifier) {
+                        try {
+                            recaptchaVerifier.clear();
+                        } catch (e) {
+                            // Ignore clear errors
+                        }
                         recaptchaVerifier = null;
-                        isRecaptchaReady = false;
                     }
+                    
+                    // Create new reCAPTCHA verifier
+                    recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
+                        'size': 'invisible',
+                        'callback': (response) => {
+                            console.log('✅ reCAPTCHA solved successfully');
+                        },
+                        'expired-callback': () => {
+                            console.warn('⚠️ reCAPTCHA expired');
+                            isRecaptchaReady = false;
+                        },
+                        'error-callback': (error) => {
+                            console.error('❌ reCAPTCHA error during use:', error);
+                        }
+                    });
+                    
+                    // Render the reCAPTCHA
+                    recaptchaVerifier.render().then(() => {
+                        console.log('✅ reCAPTCHA rendered and ready');
+                        isRecaptchaReady = true;
+                        isRecaptchaInitializing = false;
+                        resolve();
+                    }).catch((error) => {
+                        console.error('❌ reCAPTCHA render error:', error);
+                        
+                        // If already rendered, that's actually fine
+                        if (error.message && error.message.includes('already been rendered')) {
+                            console.log('🔧 reCAPTCHA already rendered, marking as ready');
+                            isRecaptchaReady = true;
+                            isRecaptchaInitializing = false;
+                            resolve();
+                        } else {
+                            recaptchaVerifier = null;
+                            isRecaptchaReady = false;
+                            isRecaptchaInitializing = false;
+                            reject(error);
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ reCAPTCHA initialization error:', error);
+                    recaptchaVerifier = null;
+                    isRecaptchaReady = false;
                     isRecaptchaInitializing = false;
-                });
-                
-            } catch (error) {
-                console.error('❌ reCAPTCHA initialization error:', error);
-                recaptchaVerifier = null;
-                isRecaptchaReady = false;
-                isRecaptchaInitializing = false;
-            }
+                    reject(error);
+                }
+            });
         }
 
         // Check if this is a test phone number (bypasses SMS)
@@ -1599,16 +1600,16 @@
             // Ensure reCAPTCHA is ready
             if (!isRecaptchaReady || !recaptchaVerifier) {
                 console.log('🔧 reCAPTCHA not ready, initializing...');
-                initializeRecaptcha();
-                
-                // Wait a moment for initialization
-                setTimeout(() => {
-                    if (!isRecaptchaReady || !recaptchaVerifier) {
+                initializeRecaptcha().then(() => {
+                    if (isRecaptchaReady && recaptchaVerifier) {
+                        sendVerificationCode(); // Retry after successful initialization
+                    } else {
                         alert('🚫 reCAPTCHA initialization failed. Please use BYPASS button or refresh the page.');
-                        return;
                     }
-                    sendVerificationCode(); // Retry
-                }, 1000);
+                }).catch((error) => {
+                    console.error('❌ reCAPTCHA initialization failed:', error);
+                    alert('🚫 reCAPTCHA initialization failed. Please use BYPASS button or refresh the page.');
+                });
                 return;
             }
 
