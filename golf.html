@@ -866,9 +866,16 @@
         }
 
         function updateStatusBar() {
+            console.log('🔧 updateStatusBar called - checking elements...');
             const statusBar = document.getElementById('statusBar');
             const statusPlayerName = document.getElementById('statusPlayerName');
             const statusPlayerPoints = document.getElementById('statusPlayerPoints');
+            
+            console.log('🔧 Status bar elements:', {
+                statusBar: !!statusBar,
+                statusPlayerName: !!statusPlayerName,
+                statusPlayerPoints: !!statusPlayerPoints
+            });
             
             // Check if elements exist before trying to use them
             if (!statusBar || !statusPlayerName || !statusPlayerPoints) {
@@ -892,6 +899,7 @@
         }
         
         // Initialize Firebase and login state when page loads
+        console.log('🏌️ Golf.html loaded - Version: FIXED_2024_08_27');
         setTimeout(() => {
             initializeFirebase();
             checkLoginState(); // Check login state after DOM is ready
