@@ -33,6 +33,7 @@ let audioContext = null;
 let dangerZoneAudioBuffer = null;
 let audioUnlocked = false;
 let preloadedAudio = null;
+let audioPlayingSuccessfully = false; // Flag to prevent multiple simultaneous playback
 
 // HOGWASH cooldown helper functions - now using Firebase for global sync
 function loadHogwashCooldowns() {
@@ -1328,6 +1329,15 @@ function playDangerZoneAudio() {
     console.log('🔊 Attempting to play DANGER ZONE audio...');
     console.log('🔊 Audio unlocked status:', audioUnlocked);
     
+    // Prevent multiple simultaneous playback
+    if (audioPlayingSuccessfully) {
+        console.log('🔊 Audio already playing successfully, skipping duplicate playback');
+        return;
+    }
+    
+    // Reset the success flag
+    audioPlayingSuccessfully = false;
+    
     // Strategy 1: Try preloaded audio first (best chance for autoplay)
     if (preloadedAudio && audioUnlocked) {
         console.log('🔊 Strategy 1: Using preloaded audio (unlocked)');
@@ -1335,6 +1345,13 @@ function playDangerZoneAudio() {
         preloadedAudio.play()
             .then(() => {
                 console.log('✅ SUCCESS! Preloaded DANGER ZONE audio playing');
+                audioPlayingSuccessfully = true;
+                
+                // Reset flag after audio finishes (estimated duration)
+                setTimeout(() => {
+                    audioPlayingSuccessfully = false;
+                }, 10000); // 10 seconds should be enough for most audio clips
+                
                 return;
             })
             .catch((error) => {
@@ -1351,6 +1368,12 @@ function playDangerZoneAudio() {
 function tryAlternativeAudioMethods() {
     console.log('🔊 Trying alternative audio methods...');
     
+    // Check if audio is already playing successfully
+    if (audioPlayingSuccessfully) {
+        console.log('🔊 Audio already playing, stopping alternative methods');
+        return;
+    }
+    
     const possibleAudioFiles = [
         'danger-zone.mp3',
         'dangerzone.mp3', 
@@ -1363,6 +1386,12 @@ function tryAlternativeAudioMethods() {
     let fileIndex = 0;
     
     function tryNextMethod() {
+        // Stop if audio is already playing successfully
+        if (audioPlayingSuccessfully) {
+            console.log('🔊 Audio playing successfully, stopping remaining methods');
+            return;
+        }
+        
         if (methodIndex >= 3) {
             console.log('🔇 All audio methods failed. Audio may be blocked by browser.');
             // Don't show permission prompt if we're on a broadcast (other users)
@@ -1389,14 +1418,18 @@ function tryAlternativeAudioMethods() {
             tryForcePlay(audioFile);
         }
         
-        // Move to next method after a delay
+        // Move to next method after a delay (but check success first)
         setTimeout(() => {
-            methodIndex++;
-            tryNextMethod();
-        }, 500);
+            if (!audioPlayingSuccessfully) {
+                methodIndex++;
+                tryNextMethod();
+            }
+        }, 300); // Reduced delay for faster response
     }
     
     function tryStandardAudio(audioFile) {
+        if (audioPlayingSuccessfully) return; // Stop if already playing
+        
         const audio = new Audio();
         audio.volume = 0.9;
         audio.preload = 'auto';
@@ -1408,7 +1441,15 @@ function tryAlternativeAudioMethods() {
         if (playPromise !== undefined) {
             playPromise
                 .then(() => {
-                    console.log(`✅ SUCCESS! Standard audio playing: ${audioFile}`);
+                    if (!audioPlayingSuccessfully) {
+                        console.log(`✅ SUCCESS! Standard audio playing: ${audioFile}`);
+                        audioPlayingSuccessfully = true;
+                        
+                        // Reset flag after audio finishes
+                        setTimeout(() => {
+                            audioPlayingSuccessfully = false;
+                        }, 10000);
+                    }
                 })
                 .catch((error) => {
                     console.log(`🔇 Standard audio failed for ${audioFile}:`, error.name);
@@ -1418,6 +1459,8 @@ function tryAlternativeAudioMethods() {
     }
     
     function tryWebAudioAPI(audioFile) {
+        if (audioPlayingSuccessfully) return; // Stop if already playing
+        
         if (!audioContext) {
             console.log('🔇 Web Audio API not available');
             return;
@@ -1427,17 +1470,25 @@ function tryAlternativeAudioMethods() {
             .then(response => response.arrayBuffer())
             .then(data => audioContext.decodeAudioData(data))
             .then(buffer => {
-                const source = audioContext.createBufferSource();
-                const gainNode = audioContext.createGain();
-                
-                source.buffer = buffer;
-                gainNode.gain.value = 0.8;
-                
-                source.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                source.start(0);
-                console.log(`✅ SUCCESS! Web Audio API playing: ${audioFile}`);
+                if (!audioPlayingSuccessfully) {
+                    const source = audioContext.createBufferSource();
+                    const gainNode = audioContext.createGain();
+                    
+                    source.buffer = buffer;
+                    gainNode.gain.value = 0.8;
+                    
+                    source.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    source.start(0);
+                    console.log(`✅ SUCCESS! Web Audio API playing: ${audioFile}`);
+                    audioPlayingSuccessfully = true;
+                    
+                    // Reset flag after audio finishes
+                    setTimeout(() => {
+                        audioPlayingSuccessfully = false;
+                    }, 10000);
+                }
             })
             .catch(error => {
                 console.log(`🔇 Web Audio API failed for ${audioFile}:`, error);
@@ -1445,24 +1496,30 @@ function tryAlternativeAudioMethods() {
     }
     
     function tryForcePlay(audioFile) {
-        // Create multiple audio instances and try to play them
-        for (let i = 0; i < 3; i++) {
-            setTimeout(() => {
-                const audio = new Audio(audioFile);
-                audio.volume = 0.7;
-                audio.muted = false;
+        if (audioPlayingSuccessfully) return; // Stop if already playing
+        
+        // Only create one audio instance instead of 3
+        const audio = new Audio(audioFile);
+        audio.volume = 0.7;
+        audio.muted = false;
+        
+        // Simulate user gesture
+        const event = new MouseEvent('click', { bubbles: true });
+        document.dispatchEvent(event);
+        
+        audio.play().then(() => {
+            if (!audioPlayingSuccessfully) {
+                console.log(`✅ SUCCESS! Force play audio: ${audioFile}`);
+                audioPlayingSuccessfully = true;
                 
-                // Simulate user gesture
-                const event = new MouseEvent('click', { bubbles: true });
-                document.dispatchEvent(event);
-                
-                audio.play().then(() => {
-                    console.log(`✅ SUCCESS! Force play audio ${i}: ${audioFile}`);
-                }).catch(e => {
-                    console.log(`🔇 Force play ${i} failed:`, e.name);
-                });
-            }, i * 100);
-        }
+                // Reset flag after audio finishes
+                setTimeout(() => {
+                    audioPlayingSuccessfully = false;
+                }, 10000);
+            }
+        }).catch(e => {
+            console.log(`🔇 Force play failed:`, e.name);
+        });
     }
     
     tryNextMethod();
