@@ -35,6 +35,12 @@ let audioUnlocked = false;
 let preloadedAudio = null;
 let audioPlayingSuccessfully = false; // Flag to prevent multiple simultaneous playback
 
+// Alex's drink assignment system
+let alexDrinkCredits = 0; // Current available drinks for Alex to assign
+const ALEX_DRINKS_PER_HOUR = 10; // Drinks Alex gets per hour
+const ALEX_MAX_DRINKS = 20; // Maximum drinks Alex can accumulate
+let alexLastDrinkRefill = Date.now(); // Last time drinks were refilled
+
 // HOGWASH cooldown helper functions - now using Firebase for global sync
 function loadHogwashCooldowns() {
     // Load from localStorage as fallback
@@ -684,6 +690,9 @@ loadHogwashCooldowns();
 // Initialize audio system for autoplay bypass
 initializeAudioSystem();
 
+// Initialize Alex's drink system
+initializeAlexDrinkSystem();
+
 // Activity Feed Functions
 function loadActivityFeed() {
     const activityFeed = document.getElementById('activityFeed');
@@ -1136,6 +1145,17 @@ function updatePlayerUI() {
             option.style.display = 'block';
         }
     });
+    
+    // Update Alex's drink section if he's logged in
+    if (currentPlayer === 'Alex') {
+        updateAlexDrinkUI();
+    } else {
+        // Clear Alex's drink section for other players
+        const alexDrinkSection = document.getElementById('alexDrinkSection');
+        if (alexDrinkSection) {
+            alexDrinkSection.innerHTML = '';
+        }
+    }
     
     // Update status bar
     updateStatusBar();
@@ -1803,6 +1823,433 @@ function testAudioOnly() {
 window.testDangerZoneAlert = testDangerZoneAlert;
 window.directDangerZoneTest = directDangerZoneTest;
 window.testAudioOnly = testAudioOnly;
+
+// Alex's Drink Assignment System
+function initializeAlexDrinkSystem() {
+    console.log('🍺 Initializing Alex drink assignment system...');
+    
+    // Load Alex's drink credits from Firebase
+    loadAlexDrinkCredits();
+    
+    // Set up drink refill timer (every hour)
+    setInterval(refillAlexDrinks, 60 * 60 * 1000); // Every hour
+    
+    // Listen for drink assignments from Firebase
+    if (window.firebaseDB) {
+        const drinkAssignmentsRef = window.firebaseRef(window.firebaseDB, 'drinkAssignments');
+        window.firebaseOnValue(drinkAssignmentsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const drinkData = snapshot.val();
+                console.log('🍺 Drink assignment broadcast received:', drinkData);
+                
+                // Check if this is a new assignment (within last 10 seconds)
+                const eventTime = new Date(drinkData.timestamp);
+                const now = new Date();
+                const timeDiff = now - eventTime;
+                
+                if (timeDiff < 10000) { // Within 10 seconds
+                    console.log('🍺 Showing drink assignment alert for all users!');
+                    showDrinkAssignmentAlert(drinkData);
+                }
+            }
+        }, (error) => {
+            console.error('❌ Firebase drink assignments listener error:', error);
+        });
+    }
+}
+
+function loadAlexDrinkCredits() {
+    if (window.firebaseDB) {
+        const alexDrinksRef = window.firebaseRef(window.firebaseDB, 'alexDrinkSystem');
+        window.firebaseOnValue(alexDrinksRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                alexDrinkCredits = data.credits || 0;
+                alexLastDrinkRefill = data.lastRefill || Date.now();
+                console.log(`🍺 Alex drink credits loaded: ${alexDrinkCredits}`);
+                
+                // Update UI if Alex is logged in
+                if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                    updateAlexDrinkUI();
+                }
+            } else {
+                // Initialize with starting credits
+                alexDrinkCredits = ALEX_DRINKS_PER_HOUR;
+                alexLastDrinkRefill = Date.now();
+                saveAlexDrinkCredits();
+            }
+        });
+    }
+}
+
+function saveAlexDrinkCredits() {
+    if (window.firebaseDB) {
+        const alexDrinksRef = window.firebaseRef(window.firebaseDB, 'alexDrinkSystem');
+        const data = {
+            credits: alexDrinkCredits,
+            lastRefill: alexLastDrinkRefill
+        };
+        
+        window.firebaseSet(alexDrinksRef, data)
+            .then(() => {
+                console.log('🍺 Alex drink credits saved to Firebase');
+            })
+            .catch((error) => {
+                console.error('❌ Failed to save Alex drink credits:', error);
+            });
+    }
+}
+
+function refillAlexDrinks() {
+    const now = Date.now();
+    const hoursSinceLastRefill = (now - alexLastDrinkRefill) / (1000 * 60 * 60);
+    
+    if (hoursSinceLastRefill >= 1) {
+        const newCredits = Math.min(alexDrinkCredits + ALEX_DRINKS_PER_HOUR, ALEX_MAX_DRINKS);
+        const addedCredits = newCredits - alexDrinkCredits;
+        
+        if (addedCredits > 0) {
+            alexDrinkCredits = newCredits;
+            alexLastDrinkRefill = now;
+            saveAlexDrinkCredits();
+            
+            console.log(`🍺 Alex received ${addedCredits} new drink credits (total: ${alexDrinkCredits})`);
+            
+            // Notify Alex if he's logged in
+            if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                updateAlexDrinkUI();
+                alert(`🍺 DRINK REFILL! 🍺\n\nYou received ${addedCredits} new drink credits!\nTotal available: ${alexDrinkCredits}`);
+            }
+        }
+    }
+}
+
+function showAlexDrinkButton() {
+    // Only show for Alex when he's logged in
+    if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+        return `
+            <div style="text-align: center; margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #4CAF50, #45a049); border-radius: 10px;">
+                <h4 style="color: white; margin: 0 0 10px 0;">🍺 ALEX'S DRINK ASSIGNMENT 🍺</h4>
+                <p style="color: white; margin: 5px 0;">Available Drinks: <strong>${alexDrinkCredits}</strong></p>
+                <button class="transfer-btn" onclick="showDrinkAssignmentModal()" style="background: linear-gradient(45deg, #FF9800, #F57C00); color: white; font-weight: bold;">
+                    🍻 ASSIGN DRINKS 🍻
+                </button>
+                <p style="font-size: 0.8em; color: #E8F5E8; margin: 5px 0 0 0;">
+                    You get 10 drinks per hour (max 20). Keep the boys accountable! 🍺
+                </p>
+            </div>
+        `;
+    }
+    return '';
+}
+
+function updateAlexDrinkUI() {
+    // Update the drink button if it exists
+    const alexDrinkSection = document.getElementById('alexDrinkSection');
+    if (alexDrinkSection) {
+        alexDrinkSection.innerHTML = showAlexDrinkButton();
+    }
+}
+
+// Drink Assignment Modal Functions
+function showDrinkAssignmentModal() {
+    if (!isPlayerLoggedIn || currentPlayer !== 'Alex') {
+        alert('🚫 Only Alex can assign drinks!');
+        return;
+    }
+    
+    if (alexDrinkCredits <= 0) {
+        alert('🍺 NO DRINKS AVAILABLE! 🍺\n\nYou don\'t have any drinks to assign right now.\nYou get 10 drinks per hour (max 20).');
+        return;
+    }
+    
+    // Update available drinks display
+    document.getElementById('availableDrinks').textContent = alexDrinkCredits;
+    
+    // Populate player list
+    populateDrinkPlayerList();
+    
+    // Show modal
+    document.getElementById('drinkAssignmentModal').style.display = 'flex';
+}
+
+function closeDrinkAssignmentModal() {
+    document.getElementById('drinkAssignmentModal').style.display = 'none';
+    
+    // Reset all drink assignments
+    const playerInputs = document.querySelectorAll('.drink-assignment-input');
+    playerInputs.forEach(input => input.value = 0);
+    updateTotalDrinksToAssign();
+    
+    // Clear Alex's message
+    const messageInput = document.getElementById('alexMessage');
+    if (messageInput) {
+        messageInput.value = '';
+    }
+}
+
+function populateDrinkPlayerList() {
+    const playerList = document.getElementById('drinkPlayerList');
+    const otherPlayers = ['Evan', 'Ian', 'Andrew', 'Zack', 'Brian']; // Everyone except Alex
+    
+    let html = '';
+    otherPlayers.forEach(playerName => {
+        html += `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee;">
+                <div style="flex: 1; text-align: left; font-weight: bold; color: #8B4513;">
+                    ${playerName}
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button onclick="changeDrinkAssignment('${playerName}', -1)" style="
+                        background: #ff4757; color: white; border: none; border-radius: 50%; 
+                        width: 30px; height: 30px; cursor: pointer; font-weight: bold;
+                    ">-</button>
+                    <input type="number" id="drinks_${playerName}" class="drink-assignment-input" 
+                           value="0" min="0" max="${alexDrinkCredits}" 
+                           onchange="updateTotalDrinksToAssign()" 
+                           style="width: 60px; text-align: center; padding: 5px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button onclick="changeDrinkAssignment('${playerName}', 1)" style="
+                        background: #2ed573; color: white; border: none; border-radius: 50%; 
+                        width: 30px; height: 30px; cursor: pointer; font-weight: bold;
+                    ">+</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    playerList.innerHTML = html;
+    updateTotalDrinksToAssign();
+}
+
+function changeDrinkAssignment(playerName, change) {
+    const input = document.getElementById(`drinks_${playerName}`);
+    const currentValue = parseInt(input.value) || 0;
+    const newValue = Math.max(0, Math.min(alexDrinkCredits, currentValue + change));
+    
+    input.value = newValue;
+    updateTotalDrinksToAssign();
+}
+
+function updateTotalDrinksToAssign() {
+    const inputs = document.querySelectorAll('.drink-assignment-input');
+    let total = 0;
+    
+    inputs.forEach(input => {
+        total += parseInt(input.value) || 0;
+    });
+    
+    document.getElementById('totalDrinksToAssign').textContent = total;
+    
+    // Disable assign button if no drinks selected or exceeds available
+    const assignButton = document.querySelector('#drinkAssignmentModal button[onclick="assignDrinks()"]');
+    if (assignButton) {
+        if (total === 0) {
+            assignButton.disabled = true;
+            assignButton.textContent = '🍺 SELECT DRINKS TO ASSIGN 🍺';
+            assignButton.style.opacity = '0.5';
+        } else if (total > alexDrinkCredits) {
+            assignButton.disabled = true;
+            assignButton.textContent = '🚫 TOO MANY DRINKS SELECTED 🚫';
+            assignButton.style.opacity = '0.5';
+        } else {
+            assignButton.disabled = false;
+            assignButton.textContent = '🍺 ASSIGN DRINKS 🍺';
+            assignButton.style.opacity = '1';
+        }
+    }
+}
+
+function assignDrinks() {
+    if (!isPlayerLoggedIn || currentPlayer !== 'Alex') {
+        alert('🚫 Only Alex can assign drinks!');
+        return;
+    }
+    
+    // Collect drink assignments
+    const assignments = {};
+    const inputs = document.querySelectorAll('.drink-assignment-input');
+    let totalDrinks = 0;
+    
+    inputs.forEach(input => {
+        const playerName = input.id.replace('drinks_', '');
+        const drinks = parseInt(input.value) || 0;
+        if (drinks > 0) {
+            assignments[playerName] = drinks;
+            totalDrinks += drinks;
+        }
+    });
+    
+    if (totalDrinks === 0) {
+        alert('🍺 Please assign at least one drink!');
+        return;
+    }
+    
+    if (totalDrinks > alexDrinkCredits) {
+        alert(`🚫 You only have ${alexDrinkCredits} drinks available!\nYou tried to assign ${totalDrinks} drinks.`);
+        return;
+    }
+    
+    // Get Alex's message
+    const messageInput = document.getElementById('alexMessage');
+    const alexMessage = messageInput ? messageInput.value.trim() : '';
+    
+    // Confirm assignment
+    let confirmMessage = `🍺 CONFIRM DRINK ASSIGNMENT 🍺\n\n`;
+    Object.entries(assignments).forEach(([player, drinks]) => {
+        confirmMessage += `${player}: ${drinks} drink${drinks > 1 ? 's' : ''}\n`;
+    });
+    confirmMessage += `\nTotal: ${totalDrinks} drinks\nRemaining: ${alexDrinkCredits - totalDrinks} drinks`;
+    
+    if (alexMessage) {
+        confirmMessage += `\n\nYour message:\n"${alexMessage}"`;
+    }
+    
+    confirmMessage += '\n\nAssign these drinks?';
+    
+    if (confirm(confirmMessage)) {
+        // Deduct drinks from Alex's credits
+        alexDrinkCredits -= totalDrinks;
+        saveAlexDrinkCredits();
+        
+        // Broadcast drink assignment with message
+        broadcastDrinkAssignment(assignments, totalDrinks, alexMessage);
+        
+        // Close modal
+        closeDrinkAssignmentModal();
+        
+        // Update Alex's UI
+        updateAlexDrinkUI();
+        
+        let successMessage = `🍺 DRINKS ASSIGNED! 🍺\n\nYou assigned ${totalDrinks} drinks!\nRemaining credits: ${alexDrinkCredits}`;
+        if (alexMessage) {
+            successMessage += `\n\nYour message was sent to everyone! 📝`;
+        }
+        alert(successMessage);
+    }
+}
+
+function broadcastDrinkAssignment(assignments, totalDrinks, alexMessage = '') {
+    if (!window.firebaseDB) {
+        console.error('❌ Firebase DB not available for drink assignment broadcast');
+        return;
+    }
+    
+    const drinkData = {
+        assignments: assignments,
+        totalDrinks: totalDrinks,
+        assignedBy: 'Alex',
+        message: alexMessage,
+        timestamp: new Date().toISOString(),
+        eventId: Date.now() + '_' + Math.floor(Math.random() * 10000),
+        acknowledged: false
+    };
+    
+    const drinkAssignmentsRef = window.firebaseRef(window.firebaseDB, 'drinkAssignments');
+    window.firebaseSet(drinkAssignmentsRef, drinkData)
+        .then(() => {
+            console.log('🍺 Drink assignment broadcast sent successfully!');
+        })
+        .catch((error) => {
+            console.error('❌ Drink assignment broadcast failed:', error);
+        });
+}
+
+function showDrinkAssignmentAlert(drinkData) {
+    // Prevent duplicate alerts for the same event
+    if (window.lastDrinkAssignmentAlert === drinkData.timestamp) {
+        console.log('🍺 Duplicate drink assignment alert prevented');
+        return;
+    }
+    window.lastDrinkAssignmentAlert = drinkData.timestamp;
+    
+    // Play drink assignment audio if available (you can add this later)
+    // playDrinkAssignmentAudio();
+    
+    // Create drink assignment alert content
+    let alertContent = `
+        <div style="font-size: 2rem; margin-bottom: 20px;">🍻</div>
+        <div style="font-weight: bold; margin-bottom: 15px;">Alex assigned drinks to:</div>
+    `;
+    
+    Object.entries(drinkData.assignments).forEach(([player, drinks]) => {
+        alertContent += `
+            <div style="margin: 10px 0; padding: 10px; background: rgba(76,175,80,0.1); border-radius: 5px;">
+                <strong>${player}</strong>: ${drinks} drink${drinks > 1 ? 's' : ''}
+            </div>
+        `;
+    });
+    
+    alertContent += `
+        <div style="margin-top: 20px; font-size: 1.1em; color: #4CAF50; font-weight: bold;">
+            Total: ${drinkData.totalDrinks} drink${drinkData.totalDrinks > 1 ? 's' : ''} assigned!
+        </div>
+    `;
+    
+    // Add Alex's message if provided
+    if (drinkData.message && drinkData.message.trim()) {
+        alertContent += `
+            <div style="margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #E3F2FD, #BBDEFB); border-radius: 8px; border-left: 4px solid #2196F3;">
+                <div style="font-weight: bold; color: #1976D2; margin-bottom: 8px; display: flex; align-items: center;">
+                    📝 Message from Alex:
+                </div>
+                <div style="font-style: italic; color: #424242; font-size: 1.1em; line-height: 1.4;">
+                    "${drinkData.message}"
+                </div>
+            </div>
+        `;
+    }
+    
+    alertContent += `
+        <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+            Keep each other accountable! 🍺
+        </div>
+    `;
+    
+    document.getElementById('drinkAlertContent').innerHTML = alertContent;
+    document.getElementById('drinkAssignmentAlert').style.display = 'flex';
+    
+    // Store assignment data for acknowledgment
+    window.currentDrinkAssignment = drinkData;
+    
+    console.log('🍺 Drink assignment alert displayed for all users!');
+}
+
+function acknowledgeDrinks() {
+    document.getElementById('drinkAssignmentAlert').style.display = 'none';
+    
+    // Send acknowledgment back to Firebase
+    if (window.currentDrinkAssignment) {
+        sendDrinkAcknowledgment(window.currentDrinkAssignment);
+        window.currentDrinkAssignment = null;
+    }
+}
+
+function sendDrinkAcknowledgment(drinkData) {
+    if (!window.firebaseDB) return;
+    
+    const acknowledgmentData = {
+        originalEventId: drinkData.eventId,
+        acknowledgedBy: currentPlayer || 'Anonymous',
+        timestamp: new Date().toISOString(),
+        acknowledged: true
+    };
+    
+    const ackRef = window.firebaseRef(window.firebaseDB, `drinkAcknowledgments/${drinkData.eventId}_${Date.now()}`);
+    window.firebaseSet(ackRef, acknowledgmentData)
+        .then(() => {
+            console.log('🍺 Drink acknowledgment sent to Alex');
+        })
+        .catch((error) => {
+            console.error('❌ Failed to send drink acknowledgment:', error);
+        });
+}
+
+// Make drink functions globally accessible
+window.showDrinkAssignmentModal = showDrinkAssignmentModal;
+window.closeDrinkAssignmentModal = closeDrinkAssignmentModal;
+window.changeDrinkAssignment = changeDrinkAssignment;
+window.assignDrinks = assignDrinks;
+window.acknowledgeDrinks = acknowledgeDrinks;
 
 function playerTransferPoints() {
     if (!currentPlayer) return;
