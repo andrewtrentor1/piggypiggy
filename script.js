@@ -41,6 +41,12 @@ const ALEX_DRINKS_PER_HOUR = 10; // Drinks Alex gets per hour
 const ALEX_MAX_DRINKS = 20; // Maximum drinks Alex can accumulate
 let alexLastDrinkRefill = Date.now(); // Last time drinks were refilled
 
+// Alex's Danger Zone initiation system
+let alexDangerZoneCredits = 0; // Current available Danger Zone initiations for Alex
+const ALEX_DANGER_ZONE_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+const ALEX_MAX_DANGER_ZONES = 3; // Maximum Danger Zone initiations Alex can accumulate
+let alexLastDangerZoneRefill = Date.now(); // Last time Danger Zone credits were refilled
+
 // HOGWASH cooldown helper functions - now using Firebase for global sync
 function loadHogwashCooldowns() {
     // Load from localStorage as fallback
@@ -1158,6 +1164,7 @@ function updatePlayerUI() {
         // Force reload Alex's drink data from Firebase when he logs in
         if (window.firebaseDB) {
             loadAlexDrinkCredits();
+            loadAlexDangerZoneCredits();
         }
         updateAlexDrinkUI();
     } else {
@@ -1842,8 +1849,14 @@ function initializeAlexDrinkSystem() {
     // Load Alex's drink credits from Firebase
     loadAlexDrinkCredits();
     
+    // Load Alex's Danger Zone credits from Firebase
+    loadAlexDangerZoneCredits();
+    
     // Set up drink refill timer (every hour)
     setInterval(refillAlexDrinks, 60 * 60 * 1000); // Every hour
+    
+    // Set up Danger Zone refill timer (every 2 hours)
+    setInterval(refillAlexDangerZones, ALEX_DANGER_ZONE_COOLDOWN_MS); // Every 2 hours
     
     // Listen for drink assignments from Firebase
     if (window.firebaseDB) {
@@ -1962,10 +1975,112 @@ function refillAlexDrinks() {
     }
 }
 
+// Alex's Danger Zone System Functions
+function loadAlexDangerZoneCredits() {
+    if (window.firebaseDB) {
+        const alexDangerZoneRef = window.firebaseRef(window.firebaseDB, 'alexDangerZoneSystem');
+        window.firebaseOnValue(alexDangerZoneRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                alexDangerZoneCredits = data.credits || 0;
+                alexLastDangerZoneRefill = data.lastRefill || Date.now();
+                console.log(`💀 Alex Danger Zone credits loaded from Firebase: ${alexDangerZoneCredits}, lastRefill: ${new Date(alexLastDangerZoneRefill).toLocaleString()}`);
+                
+                // Update UI if Alex is logged in
+                if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                    updateAlexDrinkUI();
+                }
+            } else {
+                // Initialize with starting credits (1 to start)
+                alexDangerZoneCredits = 1;
+                alexLastDangerZoneRefill = Date.now();
+                saveAlexDangerZoneCredits();
+                console.log(`💀 Alex initialized with 1 starting Danger Zone credit`);
+                
+                // Update UI if Alex is logged in
+                if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                    updateAlexDrinkUI();
+                }
+            }
+        }, (error) => {
+            console.error('❌ Firebase Alex Danger Zone credits listener error:', error);
+            // Fallback to default values if Firebase fails
+            if (alexDangerZoneCredits === 0) {
+                alexDangerZoneCredits = 1;
+                alexLastDangerZoneRefill = Date.now();
+                console.log(`💀 Firebase failed, using fallback: ${alexDangerZoneCredits} Danger Zone credits`);
+            }
+        });
+    } else {
+        console.log('💀 Firebase not available, using default Alex Danger Zone credits');
+        alexDangerZoneCredits = 1;
+        alexLastDangerZoneRefill = Date.now();
+    }
+}
+
+function saveAlexDangerZoneCredits() {
+    if (window.firebaseDB) {
+        const alexDangerZoneRef = window.firebaseRef(window.firebaseDB, 'alexDangerZoneSystem');
+        const data = {
+            credits: alexDangerZoneCredits,
+            lastRefill: alexLastDangerZoneRefill
+        };
+        
+        window.firebaseSet(alexDangerZoneRef, data)
+            .then(() => {
+                console.log('💀 Alex Danger Zone credits saved to Firebase');
+            })
+            .catch((error) => {
+                console.error('❌ Failed to save Alex Danger Zone credits:', error);
+            });
+    }
+}
+
+function refillAlexDangerZones() {
+    const now = Date.now();
+    const hoursSinceLastRefill = (now - alexLastDangerZoneRefill) / (1000 * 60 * 60);
+    
+    if (hoursSinceLastRefill >= 2) { // 2 hours
+        const newCredits = Math.min(alexDangerZoneCredits + 1, ALEX_MAX_DANGER_ZONES);
+        const addedCredits = newCredits - alexDangerZoneCredits;
+        
+        if (addedCredits > 0) {
+            alexDangerZoneCredits = newCredits;
+            alexLastDangerZoneRefill = now;
+            saveAlexDangerZoneCredits();
+            
+            console.log(`💀 Alex received ${addedCredits} new Danger Zone credit (total: ${alexDangerZoneCredits})`);
+            
+            // Notify Alex if he's logged in
+            if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                updateAlexDrinkUI();
+                alert(`💀 DANGER ZONE DELIVERY! 💀\n\nYou received ${addedCredits} new Danger Zone initiation!\nTotal available: ${alexDangerZoneCredits}\n\nNext delivery in 2 hours! ⏰`);
+            }
+        } else if (alexDangerZoneCredits >= ALEX_MAX_DANGER_ZONES) {
+            // Alex is at max capacity
+            alexLastDangerZoneRefill = now; // Reset timer even if no credits added
+            saveAlexDangerZoneCredits();
+            
+            if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                updateAlexDrinkUI();
+                console.log(`💀 Alex is at max Danger Zone capacity (${ALEX_MAX_DANGER_ZONES} initiations)`);
+            }
+        }
+    }
+}
+
+function isWithinDangerZoneHours() {
+    const now = new Date();
+    const hour = now.getHours();
+    return hour >= 10 && hour < 24; // 10 AM to midnight (11:59 PM)
+}
+
 function showAlexDrinkButton() {
     // Only show for Alex when he's logged in
     if (isPlayerLoggedIn && currentPlayer === 'Alex') {
         const nextRefillTime = getNextDrinkRefillCountdown();
+        const nextDangerZoneTime = getNextDangerZoneRefillCountdown();
+        const isDangerZoneAvailable = isWithinDangerZoneHours();
         
         return `
             <div style="text-align: center; margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #4CAF50, #45a049); border-radius: 10px;">
@@ -1984,6 +2099,30 @@ function showAlexDrinkButton() {
                 </div>
                 <p style="font-size: 0.8em; color: #E8F5E8; margin: 8px 0 0 0;">
                     You get 10 drinks per hour (max 20). Keep the boys accountable! 🍺
+                </p>
+            </div>
+            
+            <div style="text-align: center; margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #8B0000, #A52A2A); border-radius: 10px;">
+                <h4 style="color: white; margin: 0 0 10px 0;">💀 ALEX'S DANGER ZONE 💀</h4>
+                <p style="color: white; margin: 5px 0;">Available Initiations: <strong>${alexDangerZoneCredits}</strong></p>
+                ${isDangerZoneAvailable ? 
+                    `<button class="transfer-btn" onclick="initiateDangerZone()" ${alexDangerZoneCredits <= 0 ? 'disabled' : ''} style="background: linear-gradient(45deg, #FF4444, #CC0000); color: white; font-weight: bold; ${alexDangerZoneCredits <= 0 ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                        💀 INITIATE DANGER ZONE 💀
+                    </button>` :
+                    `<button class="transfer-btn" disabled style="background: #666; color: #999; font-weight: bold; opacity: 0.5; cursor: not-allowed;">
+                        💀 DANGER ZONE (10AM-12AM) 💀
+                    </button>`
+                }
+                <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.2); border-radius: 5px;">
+                    <div style="font-size: 0.9em; color: #FFE8E8; margin-bottom: 3px;">
+                        ⏰ Next Danger Zone Delivery:
+                    </div>
+                    <div id="alexDangerZoneCountdown" style="font-size: 1.1em; color: #FFEB3B; font-weight: bold;">
+                        ${nextDangerZoneTime}
+                    </div>
+                </div>
+                <p style="font-size: 0.8em; color: #FFE8E8; margin: 8px 0 0 0;">
+                    You get 1 initiation every 2 hours (max 3). Available 10AM-Midnight only! 💀
                 </p>
             </div>
         `;
@@ -2018,6 +2157,70 @@ function getNextDrinkRefillCountdown() {
     return `${minutes}m ${seconds}s`;
 }
 
+function getNextDangerZoneRefillCountdown() {
+    // Ensure we have a valid lastRefill time
+    if (!alexLastDangerZoneRefill || alexLastDangerZoneRefill === 0) {
+        return 'Loading... ⏳';
+    }
+    
+    const now = Date.now();
+    const nextRefill = alexLastDangerZoneRefill + ALEX_DANGER_ZONE_COOLDOWN_MS; // 2 hours from last refill
+    const timeUntilRefill = nextRefill - now;
+    
+    // Check if Alex is at max capacity
+    if (alexDangerZoneCredits >= ALEX_MAX_DANGER_ZONES && timeUntilRefill > 0) {
+        const hours = Math.floor(timeUntilRefill / (1000 * 60 * 60));
+        const minutes = Math.floor((timeUntilRefill % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeUntilRefill % (1000 * 60)) / 1000);
+        return `${hours}h ${minutes}m ${seconds}s (At Max)`;
+    }
+    
+    if (timeUntilRefill <= 0) {
+        return 'Ready Now! 💀';
+    }
+    
+    const hours = Math.floor(timeUntilRefill / (1000 * 60 * 60));
+    const minutes = Math.floor((timeUntilRefill % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeUntilRefill % (1000 * 60)) / 1000);
+    
+    return `${hours}h ${minutes}m ${seconds}s`;
+}
+
+function initiateDangerZone() {
+    // Check if Alex has credits
+    if (alexDangerZoneCredits <= 0) {
+        alert('💀 No Danger Zone initiations available!\n\nYou need to wait for your next delivery.');
+        return;
+    }
+    
+    // Check time restrictions
+    if (!isWithinDangerZoneHours()) {
+        alert('💀 DANGER ZONE UNAVAILABLE! 💀\n\nDanger Zone initiations are only available from 10:00 AM to 11:59 PM.');
+        return;
+    }
+    
+    // Confirm initiation
+    const confirmMessage = `💀 CONFIRM DANGER ZONE INITIATION 💀\n\nThis will trigger a DANGER ZONE alert for ALL players!\n\nRemaining initiations after this: ${alexDangerZoneCredits - 1}\nNext delivery: ${getNextDangerZoneRefillCountdown()}\n\nAre you sure you want to initiate DANGER ZONE?`;
+    
+    if (confirm(confirmMessage)) {
+        // Deduct credit
+        alexDangerZoneCredits -= 1;
+        saveAlexDangerZoneCredits();
+        
+        // Log the initiation in activity feed
+        addActivity('danger_zone_initiation', '💀', 'Alex initiated DANGER ZONE for all players!');
+        
+        // Trigger the danger zone alert
+        broadcastDangerZone('Alex (Manual Initiation)');
+        
+        // Update UI
+        updateAlexDrinkUI();
+        
+        // Show confirmation
+        alert(`💀 DANGER ZONE INITIATED! 💀\n\nAll players have been alerted!\nRemaining initiations: ${alexDangerZoneCredits}\n\nNext delivery: ${getNextDangerZoneRefillCountdown()}`);
+    }
+}
+
 function updateAlexDrinkUI() {
     // Update the drink button if it exists
     const alexDrinkSection = document.getElementById('alexDrinkSection');
@@ -2039,18 +2242,35 @@ function startAlexDrinkCountdownTimer() {
     
     // Start new timer that updates every second
     window.alexDrinkCountdownTimer = setInterval(() => {
-        const countdownElement = document.getElementById('alexDrinkCountdown');
-        if (countdownElement && isPlayerLoggedIn && currentPlayer === 'Alex') {
-            const nextRefillTime = getNextDrinkRefillCountdown();
-            countdownElement.textContent = nextRefillTime;
+        const drinkCountdownElement = document.getElementById('alexDrinkCountdown');
+        const dangerZoneCountdownElement = document.getElementById('alexDangerZoneCountdown');
+        
+        if ((drinkCountdownElement || dangerZoneCountdownElement) && isPlayerLoggedIn && currentPlayer === 'Alex') {
+            // Update drink countdown
+            if (drinkCountdownElement) {
+                const nextRefillTime = getNextDrinkRefillCountdown();
+                drinkCountdownElement.textContent = nextRefillTime;
+                
+                // Check if it's time for a refill
+                if (nextRefillTime === 'Ready Now! 🍺') {
+                    // Trigger refill check
+                    refillAlexDrinks();
+                }
+            }
             
-            // Check if it's time for a refill
-            if (nextRefillTime === 'Ready Now! 🍺') {
-                // Trigger refill check
-                refillAlexDrinks();
+            // Update Danger Zone countdown
+            if (dangerZoneCountdownElement) {
+                const nextDangerZoneTime = getNextDangerZoneRefillCountdown();
+                dangerZoneCountdownElement.textContent = nextDangerZoneTime;
+                
+                // Check if it's time for a Danger Zone refill
+                if (nextDangerZoneTime === 'Ready Now! 💀') {
+                    // Trigger refill check
+                    refillAlexDangerZones();
+                }
             }
         } else {
-            // Stop timer if Alex is no longer logged in or element doesn't exist
+            // Stop timer if Alex is no longer logged in or elements don't exist
             clearInterval(window.alexDrinkCountdownTimer);
             window.alexDrinkCountdownTimer = null;
         }
@@ -2217,6 +2437,19 @@ function assignDrinks() {
         alexDrinkCredits -= totalDrinks;
         saveAlexDrinkCredits();
         
+        // Log the assignment in the activity feed
+        const assignmentList = Object.entries(assignments)
+            .filter(([player, count]) => count > 0)
+            .map(([player, count]) => `${player} (${count})`)
+            .join(', ');
+        
+        let activityMessage = `Alex assigned drinks: ${assignmentList}`;
+        if (alexMessage.trim()) {
+            activityMessage += ` - "${alexMessage.trim()}"`;
+        }
+        
+        addActivity('drink_assignment', '🍺', activityMessage);
+        
         // Broadcast drink assignment with message
         broadcastDrinkAssignment(assignments, totalDrinks, alexMessage);
         
@@ -2323,6 +2556,17 @@ function showDrinkAssignmentAlert(drinkData) {
 function acknowledgeDrinks() {
     document.getElementById('drinkAssignmentAlert').style.display = 'none';
     
+    // Log acknowledgment in activity feed
+    if (window.currentDrinkAssignment && currentPlayer) {
+        const drinkData = window.currentDrinkAssignment;
+        const playerDrinks = drinkData.assignments[currentPlayer] || 0;
+        
+        if (playerDrinks > 0) {
+            const activityMessage = `${currentPlayer} acknowledged ${playerDrinks} drink${playerDrinks > 1 ? 's' : ''} from Alex`;
+            addActivity('drink_acknowledgment', '✅', activityMessage);
+        }
+    }
+    
     // Send acknowledgment back to Firebase
     if (window.currentDrinkAssignment) {
         sendDrinkAcknowledgment(window.currentDrinkAssignment);
@@ -2356,6 +2600,9 @@ window.closeDrinkAssignmentModal = closeDrinkAssignmentModal;
 window.changeDrinkAssignment = changeDrinkAssignment;
 window.assignDrinks = assignDrinks;
 window.acknowledgeDrinks = acknowledgeDrinks;
+
+// Make Alex's Danger Zone function globally accessible
+window.initiateDangerZone = initiateDangerZone;
 
 // Debug function for Alex's drink system (temporary)
 window.debugAlexDrinks = function() {
