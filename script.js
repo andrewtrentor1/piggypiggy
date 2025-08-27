@@ -386,6 +386,10 @@ setTimeout(() => {
     initializeFirebase();
     // Test connection after initialization
     setTimeout(testFirebaseConnection, 2000);
+    // Initialize Alex's drink system after Firebase is ready
+    setTimeout(() => {
+        initializeAlexDrinkSystem();
+    }, 1500);
     // reCAPTCHA will be initialized only when needed for SMS sending
 }, 1000);
 
@@ -689,9 +693,6 @@ loadHogwashCooldowns();
 
 // Initialize audio system for autoplay bypass
 initializeAudioSystem();
-
-// Initialize Alex's drink system
-initializeAlexDrinkSystem();
 
 // Activity Feed Functions
 function loadActivityFeed() {
@@ -1154,6 +1155,10 @@ function updatePlayerUI() {
     
     // Update Alex's drink section if he's logged in
     if (currentPlayer === 'Alex') {
+        // Force reload Alex's drink data from Firebase when he logs in
+        if (window.firebaseDB) {
+            loadAlexDrinkCredits();
+        }
         updateAlexDrinkUI();
     } else {
         // Clear Alex's drink section for other players
@@ -1872,7 +1877,7 @@ function loadAlexDrinkCredits() {
                 const data = snapshot.val();
                 alexDrinkCredits = data.credits || 0;
                 alexLastDrinkRefill = data.lastRefill || Date.now();
-                console.log(`🍺 Alex drink credits loaded: ${alexDrinkCredits}`);
+                console.log(`🍺 Alex drink credits loaded from Firebase: ${alexDrinkCredits}, lastRefill: ${new Date(alexLastDrinkRefill).toLocaleString()}`);
                 
                 // Update UI if Alex is logged in
                 if (isPlayerLoggedIn && currentPlayer === 'Alex') {
@@ -1884,8 +1889,25 @@ function loadAlexDrinkCredits() {
                 alexLastDrinkRefill = Date.now();
                 saveAlexDrinkCredits();
                 console.log(`🍺 Alex initialized with ${ALEX_MAX_DRINKS} starting drink credits`);
+                
+                // Update UI if Alex is logged in
+                if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                    updateAlexDrinkUI();
+                }
+            }
+        }, (error) => {
+            console.error('❌ Firebase Alex drink credits listener error:', error);
+            // Fallback to default values if Firebase fails
+            if (alexDrinkCredits === 0) {
+                alexDrinkCredits = ALEX_MAX_DRINKS;
+                alexLastDrinkRefill = Date.now();
+                console.log(`🍺 Firebase failed, using fallback: ${alexDrinkCredits} drinks`);
             }
         });
+    } else {
+        console.log('🍺 Firebase not available, using default Alex drink credits');
+        alexDrinkCredits = ALEX_MAX_DRINKS;
+        alexLastDrinkRefill = Date.now();
     }
 }
 
@@ -1970,9 +1992,21 @@ function showAlexDrinkButton() {
 }
 
 function getNextDrinkRefillCountdown() {
+    // Ensure we have a valid lastRefill time
+    if (!alexLastDrinkRefill || alexLastDrinkRefill === 0) {
+        return 'Loading... ⏳';
+    }
+    
     const now = Date.now();
     const nextRefill = alexLastDrinkRefill + (60 * 60 * 1000); // 1 hour from last refill
     const timeUntilRefill = nextRefill - now;
+    
+    // Check if Alex is at max capacity
+    if (alexDrinkCredits >= ALEX_MAX_DRINKS && timeUntilRefill > 0) {
+        const minutes = Math.floor(timeUntilRefill / (1000 * 60));
+        const seconds = Math.floor((timeUntilRefill % (1000 * 60)) / 1000);
+        return `${minutes}m ${seconds}s (At Max)`;
+    }
     
     if (timeUntilRefill <= 0) {
         return 'Ready Now! 🍺';
@@ -2322,6 +2356,23 @@ window.closeDrinkAssignmentModal = closeDrinkAssignmentModal;
 window.changeDrinkAssignment = changeDrinkAssignment;
 window.assignDrinks = assignDrinks;
 window.acknowledgeDrinks = acknowledgeDrinks;
+
+// Debug function for Alex's drink system (temporary)
+window.debugAlexDrinks = function() {
+    console.log('🍺 Alex Drink System Debug:');
+    console.log('- Current Player:', currentPlayer);
+    console.log('- Is Player Logged In:', isPlayerLoggedIn);
+    console.log('- Alex Drink Credits:', alexDrinkCredits);
+    console.log('- Alex Last Refill:', new Date(alexLastDrinkRefill).toLocaleString());
+    console.log('- Firebase Ready:', !!window.firebaseDB);
+    console.log('- Next Refill Countdown:', getNextDrinkRefillCountdown());
+    
+    if (currentPlayer === 'Alex') {
+        alert(`🍺 Alex Drink Debug:\n\nCredits: ${alexDrinkCredits}\nLast Refill: ${new Date(alexLastDrinkRefill).toLocaleString()}\nNext Delivery: ${getNextDrinkRefillCountdown()}`);
+    } else {
+        alert('🚫 This debug is only for Alex!');
+    }
+};
 
 function playerTransferPoints() {
     if (!currentPlayer) return;
