@@ -445,7 +445,6 @@
                 <a href="golf.html" class="nav-tab">🏌️ GOLF SESSIONS</a>
                 <a href="activity.html" class="nav-tab">📜 ACTIVITY FEED</a>
                 <a href="history.html" class="nav-tab">🏆 HALL OF FAME</a>
-                <button class="nav-btn" onclick="manualRefreshDB()" title="Refresh Database">🔄 Refresh DB</button>
             </div>
         </header>
         
@@ -771,89 +770,55 @@
         
         // Initialize Firebase data
         function initializeFirebase() {
-            console.log('🔥 Initializing Firebase...');
-            console.log('🌐 Current domain:', window.location.hostname);
-            console.log('🔐 Auth domain:', window.firebaseAuth.config?.authDomain || 'unknown');
-            console.log('💾 Database URL:', window.firebaseDB.app.options.databaseURL);
-            console.log('🔑 API Key present:', !!window.firebaseDB.app.options.apiKey);
+            const playersRef = window.firebaseRef(window.firebaseDB, 'players');
+            const activitiesRef = window.firebaseRef(window.firebaseDB, 'activities');
             
-            try {
-                const playersRef = window.firebaseRef(window.firebaseDB, 'players');
-                const activitiesRef = window.firebaseRef(window.firebaseDB, 'activities');
-                
-                console.log('📍 Players ref created:', playersRef);
-                console.log('📍 Activities ref created:', activitiesRef);
-            
-                // Listen for player changes in real-time
-                window.firebaseOnValue(playersRef, (snapshot) => {
-                    console.log('📊 Players snapshot received:', snapshot.exists());
-                    const data = snapshot.val();
-                    console.log('📊 Players data:', data);
+            // Listen for player changes in real-time
+            window.firebaseOnValue(playersRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // Merge Firebase data with default structure to ensure GOD exists
+                    players = {
+                        'Evan': data.Evan || 100,
+                        'Ian': data.Ian || 100,
+                        'Andrew': data.Andrew || 100,
+                        'Zack': data.Zack || 100,
+                        'Brian': data.Brian || 100,
+                        'Alex': data.Alex || 100,
+                        'GOD': data.GOD || 1000
+                    };
                     
-                    if (data) {
-                        // Merge Firebase data with default structure to ensure GOD exists
-                        players = {
-                            'Evan': data.Evan || 100,
-                            'Ian': data.Ian || 100,
-                            'Andrew': data.Andrew || 100,
-                            'Zack': data.Zack || 100,
-                            'Brian': data.Brian || 100,
-                            'Alex': data.Alex || 100,
-                            'GOD': data.GOD || 1000
-                        };
-                        
-                        // If GOD wasn't in the Firebase data, save the updated structure
-                        if (!data.GOD) {
-                            console.log('🙏 Adding GOD to Firebase data');
-                            savePlayers();
-                        }
-                        
-                        updateLeaderboard();
-                        if (isPlayerLoggedIn) {
-                            updatePlayerUI();
-                        }
-                        console.log('🔥 Firebase players updated:', players);
-                    } else {
-                        console.log('📊 No existing players data, setting defaults');
-                        // First time - set default values
+                    // If GOD wasn't in the Firebase data, save the updated structure
+                    if (!data.GOD) {
+                        console.log('🙏 Adding GOD to Firebase data');
                         savePlayers();
                     }
-                    isFirebaseReady = true;
                     
-                    // Hide loading indicator and show leaderboard
-                    document.getElementById('loadingIndicator').style.display = 'none';
-                    document.getElementById('leaderboard').style.display = 'block';
-                }, (error) => {
-                    console.error('❌ Firebase players listener error:', error);
-                    alert('🚫 Database connection failed!\n\nError: ' + error.message + '\n\nPlease refresh the page.');
-                });
-
-                // Listen for activity feed changes in real-time
-                window.firebaseOnValue(activitiesRef, (snapshot) => {
-                    console.log('📜 Activities snapshot received:', snapshot.exists());
-                    if (snapshot.exists()) {
-                        const firebaseActivities = snapshot.val();
-                        activities = Object.values(firebaseActivities).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                        loadActivityFeed();
-                        console.log('📜 Activities loaded from Firebase:', activities);
-                    } else {
-                        activities = [];
-                        loadActivityFeed();
-                        console.log('📜 No existing activities');
+                    updateLeaderboard();
+                    if (isPlayerLoggedIn) {
+                        updatePlayerUI();
                     }
-                }, (error) => {
-                    console.error('❌ Firebase activities listener error:', error);
-                });
-                
-            } catch (error) {
-                console.error('❌ Firebase initialization error:', error);
-                alert('🚫 Firebase setup failed!\n\nError: ' + error.message + '\n\nPlease refresh the page.');
-                
-                // Show leaderboard with default data as fallback
-                document.getElementById('loadingIndicator').style.display = 'none';
-                document.getElementById('leaderboard').style.display = 'block';
-                updateLeaderboard();
-            }
+                    console.log('🔥 Firebase players updated:', players);
+                } else {
+                    // First time - set default values
+                    savePlayers();
+                }
+                isFirebaseReady = true;
+            });
+
+            // Listen for activity feed changes in real-time
+            window.firebaseOnValue(activitiesRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const firebaseActivities = snapshot.val();
+                    activities = Object.values(firebaseActivities).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    loadActivityFeed();
+                    console.log('📜 Activities loaded from Firebase:', activities);
+                } else {
+                    activities = [];
+                    loadActivityFeed();
+                    console.log('📜 No existing activities');
+                }
+            });
 
             // Monitor authentication state
             window.onAuthStateChanged(window.firebaseAuth, (user) => {
@@ -916,40 +881,7 @@
                 });
         }
         
-        // Manual database refresh function
-        function manualRefreshDB() {
-            console.log('🔄 Manual database refresh requested');
-            alert('🔄 Refreshing database connection...\n\nCheck console for details.');
-            
-            // Re-initialize Firebase
-            initializeFirebase();
-        }
-
-        // Test Firebase connectivity
-        function testFirebaseConnection() {
-            console.log('🧪 Testing Firebase connection...');
-            
-            try {
-                // Test database reference creation
-                const testRef = window.firebaseRef(window.firebaseDB, '.info/connected');
-                
-                window.firebaseOnValue(testRef, (snapshot) => {
-                    const connected = snapshot.val();
-                    if (connected) {
-                        console.log('✅ Firebase connection: ONLINE');
-                    } else {
-                        console.log('❌ Firebase connection: OFFLINE');
-                    }
-                });
-                
-            } catch (error) {
-                console.error('❌ Firebase connection test failed:', error);
-            }
-        }
-
         // Initialize Firebase when page loads
-        console.log('📄 Starting Firebase initialization...');
-        testFirebaseConnection();
         setTimeout(initializeFirebase, 1000);
         
         // Initialize bubbles (reduced frequency)
@@ -1218,11 +1150,8 @@
             }
         }
         
-        // Initialize login state after DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('📄 DOM loaded, checking login state...');
-            checkLoginState();
-        });
+        // Initialize login state
+        checkLoginState();
         
         // Don't initialize leaderboard until Firebase loads
         // updateLeaderboard(); // Removed to prevent showing default data
@@ -1569,7 +1498,6 @@
             
             // Check if elements exist (they might not be loaded yet)
             if (!statusBar || !statusPlayerName || !statusPlayerPoints) {
-                console.log('⚠️ Status bar elements not found, skipping update');
                 return;
             }
             
