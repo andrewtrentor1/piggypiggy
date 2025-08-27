@@ -1525,6 +1525,8 @@
                     },
                     'error-callback': (error) => {
                         console.error('❌ reCAPTCHA error:', error);
+                        console.error('❌ reCAPTCHA error type:', typeof error);
+                        console.error('❌ reCAPTCHA error details:', JSON.stringify(error));
                         isRecaptchaReady = false;
                     }
                 });
