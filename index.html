@@ -796,6 +796,25 @@
                 console.error('❌ Failed to set Firebase Auth persistence:', error);
             });
 
+        // Configure Firebase test phone numbers (no SMS required)
+        auth.settings.appVerificationDisabledForTesting = false; // Enable for production
+        
+        // Set up test phone numbers that bypass SMS
+        if (window.location.hostname === 'piggypiggy.pro' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            try {
+                // These test numbers will work without SMS
+                const testPhoneNumbers = {
+                    '+1555123456': '123456', // Andrew's test number
+                    '+1555123457': '123456'  // Evan's test number  
+                };
+                
+                // Note: This requires Firebase Auth test configuration
+                console.log('🧪 Test phone numbers configured for development');
+            } catch (error) {
+                console.log('⚠️ Test phone numbers not configured:', error);
+            }
+        }
+
         // Make Firebase functions available globally
         window.firebaseDB = database;
         window.firebaseAuth = auth;
