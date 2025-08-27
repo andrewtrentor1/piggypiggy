@@ -28,6 +28,12 @@ let hogwashCooldowns = {}; // Store last HOGWASH time for each player
 // DANGER ZONE testing flag (temporary)
 let forceDangerZoneNext = false;
 
+// Audio management for autoplay bypass
+let audioContext = null;
+let dangerZoneAudioBuffer = null;
+let audioUnlocked = false;
+let preloadedAudio = null;
+
 // HOGWASH cooldown helper functions - now using Firebase for global sync
 function loadHogwashCooldowns() {
     // Load from localStorage as fallback
@@ -674,6 +680,9 @@ checkLoginState();
 // Initialize HOGWASH cooldowns
 loadHogwashCooldowns();
 
+// Initialize audio system for autoplay bypass
+initializeAudioSystem();
+
 // Activity Feed Functions
 function loadActivityFeed() {
     const activityFeed = document.getElementById('activityFeed');
@@ -1317,8 +1326,31 @@ function showDangerZoneAlert(playerName, timestamp) {
 
 function playDangerZoneAudio() {
     console.log('🔊 Attempting to play DANGER ZONE audio...');
+    console.log('🔊 Audio unlocked status:', audioUnlocked);
     
-    // List of possible audio file names/paths
+    // Strategy 1: Try preloaded audio first (best chance for autoplay)
+    if (preloadedAudio && audioUnlocked) {
+        console.log('🔊 Strategy 1: Using preloaded audio (unlocked)');
+        preloadedAudio.currentTime = 0; // Reset to start
+        preloadedAudio.play()
+            .then(() => {
+                console.log('✅ SUCCESS! Preloaded DANGER ZONE audio playing');
+                return;
+            })
+            .catch((error) => {
+                console.log('🔇 Preloaded audio failed:', error.name);
+                tryAlternativeAudioMethods();
+            });
+        return;
+    }
+    
+    // Strategy 2: Try multiple alternative methods
+    tryAlternativeAudioMethods();
+}
+
+function tryAlternativeAudioMethods() {
+    console.log('🔊 Trying alternative audio methods...');
+    
     const possibleAudioFiles = [
         'danger-zone.mp3',
         'dangerzone.mp3', 
@@ -1327,72 +1359,113 @@ function playDangerZoneAudio() {
         'sounds/danger-zone.mp3'
     ];
     
-    // Try each audio file sequentially
-    let currentIndex = 0;
+    let methodIndex = 0;
+    let fileIndex = 0;
     
-    function tryNextAudio() {
-        if (currentIndex >= possibleAudioFiles.length) {
-            console.log('🔇 No DANGER ZONE audio file found or playable. Checked:', possibleAudioFiles);
-            console.log('🔇 Make sure danger-zone.mp3 is in your project folder and try clicking on the page first to enable audio.');
+    function tryNextMethod() {
+        if (methodIndex >= 3) {
+            console.log('🔇 All audio methods failed. Audio may be blocked by browser.');
+            // Don't show permission prompt if we're on a broadcast (other users)
+            if (!window.lastDangerZoneAlert || Date.now() - new Date(window.lastDangerZoneAlert).getTime() < 5000) {
+                // Only show prompt if this is a recent/local trigger
+                setTimeout(() => showAudioPermissionPrompt(), 1000);
+            }
             return;
         }
         
-        const audioFile = possibleAudioFiles[currentIndex];
-        console.log(`🔊 Trying audio file: ${audioFile}`);
+        const audioFile = possibleAudioFiles[fileIndex % possibleAudioFiles.length];
         
+        if (methodIndex === 0) {
+            // Method 1: Standard Audio with aggressive settings
+            console.log(`🔊 Method 1 - Standard Audio: ${audioFile}`);
+            tryStandardAudio(audioFile);
+        } else if (methodIndex === 1) {
+            // Method 2: Web Audio API (if available)
+            console.log(`🔊 Method 2 - Web Audio API: ${audioFile}`);
+            tryWebAudioAPI(audioFile);
+        } else if (methodIndex === 2) {
+            // Method 3: Force play with user gesture simulation
+            console.log(`🔊 Method 3 - Force play: ${audioFile}`);
+            tryForcePlay(audioFile);
+        }
+        
+        // Move to next method after a delay
+        setTimeout(() => {
+            methodIndex++;
+            tryNextMethod();
+        }, 500);
+    }
+    
+    function tryStandardAudio(audioFile) {
         const audio = new Audio();
-        audio.volume = 0.8; // 80% volume
+        audio.volume = 0.9;
         audio.preload = 'auto';
-        
-        // Set up event listeners
-        audio.addEventListener('canplaythrough', () => {
-            console.log(`✅ Audio file loaded successfully: ${audioFile}`);
-        });
-        
-        audio.addEventListener('loadstart', () => {
-            console.log(`📥 Loading audio: ${audioFile}`);
-        });
-        
-        audio.addEventListener('error', (e) => {
-            console.log(`❌ Audio error for ${audioFile}:`, e.target.error);
-            currentIndex++;
-            tryNextAudio(); // Try next file
-        });
-        
-        // Set source and attempt to play
+        audio.crossOrigin = 'anonymous';
         audio.src = audioFile;
         
-        audio.play()
-            .then(() => {
-                console.log(`🔊 SUCCESS! DANGER ZONE audio playing: ${audioFile}`);
+        // Try to play immediately
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    console.log(`✅ SUCCESS! Standard audio playing: ${audioFile}`);
+                })
+                .catch((error) => {
+                    console.log(`🔇 Standard audio failed for ${audioFile}:`, error.name);
+                    fileIndex++;
+                });
+        }
+    }
+    
+    function tryWebAudioAPI(audioFile) {
+        if (!audioContext) {
+            console.log('🔇 Web Audio API not available');
+            return;
+        }
+        
+        fetch(audioFile)
+            .then(response => response.arrayBuffer())
+            .then(data => audioContext.decodeAudioData(data))
+            .then(buffer => {
+                const source = audioContext.createBufferSource();
+                const gainNode = audioContext.createGain();
                 
-                // Show success message briefly
-                setTimeout(() => {
-                    console.log('🔊 Audio should be playing now!');
-                }, 100);
+                source.buffer = buffer;
+                gainNode.gain.value = 0.8;
+                
+                source.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                source.start(0);
+                console.log(`✅ SUCCESS! Web Audio API playing: ${audioFile}`);
             })
-            .catch((error) => {
-                console.log(`🔇 Failed to play ${audioFile}:`, error.name, error.message);
-                
-                // Common error handling
-                if (error.name === 'NotAllowedError') {
-                    console.log('🔇 AUTOPLAY BLOCKED: Browser prevented audio autoplay. User needs to interact with page first.');
-                    showAudioPermissionPrompt();
-                } else if (error.name === 'NotSupportedError') {
-                    console.log('🔇 AUDIO FORMAT NOT SUPPORTED: Try converting to a different format.');
-                } else if (error.name === 'AbortError') {
-                    console.log('🔇 AUDIO LOADING ABORTED: File might be corrupted or network issue.');
-                } else {
-                    console.log('🔇 UNKNOWN AUDIO ERROR:', error);
-                }
-                
-                currentIndex++;
-                tryNextAudio(); // Try next file
+            .catch(error => {
+                console.log(`🔇 Web Audio API failed for ${audioFile}:`, error);
             });
     }
     
-    // Start trying audio files
-    tryNextAudio();
+    function tryForcePlay(audioFile) {
+        // Create multiple audio instances and try to play them
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                const audio = new Audio(audioFile);
+                audio.volume = 0.7;
+                audio.muted = false;
+                
+                // Simulate user gesture
+                const event = new MouseEvent('click', { bubbles: true });
+                document.dispatchEvent(event);
+                
+                audio.play().then(() => {
+                    console.log(`✅ SUCCESS! Force play audio ${i}: ${audioFile}`);
+                }).catch(e => {
+                    console.log(`🔇 Force play ${i} failed:`, e.name);
+                });
+            }, i * 100);
+        }
+    }
+    
+    tryNextMethod();
 }
 
 // Show a prompt to enable audio if autoplay is blocked
@@ -1467,6 +1540,99 @@ function enableDangerZoneAudio() {
 
 // Make function globally accessible
 window.enableDangerZoneAudio = enableDangerZoneAudio;
+
+// Audio system initialization for autoplay bypass
+function initializeAudioSystem() {
+    console.log('🔊 Initializing audio system for autoplay bypass...');
+    
+    // Try to create AudioContext (Web Audio API)
+    try {
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContext();
+        console.log('✅ AudioContext created successfully');
+    } catch (e) {
+        console.log('❌ AudioContext not supported:', e);
+    }
+    
+    // Preload audio file
+    preloadDangerZoneAudio();
+    
+    // Set up event listeners to unlock audio on ANY user interaction
+    setupAudioUnlockListeners();
+}
+
+function preloadDangerZoneAudio() {
+    console.log('📥 Preloading DANGER ZONE audio...');
+    
+    // Create and preload audio element
+    preloadedAudio = new Audio();
+    preloadedAudio.preload = 'auto';
+    preloadedAudio.volume = 0.8;
+    preloadedAudio.src = 'danger-zone.mp3';
+    
+    preloadedAudio.addEventListener('canplaythrough', () => {
+        console.log('✅ DANGER ZONE audio preloaded successfully');
+    });
+    
+    preloadedAudio.addEventListener('error', (e) => {
+        console.log('❌ Audio preload failed:', e);
+        // Try alternative file names
+        const alternatives = ['dangerzone.mp3', 'danger_zone.mp3'];
+        for (const alt of alternatives) {
+            const testAudio = new Audio();
+            testAudio.src = alt;
+            testAudio.addEventListener('canplaythrough', () => {
+                console.log(`✅ Found alternative audio file: ${alt}`);
+                preloadedAudio.src = alt;
+            });
+        }
+    });
+}
+
+function setupAudioUnlockListeners() {
+    console.log('🔓 Setting up audio unlock listeners...');
+    
+    const unlockEvents = ['touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown'];
+    
+    function unlockAudio() {
+        if (audioUnlocked) return;
+        
+        console.log('🔓 Attempting to unlock audio...');
+        
+        // Try to play and immediately pause a silent audio
+        if (preloadedAudio) {
+            const originalVolume = preloadedAudio.volume;
+            preloadedAudio.volume = 0; // Silent
+            
+            preloadedAudio.play().then(() => {
+                preloadedAudio.pause();
+                preloadedAudio.currentTime = 0;
+                preloadedAudio.volume = originalVolume;
+                audioUnlocked = true;
+                console.log('✅ Audio unlocked successfully!');
+                
+                // Remove listeners once unlocked
+                unlockEvents.forEach(event => {
+                    document.removeEventListener(event, unlockAudio, true);
+                });
+            }).catch(e => {
+                console.log('🔓 Audio unlock attempt failed:', e);
+            });
+        }
+        
+        // Also try with AudioContext
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume().then(() => {
+                console.log('✅ AudioContext resumed');
+            });
+        }
+    }
+    
+    // Add listeners for all interaction events
+    unlockEvents.forEach(event => {
+        document.addEventListener(event, unlockAudio, true);
+    });
+}
 
 function closeDangerZoneAlert() {
     const alertModal = document.getElementById('dangerZoneAlert');
