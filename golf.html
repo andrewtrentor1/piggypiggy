@@ -636,17 +636,17 @@
             </div>
             
             <div class="form-group">
-                <label>Pig Points to Award:</label>
-                <input type="number" id="ctpPoints" min="1" max="50" value="5" placeholder="Points per player">
-                <small style="color: #666;">Points will be taken from losing teams and given to winning team players</small>
+                <label>Points Each Losing Player Pays:</label>
+                <input type="number" id="ctpPoints" min="1" max="50" value="10" placeholder="Points per losing player">
+                <small style="color: #666;">Each non-winning player pays this amount to the winning team</small>
             </div>
             
             <div style="margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 8px;">
                 <h4 style="margin-bottom: 10px; color: #8B4513;">How CTP Works:</h4>
                 <ul style="margin: 0; padding-left: 20px; color: #666;">
-                    <li>Each losing team pays the points</li>
-                    <li>Points split equally among winning team players</li>
-                    <li>Updates pig points in real-time</li>
+                    <li>Each losing player pays the full amount</li>
+                    <li>Total collected points split among winning team players</li>
+                    <li>Example: 10 points × 4 losing players = 40 total → 20 each to 2 winners</li>
                 </ul>
             </div>
             
@@ -693,8 +693,8 @@
         let currentCtpHole = null;
         let players = {}; // Will be loaded from pig points system
         
-        // Par 3 holes (typically holes 3, 6, 9 for a 9-hole course)
-        const par3Holes = [3, 6, 9];
+        // All holes can be CTP holes
+        const allHoles = [1, 2, 3, 4, 5, 6, 7, 8, 9];
         
         // Initialize bubbles
         function createBubbles() {
@@ -995,23 +995,21 @@
                     label.className = 'hole-label';
                     label.textContent = i.toString();
                     
-                    // Add CTP flag for par 3 holes
-                    if (par3Holes.includes(i)) {
-                        const ctpFlag = document.createElement('span');
-                        ctpFlag.className = 'ctp-flag';
-                        ctpFlag.textContent = '🚩';
-                        ctpFlag.title = 'Closest to Pin';
-                        ctpFlag.onclick = () => openCtpModal(sessionId, i);
-                        
-                        // Check if CTP has been won for this hole
-                        const session = golfSessions[sessionId];
-                        if (session && session.ctpWinners && session.ctpWinners[i]) {
-                            ctpFlag.classList.add('won');
-                            ctpFlag.title = `CTP Won by: ${session.ctpWinners[i].teamName}`;
-                        }
-                        
-                        label.appendChild(ctpFlag);
+                    // Add CTP flag for all holes
+                    const ctpFlag = document.createElement('span');
+                    ctpFlag.className = 'ctp-flag';
+                    ctpFlag.textContent = '⛳';
+                    ctpFlag.title = 'Closest to Pin';
+                    ctpFlag.onclick = () => openCtpModal(sessionId, i);
+                    
+                    // Check if CTP has been won for this hole
+                    const session = golfSessions[sessionId];
+                    if (session && session.ctpWinners && session.ctpWinners[i]) {
+                        ctpFlag.classList.add('won');
+                        ctpFlag.title = `CTP Won by: ${session.ctpWinners[i].teamName}`;
                     }
+                    
+                    label.appendChild(ctpFlag);
                     
                     const input = document.createElement('input');
                     input.type = 'number';
@@ -1086,7 +1084,7 @@
             const session = golfSessions[sessionId];
             if (!session) return;
             
-            document.getElementById('ctpHoleInfo').textContent = `${session.title} - Hole ${holeNumber} (Par 3)`;
+            document.getElementById('ctpHoleInfo').textContent = `${session.title} - Hole ${holeNumber} CTP`;
             
             // Populate team dropdown
             const teamSelect = document.getElementById('ctpWinningTeam');
@@ -1129,23 +1127,25 @@
             const winningTeam = session.teams[teamIndex];
             const losingTeams = session.teams.filter((_, index) => index !== teamIndex);
             
-            // Calculate points per player
-            const pointsPerWinner = Math.floor(points / winningTeam.players.length);
-            const pointsPerLoser = Math.floor(points / losingTeams.reduce((total, team) => total + team.players.length, 0));
+            // Calculate total points collected and points per winner
+            const totalLosingPlayers = losingTeams.reduce((total, team) => total + team.players.length, 0);
+            const totalPointsCollected = points * totalLosingPlayers;
+            const pointsPerWinner = Math.floor(totalPointsCollected / winningTeam.players.length);
             
-            // Update pig points
+            // Update pig points - each losing player pays the award amount
+            losingTeams.forEach(team => {
+                team.players.forEach(playerName => {
+                    if (players[playerName] !== undefined) {
+                        players[playerName] -= points; // Each losing player pays the full award amount
+                    }
+                });
+            });
+            
+            // Each winning player gets their share of the total collected
             winningTeam.players.forEach(playerName => {
                 if (players[playerName] !== undefined) {
                     players[playerName] += pointsPerWinner;
                 }
-            });
-            
-            losingTeams.forEach(team => {
-                team.players.forEach(playerName => {
-                    if (players[playerName] !== undefined) {
-                        players[playerName] -= pointsPerLoser;
-                    }
-                });
             });
             
             // Save CTP winner info
@@ -1156,7 +1156,9 @@
             session.ctpWinners[currentCtpHole] = {
                 teamName: winningTeam.name,
                 teamPlayers: winningTeam.players,
-                points: points,
+                pointsPerLoser: points,
+                totalPointsCollected: totalPointsCollected,
+                pointsPerWinner: pointsPerWinner,
                 timestamp: new Date().toISOString()
             };
             
@@ -1168,7 +1170,7 @@
             openScoreModal(currentSessionId);
             closeCtpModal();
             
-            alert(`🏆 CTP awarded to ${winningTeam.name}!\n🐷 ${pointsPerWinner} points per player\n💰 Total points transferred: ${points}`);
+            alert(`🏆 CTP awarded to ${winningTeam.name}!\n🐷 ${pointsPerWinner} points per winner\n💰 Total points collected: ${totalPointsCollected}\n📊 Each losing player paid: ${points}`);
         }
         
         function savePigPoints() {
