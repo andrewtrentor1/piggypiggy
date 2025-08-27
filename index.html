@@ -773,9 +773,9 @@
         function initializeFirebase() {
             console.log('🔥 Initializing Firebase...');
             console.log('🌐 Current domain:', window.location.hostname);
-            console.log('🔐 Auth domain:', auth.config.authDomain);
-            console.log('💾 Database URL:', database.app.options.databaseURL);
-            console.log('🔑 API Key present:', !!database.app.options.apiKey);
+            console.log('🔐 Auth domain:', window.firebaseAuth.config?.authDomain || 'unknown');
+            console.log('💾 Database URL:', window.firebaseDB.app.options.databaseURL);
+            console.log('🔑 API Key present:', !!window.firebaseDB.app.options.apiKey);
             
             try {
                 const playersRef = window.firebaseRef(window.firebaseDB, 'players');
@@ -1218,8 +1218,11 @@
             }
         }
         
-        // Initialize login state
-        checkLoginState();
+        // Initialize login state after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM loaded, checking login state...');
+            checkLoginState();
+        });
         
         // Don't initialize leaderboard until Firebase loads
         // updateLeaderboard(); // Removed to prevent showing default data
@@ -1563,6 +1566,12 @@
             const statusBar = document.getElementById('statusBar');
             const statusPlayerName = document.getElementById('statusPlayerName');
             const statusPlayerPoints = document.getElementById('statusPlayerPoints');
+            
+            // Check if elements exist (they might not be loaded yet)
+            if (!statusBar || !statusPlayerName || !statusPlayerPoints) {
+                console.log('⚠️ Status bar elements not found, skipping update');
+                return;
+            }
             
             if (isPlayerLoggedIn && currentPlayer) {
                 statusBar.classList.add('visible');
