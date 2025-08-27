@@ -156,6 +156,27 @@ function initializeFirebase() {
         alert('❌ Failed to load activities from Firebase: ' + error.message);
     });
 
+    // Listen for DANGER ZONE broadcasts in real-time
+    const dangerZoneRef = window.firebaseRef(window.firebaseDB, 'dangerZone');
+    window.firebaseOnValue(dangerZoneRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const dangerZoneData = snapshot.val();
+            console.log('🚨 DANGER ZONE broadcast received:', dangerZoneData);
+            
+            // Check if this is a new DANGER ZONE event (within last 10 seconds)
+            const eventTime = new Date(dangerZoneData.timestamp);
+            const now = new Date();
+            const timeDiff = now - eventTime;
+            
+            if (timeDiff < 10000) { // Within 10 seconds
+                console.log('🚨 Triggering DANGER ZONE alert for all users!');
+                showDangerZoneAlert(dangerZoneData.playerName, dangerZoneData.timestamp);
+            }
+        }
+    }, (error) => {
+        console.error('❌ Firebase DANGER ZONE listener error:', error);
+    });
+
     // Monitor authentication state
     window.onAuthStateChanged(window.firebaseAuth, (user) => {
         if (user) {
@@ -1124,6 +1145,203 @@ window.clearBypassLogin = clearBypassLogin;
 // Make HOGWASH cooldown functions globally accessible
 window.closeHogwashCooldownModal = closeHogwashCooldownModal;
 
+// DANGER ZONE broadcast functions
+function broadcastDangerZone(playerName) {
+    if (!window.firebaseDB) {
+        console.error('❌ Firebase DB not available for DANGER ZONE broadcast');
+        return;
+    }
+    
+    const dangerZoneData = {
+        playerName: playerName,
+        timestamp: new Date().toISOString(),
+        eventId: Date.now() + '_' + Math.floor(Math.random() * 10000)
+    };
+    
+    const dangerZoneRef = window.firebaseRef(window.firebaseDB, 'dangerZone');
+    window.firebaseSet(dangerZoneRef, dangerZoneData)
+        .then(() => {
+            console.log('🚨 DANGER ZONE broadcast sent successfully!');
+        })
+        .catch((error) => {
+            console.error('❌ DANGER ZONE broadcast failed:', error);
+        });
+}
+
+function showDangerZoneAlert(playerName, timestamp) {
+    // Prevent duplicate alerts for the same event
+    if (window.lastDangerZoneAlert === timestamp) {
+        console.log('🚨 Duplicate DANGER ZONE alert prevented');
+        return;
+    }
+    window.lastDangerZoneAlert = timestamp;
+    
+    // Play danger zone audio if available
+    playDangerZoneAudio();
+    
+    // Create dramatic warning popup
+    const alertModal = document.createElement('div');
+    alertModal.id = 'dangerZoneAlert';
+    alertModal.className = 'modal';
+    alertModal.style.display = 'flex';
+    alertModal.style.zIndex = '10000'; // Ensure it's on top
+    
+    alertModal.innerHTML = `
+        <div class="modal-content" style="
+            background: linear-gradient(45deg, #ff0000, #ff4500, #ff0000); 
+            color: white; 
+            text-align: center; 
+            border: 5px solid #ff0000;
+            animation: dangerPulse 0.5s infinite alternate;
+            box-shadow: 0 0 50px #ff0000;
+        ">
+            <h1 style="
+                font-size: 4rem; 
+                margin: 20px 0; 
+                text-shadow: 3px 3px 0px #000;
+                animation: dangerShake 0.3s infinite;
+            ">⚠️ DANGER ZONE ⚠️</h1>
+            
+            <div style="font-size: 6rem; margin: 30px 0; animation: dangerSpin 2s linear infinite;">
+                💀⚠️💀
+            </div>
+            
+            <h2 style="
+                font-size: 3rem; 
+                margin: 20px 0; 
+                color: #ffff00;
+                text-shadow: 2px 2px 0px #000;
+                animation: dangerFlash 1s infinite;
+            ">
+                ${playerName} TRIGGERED THE DANGER ZONE!
+            </h2>
+            
+            <p style="
+                font-size: 2rem; 
+                margin: 20px 0; 
+                font-weight: bold;
+                text-shadow: 1px 1px 0px #000;
+            ">
+                🚨 ALL PLAYERS ARE NOW IN DANGER! 🚨<br>
+                💀 BEWARE THE CONSEQUENCES! 💀
+            </p>
+            
+            <button onclick="closeDangerZoneAlert()" style="
+                background: linear-gradient(45deg, #000, #333); 
+                color: #ff0000; 
+                border: 3px solid #ff0000;
+                padding: 15px 30px; 
+                font-size: 1.5rem; 
+                font-weight: bold;
+                cursor: pointer;
+                margin-top: 20px;
+                animation: dangerButtonPulse 1s infinite;
+            ">
+                💀 ACKNOWLEDGE DANGER 💀
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(alertModal);
+    
+    // Add CSS animations if they don't exist
+    addDangerZoneAnimations();
+    
+    // Auto-close after 10 seconds if user doesn't click
+    setTimeout(() => {
+        closeDangerZoneAlert();
+    }, 10000);
+    
+    console.log('🚨 DANGER ZONE alert displayed for all users!');
+}
+
+function playDangerZoneAudio() {
+    // Try to play the danger zone audio file
+    const audio = new Audio();
+    
+    // List of possible audio file names/paths
+    const possibleAudioFiles = [
+        'danger-zone.mp3',
+        'dangerzone.mp3',
+        'danger_zone.mp3',
+        'audio/danger-zone.mp3',
+        'sounds/danger-zone.mp3'
+    ];
+    
+    let audioPlayed = false;
+    
+    for (const audioFile of possibleAudioFiles) {
+        if (!audioPlayed) {
+            audio.src = audioFile;
+            audio.volume = 0.7; // 70% volume
+            
+            audio.play().then(() => {
+                console.log(`🔊 DANGER ZONE audio playing: ${audioFile}`);
+                audioPlayed = true;
+            }).catch((error) => {
+                console.log(`🔇 Audio file not found or failed to play: ${audioFile}`, error);
+            });
+        }
+    }
+    
+    if (!audioPlayed) {
+        console.log('🔇 No DANGER ZONE audio file found. Add danger-zone.mp3 to your project directory!');
+    }
+}
+
+function closeDangerZoneAlert() {
+    const alertModal = document.getElementById('dangerZoneAlert');
+    if (alertModal) {
+        alertModal.remove();
+    }
+}
+
+function addDangerZoneAnimations() {
+    // Check if animations already exist
+    if (document.getElementById('dangerZoneAnimations')) {
+        return;
+    }
+    
+    const style = document.createElement('style');
+    style.id = 'dangerZoneAnimations';
+    style.textContent = `
+        @keyframes dangerPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+        
+        @keyframes dangerShake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        
+        @keyframes dangerSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes dangerFlash {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes dangerButtonPulse {
+            0% { transform: scale(1); box-shadow: 0 0 10px #ff0000; }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px #ff0000; }
+            100% { transform: scale(1); box-shadow: 0 0 10px #ff0000; }
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+// Make functions globally accessible
+window.closeDangerZoneAlert = closeDangerZoneAlert;
+
 function playerTransferPoints() {
     if (!currentPlayer) return;
     
@@ -1372,7 +1590,11 @@ function rollHogwash() {
         {
             type: 'danger',
             title: '⚠️ DANGER ZONE ⚠️',
-            action: () => `${playerName} is in the DANGER ZONE! 💀`,
+            action: () => {
+                // Broadcast DANGER ZONE to all connected devices
+                broadcastDangerZone(playerName);
+                return `${playerName} triggered the DANGER ZONE! 💀 ALL PLAYERS BEWARE!`;
+            },
             color: '#ff4757'
         },
         {
