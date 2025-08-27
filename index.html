@@ -940,6 +940,8 @@
                     
                     if (playerName) {
                         const wasLoggedIn = isPlayerLoggedIn;
+                        const wasAlreadyLoggedInThisSession = localStorage.getItem('firebaseAuthLoggedIn') === playerName;
+                        
                         isPlayerLoggedIn = true;
                         currentPlayer = playerName;
                         
@@ -952,8 +954,11 @@
                         
                         console.log(`🔐 Player authenticated: ${playerName} (${phoneNumber})`);
                         
-                        // Only show welcome message if this is a new login (not a page refresh)
-                        if (!wasLoggedIn) {
+                        // Only show welcome message if this is a truly new login (not a page refresh/navigation)
+                        if (!wasLoggedIn && !wasAlreadyLoggedInThisSession) {
+                            // Mark this user as logged in for this session
+                            localStorage.setItem('firebaseAuthLoggedIn', playerName);
+                            
                             if (playerName === 'Evan') {
                                 alert(`🐷 Welcome Ham Handler ${playerName}! 🐷\nYou now have FULL admin access AND player controls!`);
                                 // Log activity
@@ -976,6 +981,9 @@
                     const wasLoggedIn = isPlayerLoggedIn;
                     isPlayerLoggedIn = false;
                     currentPlayer = '';
+                    
+                    // Clear the Firebase auth login flag
+                    localStorage.removeItem('firebaseAuthLoggedIn');
                     
                     // If Evan logs out, also remove Ham Handler privileges
                     if (isBookkeeperLoggedIn && localStorage.getItem('bookkeeperLoggedIn') === 'true') {
@@ -1853,6 +1861,9 @@
             // Clear bypass login state
             localStorage.removeItem('bypassPlayerLoggedIn');
             localStorage.removeItem('bypassCurrentPlayer');
+            
+            // Clear Firebase auth login flag
+            localStorage.removeItem('firebaseAuthLoggedIn');
             
             if (isPlayerLoggedIn) {
                 logoutPlayer();
