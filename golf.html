@@ -874,6 +874,48 @@
                 }
             });
 
+            // Listen for DANGER ZONE broadcasts in real-time
+            const dangerZoneRef = window.firebaseRef(window.firebaseDB, 'dangerZone');
+            window.firebaseOnValue(dangerZoneRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const dangerZoneData = snapshot.val();
+                    console.log('🚨 DANGER ZONE broadcast received on golf page:', dangerZoneData);
+                    
+                    // Check if this is a new DANGER ZONE event (within last 10 seconds)
+                    const eventTime = new Date(dangerZoneData.timestamp);
+                    const now = new Date();
+                    const timeDiff = now - eventTime;
+                    
+                    if (timeDiff < 10000) { // Within 10 seconds
+                        console.log('🚨 Triggering DANGER ZONE alert on golf page!');
+                        showDangerZoneAlert(dangerZoneData.playerName, dangerZoneData.timestamp);
+                    }
+                }
+            }, (error) => {
+                console.error('❌ Firebase DANGER ZONE listener error on golf page:', error);
+            });
+
+            // Listen for drink assignments from Firebase
+            const drinkAssignmentsRef = window.firebaseRef(window.firebaseDB, 'drinkAssignments');
+            window.firebaseOnValue(drinkAssignmentsRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const drinkData = snapshot.val();
+                    console.log('🍺 Drink assignment broadcast received on golf page:', drinkData);
+                    
+                    // Check if this is a new assignment (within last 10 seconds)
+                    const eventTime = new Date(drinkData.timestamp);
+                    const now = new Date();
+                    const timeDiff = now - eventTime;
+                    
+                    if (timeDiff < 10000) { // Within 10 seconds
+                        console.log('🍺 Showing drink assignment alert on golf page!');
+                        showDrinkAssignmentAlert(drinkData);
+                    }
+                }
+            }, (error) => {
+                console.error('❌ Firebase drink assignments listener error on golf page:', error);
+            });
+
             // Monitor authentication state (same as index.html)
             window.onAuthStateChanged(window.firebaseAuth, (user) => {
                 if (user) {
@@ -1001,6 +1043,160 @@
         }
 
         // Initialize Firebase and login state when page loads
+        // Danger Zone Alert Functions (copied from script.js)
+        function showDangerZoneAlert(playerName, timestamp) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('dangerZoneAlert');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.id = 'dangerZoneAlert';
+                modal.style.display = 'none';
+                modal.innerHTML = `
+                    <div class="modal-content" style="background: linear-gradient(45deg, #8B0000, #FF0000); border: 3px solid #FFD700; animation: dangerPulse 0.5s infinite alternate;">
+                        <h2 style="color: #FFD700; text-shadow: 2px 2px 4px #000; margin: 0 0 15px 0; font-size: 2em;">💀 DANGER ZONE 💀</h2>
+                        <p style="color: white; font-size: 1.3em; font-weight: bold; text-shadow: 1px 1px 2px #000; margin: 10px 0;">
+                            <span id="dangerZonePlayerName">${playerName}</span> has triggered the DANGER ZONE!
+                        </p>
+                        <p style="color: #FFD700; font-size: 1.1em; margin: 15px 0;">
+                            All players are now in the DANGER ZONE!
+                        </p>
+                        <button onclick="closeDangerZoneAlert()" style="background: #FFD700; color: #8B0000; border: none; padding: 12px 24px; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 10px;">
+                            ACKNOWLEDGE DANGER
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Add CSS animation if not exists
+                if (!document.getElementById('dangerZoneStyles')) {
+                    const style = document.createElement('style');
+                    style.id = 'dangerZoneStyles';
+                    style.textContent = `
+                        @keyframes dangerPulse {
+                            0% { transform: scale(1); box-shadow: 0 0 20px #FF0000; }
+                            100% { transform: scale(1.02); box-shadow: 0 0 30px #FF0000, 0 0 40px #FFD700; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+            
+            // Update player name and show modal
+            document.getElementById('dangerZonePlayerName').textContent = playerName;
+            modal.style.display = 'flex';
+            
+            // Play audio if available
+            playDangerZoneAudio();
+        }
+
+        function closeDangerZoneAlert() {
+            const modal = document.getElementById('dangerZoneAlert');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function playDangerZoneAudio() {
+            try {
+                const audio = new Audio('danger-zone.mp3');
+                audio.volume = 0.7;
+                audio.play().catch(error => {
+                    console.log('🔇 Audio autoplay blocked on golf page:', error);
+                });
+            } catch (error) {
+                console.log('🔇 Audio not available on golf page:', error);
+            }
+        }
+
+        // Drink Assignment Alert Functions (copied from script.js)
+        function showDrinkAssignmentAlert(drinkData) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('drinkAssignmentAlert');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.id = 'drinkAssignmentAlert';
+                modal.style.display = 'none';
+                modal.innerHTML = `
+                    <div class="modal-content" style="background: linear-gradient(45deg, #4CAF50, #45a049); border: 2px solid #FFD700;">
+                        <h2 style="color: white; margin: 0 0 15px 0;">🍺 DRINK ASSIGNMENT 🍺</h2>
+                        <div id="drinkAlertContent"></div>
+                        <button onclick="acknowledgeDrinks()" style="background: #FFD700; color: #4CAF50; border: none; padding: 12px 24px; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 15px;">
+                            I'LL DRINK! 🍻
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+            
+            // Build alert content
+            let alertContent = `<p style="color: white; font-size: 1.2em; margin: 10px 0;"><strong>Alex has assigned drinks!</strong></p>`;
+            
+            // Show assignments
+            if (drinkData.assignments) {
+                alertContent += `<div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px; margin: 10px 0;">`;
+                Object.entries(drinkData.assignments).forEach(([player, drinks]) => {
+                    if (drinks > 0) {
+                        alertContent += `<p style="color: white; margin: 5px 0;"><strong>${player}:</strong> ${drinks} drink${drinks > 1 ? 's' : ''}</p>`;
+                    }
+                });
+                alertContent += `</div>`;
+            }
+            
+            // Show message if exists
+            if (drinkData.message && drinkData.message.trim()) {
+                alertContent += `<div style="background: rgba(255,215,0,0.2); padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #FFD700;">
+                    <p style="color: #FFD700; font-weight: bold; margin: 0 0 5px 0;">Message from Alex:</p>
+                    <p style="color: white; margin: 0; font-style: italic;">"${drinkData.message.trim()}"</p>
+                </div>`;
+            }
+            
+            document.getElementById('drinkAlertContent').innerHTML = alertContent;
+            modal.style.display = 'flex';
+            
+            // Store assignment data for acknowledgment
+            window.currentDrinkAssignment = drinkData;
+        }
+
+        function acknowledgeDrinks() {
+            const modal = document.getElementById('drinkAssignmentAlert');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            // Send acknowledgment back to Firebase
+            if (window.currentDrinkAssignment) {
+                sendDrinkAcknowledgment(window.currentDrinkAssignment);
+                window.currentDrinkAssignment = null;
+            }
+        }
+
+        function sendDrinkAcknowledgment(drinkData) {
+            if (!window.firebaseDB) return;
+            
+            const acknowledgmentData = {
+                originalEventId: drinkData.eventId,
+                playerName: currentPlayer || 'Anonymous',
+                timestamp: new Date().toISOString(),
+                acknowledgedDrinks: drinkData.assignments[currentPlayer] || 0
+            };
+            
+            const ackRef = window.firebaseRef(window.firebaseDB, `drinkAcknowledgments/${Date.now()}_${Math.floor(Math.random() * 10000)}`);
+            
+            window.firebaseSet(ackRef, acknowledgmentData)
+                .then(() => {
+                    console.log('✅ Drink acknowledgment sent from golf page');
+                })
+                .catch((error) => {
+                    console.error('❌ Failed to send drink acknowledgment from golf page:', error);
+                });
+        }
+
+        // Make functions globally accessible
+        window.closeDangerZoneAlert = closeDangerZoneAlert;
+        window.acknowledgeDrinks = acknowledgeDrinks;
+
         console.log('🏌️ Golf.html loaded - Version: FIXED_2024_08_27');
         setTimeout(() => {
             checkBypassLoginState();
