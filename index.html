@@ -942,8 +942,7 @@
                     const playerName = phoneToPlayer[phoneNumber];
                     
                     if (playerName) {
-                        const wasLoggedIn = isPlayerLoggedIn;
-                        const wasAlreadyLoggedInThisSession = localStorage.getItem('firebaseAuthLoggedIn') === playerName;
+                        const wasAlreadyLoggedIn = localStorage.getItem('firebaseAuthLoggedIn') === playerName;
                         
                         isPlayerLoggedIn = true;
                         currentPlayer = playerName;
@@ -957,9 +956,10 @@
                         
                         console.log(`🔐 Player authenticated: ${playerName} (${phoneNumber})`);
                         
-                        // Only show welcome message if this is a truly new login (not a page refresh/navigation)
-                        if (!wasLoggedIn && !wasAlreadyLoggedInThisSession) {
-                            // Mark this user as logged in for this session
+                        // Only show welcome message and log activity if this is truly a NEW login
+                        // (not just navigating back to the page or refreshing)
+                        if (!wasAlreadyLoggedIn) {
+                            // Mark this user as logged in
                             localStorage.setItem('firebaseAuthLoggedIn', playerName);
                             
                             if (playerName === 'Evan') {
@@ -971,6 +971,8 @@
                                 // Log activity
                                 addActivity('admin', '🔐', `${playerName} logged in securely`);
                             }
+                        } else {
+                            console.log(`🔐 Player session restored: ${playerName} (already logged in)`);
                         }
                         
                         checkLoginState();
