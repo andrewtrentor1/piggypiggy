@@ -740,6 +740,9 @@
                         <button onclick="debugFirebaseAuth()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px; margin-left: 5px;">
                             🔍 DEBUG INFO
                         </button>
+                        <button onclick="clearBypassLogin()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px; margin-left: 5px;">
+                            🧹 CLEAR BYPASS
+                        </button>
                     </small>
                 </div>
             </div>
@@ -1871,6 +1874,31 @@
                 toggleBookkeeper(); // This will log out Ham Handler
             }
         }
+
+        // Function to clear bypass login state for testing real Firebase Auth
+        function clearBypassLogin() {
+            localStorage.removeItem('bypassPlayerLoggedIn');
+            localStorage.removeItem('bypassCurrentPlayer');
+            localStorage.removeItem('firebaseAuthLoggedIn');
+            
+            // Reset local state
+            isPlayerLoggedIn = false;
+            currentPlayer = '';
+            isBookkeeperLoggedIn = false;
+            localStorage.removeItem('bookkeeperLoggedIn');
+            
+            // Sign out from Firebase Auth if logged in
+            if (window.firebaseAuth.currentUser) {
+                window.firebaseAuth.signOut();
+            }
+            
+            checkLoginState();
+            console.log('🧹 Bypass login state cleared - ready for real Firebase Auth testing');
+            alert('🧹 Bypass login cleared!\nYou can now test real Firebase Auth login.');
+        }
+
+        // Make it available globally for console debugging
+        window.clearBypassLogin = clearBypassLogin;
 
         function playerTransferPoints() {
             if (!currentPlayer) return;
