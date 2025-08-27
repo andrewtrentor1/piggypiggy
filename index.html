@@ -762,6 +762,8 @@
         let activities = [];
         let recaptchaVerifier = null;
         let confirmationResult = null;
+        let recaptchaFailures = 0;
+        const MAX_RECAPTCHA_FAILURES = 3;
 
         // Phone number to player name mapping
         const phoneToPlayer = {
@@ -777,6 +779,10 @@
         
         // Initialize Firebase data
         function initializeFirebase() {
+            console.log('🔥 Initializing Firebase...');
+            console.log('🌐 Current domain:', window.location.hostname);
+            console.log('🔐 Auth domain:', auth.config.authDomain);
+            
             const playersRef = window.firebaseRef(window.firebaseDB, 'players');
             const activitiesRef = window.firebaseRef(window.firebaseDB, 'activities');
             
@@ -1240,6 +1246,14 @@
         // Player Login Functions with Phone Auth
         function showPlayerLoginModal() {
             document.getElementById('playerLoginModal').style.display = 'flex';
+            
+            // Debug Firebase Auth state
+            console.log('🔍 Firebase Auth Debug:');
+            console.log('- Auth instance:', window.firebaseAuth);
+            console.log('- Current user:', window.firebaseAuth.currentUser);
+            console.log('- App name:', window.firebaseAuth.app.name);
+            console.log('- Auth domain:', window.firebaseAuth.config?.authDomain);
+            
             // Setup invisible reCAPTCHA only when needed
             setTimeout(setupRecaptcha, 100);
         }
@@ -1261,7 +1275,9 @@
         function setupRecaptcha() {
             if (!recaptchaVerifier) {
                 try {
-                    // Use invisible reCAPTCHA that runs automatically
+                    console.log('🔧 Setting up reCAPTCHA...');
+                    
+                    // Use invisible reCAPTCHA with proper Firebase v9+ syntax
                     recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
                         'size': 'invisible',
                         'callback': (response) => {
@@ -1269,19 +1285,27 @@
                         },
                         'expired-callback': () => {
                             console.log('⚠️ reCAPTCHA expired, will retry on next attempt');
+                            recaptchaVerifier = null;
+                        },
+                        'error-callback': (error) => {
+                            console.error('❌ reCAPTCHA error:', error);
+                            recaptchaVerifier = null;
                         }
                     });
                     
-                    // Render the reCAPTCHA
-                    recaptchaVerifier.render().then((widgetId) => {
-                        console.log('✅ Invisible reCAPTCHA ready');
-                    }).catch((error) => {
-                        console.error('❌ reCAPTCHA render error:', error);
-                    });
+                    console.log('✅ reCAPTCHA verifier created');
                     
                 } catch (error) {
                     console.error('❌ reCAPTCHA setup error:', error);
                     recaptchaVerifier = null;
+                    recaptchaFailures++;
+                    
+                    if (recaptchaFailures >= MAX_RECAPTCHA_FAILURES) {
+                        console.warn('⚠️ Too many reCAPTCHA failures, suggesting bypass');
+                        alert('🚫 reCAPTCHA setup has failed multiple times.\n\nThis may be due to:\n• Network issues\n• Firebase configuration\n• Browser compatibility\n\nPlease use the BYPASS button for now.');
+                    } else {
+                        alert('🚫 reCAPTCHA setup failed. Please refresh the page and try again, or use the BYPASS button.');
+                    }
                 }
             }
         }
@@ -1311,6 +1335,24 @@
                 return;
             }
 
+            // Ensure reCAPTCHA is set up
+            if (!recaptchaVerifier) {
+                console.log('🔧 reCAPTCHA not ready, setting up...');
+                setupRecaptcha();
+                
+                // Wait a moment for setup, then try again
+                setTimeout(() => {
+                    if (!recaptchaVerifier) {
+                        alert('🚫 reCAPTCHA setup failed. Please refresh the page or use BYPASS button.');
+                        return;
+                    }
+                    sendVerificationCode(); // Retry
+                }, 1000);
+                return;
+            }
+
+            console.log('📱 Sending SMS to:', phoneNumber);
+
             // Send SMS verification code
             window.signInWithPhoneNumber(window.firebaseAuth, phoneNumber, recaptchaVerifier)
                 .then((result) => {
@@ -1329,17 +1371,32 @@
                     
                     let errorMessage = `🚫 SMS Error: ${error.message}\n\n`;
                     
-                    if (error.code === 'auth/too-many-requests') {
+                    if (error.code === 'auth/internal-error') {
+                        errorMessage += `Internal Firebase error. This could be due to:\n• reCAPTCHA configuration issues\n• Firebase service problems\n• Network connectivity\n\nTry refreshing the page or use BYPASS button.`;
+                    } else if (error.code === 'auth/too-many-requests') {
                         errorMessage += `Rate limit hit. This could be due to:\n• Multiple attempts in short time\n• reCAPTCHA issues\n• Firebase quotas\n\nTry the BYPASS button below, or wait 1 hour.`;
                     } else if (error.code === 'auth/captcha-check-failed') {
                         errorMessage += `reCAPTCHA failed. Please:\n• Refresh the page\n• Complete reCAPTCHA properly\n• Try again`;
+                    } else if (error.code === 'auth/invalid-phone-number') {
+                        errorMessage += `Invalid phone number format.\nPlease contact admin to verify phone number.`;
                     } else {
-                        errorMessage += `Error Code: ${error.code}\n\nTry the BYPASS button for now.`;
+                        errorMessage += `Error Code: ${error.code}\n\nTry refreshing the page or use BYPASS button.`;
                     }
                     
                     alert(errorMessage);
-                    recaptchaVerifier.clear();
-                    setupRecaptcha();
+                    
+                    // Clean up and reset reCAPTCHA
+                    if (recaptchaVerifier) {
+                        try {
+                            recaptchaVerifier.clear();
+                        } catch (clearError) {
+                            console.warn('Error clearing reCAPTCHA:', clearError);
+                        }
+                        recaptchaVerifier = null;
+                    }
+                    
+                    // Setup fresh reCAPTCHA for next attempt
+                    setTimeout(setupRecaptcha, 500);
                 });
         }
 
