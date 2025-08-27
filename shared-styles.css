@@ -1,0 +1,190 @@
+/* MBE Shared Styles - Consistent across all pages */
+
+/* Base Styles */
+body {
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    background: linear-gradient(135deg, #f5deb3 0%, #deb887 100%);
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    padding-bottom: 80px; /* Space for floating status bar */
+}
+
+/* Navigation Buttons - CONSISTENT STYLE */
+.nav-btn, .nav-link, .nav-tab {
+    background: linear-gradient(45deg, #daa520, #f0e68c) !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    text-decoration: none !important;
+    color: #333 !important;
+    display: inline-block !important;
+    font-family: 'Comic Sans MS', cursive, sans-serif !important;
+}
+
+.nav-btn:hover, .nav-link:hover, .nav-tab:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+.nav-btn.active, .nav-link.active, .nav-tab.active {
+    background: linear-gradient(45deg, #8B4513, #A0522D) !important;
+    color: white !important;
+}
+
+/* Action Buttons - CONSISTENT STYLE */
+.transfer-btn, .login-btn, .god-btn, .session-btn, .hogwash-btn, .player-login-btn, .filter-btn, .add-year-btn {
+    font-family: 'Comic Sans MS', cursive, sans-serif !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    margin: 8px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+.transfer-btn, .login-btn {
+    background: linear-gradient(45deg, #daa520, #f0e68c) !important;
+    color: #333 !important;
+}
+
+.god-btn {
+    background: linear-gradient(45deg, #9370db, #dda0dd) !important;
+    color: white !important;
+}
+
+.hogwash-btn {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24) !important;
+    color: white !important;
+    animation: pulse 2s infinite !important;
+}
+
+.player-login-btn {
+    background: linear-gradient(45deg, #4834d4, #686de0) !important;
+    color: white !important;
+}
+
+.session-btn {
+    background: linear-gradient(45deg, #28a745, #20c997) !important;
+    color: white !important;
+}
+
+.filter-btn {
+    background: linear-gradient(45deg, #4834d4, #686de0) !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border-radius: 20px !important;
+    font-size: 0.9rem !important;
+}
+
+.filter-btn.active {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24) !important;
+}
+
+.add-year-btn {
+    background: linear-gradient(45deg, #28a745, #20c997) !important;
+    color: white !important;
+    padding: 15px 30px !important;
+    font-size: 1.1rem !important;
+}
+
+/* Button Hover Effects - CONSISTENT */
+.transfer-btn:hover, .login-btn:hover, .god-btn:hover, .session-btn:hover, 
+.hogwash-btn:hover, .player-login-btn:hover, .filter-btn:hover, .add-year-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+/* Floating Status Bar */
+.status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(45deg, #8B4513, #A0522D);
+    color: white;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+    display: none; /* Hidden by default */
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+}
+
+.status-bar.visible {
+    display: flex;
+}
+
+.status-player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-points {
+    font-weight: bold;
+    color: #f0e68c;
+}
+
+.status-logout {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+}
+
+.status-logout:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        padding-bottom: 70px; /* Smaller space on mobile */
+    }
+    
+    .nav-btn, .nav-link, .nav-tab {
+        padding: 10px 16px !important;
+        font-size: 0.9rem !important;
+        margin: 4px !important;
+    }
+    
+    .transfer-btn, .login-btn, .god-btn, .session-btn, .hogwash-btn, .player-login-btn {
+        padding: 10px 20px !important;
+        font-size: 0.9rem !important;
+        margin: 6px !important;
+    }
+    
+    .status-bar {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .status-logout {
+        padding: 3px 6px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
+    50% { box-shadow: 0 4px 25px rgba(255, 107, 107, 0.8); }
+    100% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
+}

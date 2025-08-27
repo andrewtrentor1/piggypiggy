@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏌️ MBE Golf Sessions 🏌️</title>
+    <link rel="stylesheet" href="shared-styles.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
         
@@ -844,6 +845,27 @@
                 document.getElementById('bookkeeperControls').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'block';
             }
+            updateStatusBar();
+        }
+
+        function updateStatusBar() {
+            const statusBar = document.getElementById('statusBar');
+            const statusPlayerName = document.getElementById('statusPlayerName');
+            const statusPlayerPoints = document.getElementById('statusPlayerPoints');
+            
+            if (isBookkeeperLoggedIn) {
+                statusBar.classList.add('visible');
+                statusPlayerName.textContent = `👑 Ham Handler`;
+                statusPlayerPoints.textContent = `Admin Mode`;
+            } else {
+                statusBar.classList.remove('visible');
+            }
+        }
+
+        function quickLogout() {
+            if (isBookkeeperLoggedIn) {
+                logout(); // Use existing logout function
+            }
         }
         
         // Initialize login state
@@ -1373,5 +1395,14 @@
         `;
         document.head.appendChild(style);
     </script>
+
+    <!-- Floating Status Bar -->
+    <div class="status-bar" id="statusBar">
+        <div class="status-player">
+            <span id="statusPlayerName">Not logged in</span>
+            <span class="status-points" id="statusPlayerPoints"></span>
+        </div>
+        <button class="status-logout" onclick="quickLogout()">Logout</button>
+    </div>
 </body>
 </html>

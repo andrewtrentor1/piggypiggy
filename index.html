@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐷 MBE PIG POINTS EXTRAVAGANZA 🐷</title>
+    <link rel="stylesheet" href="shared-styles.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
         
@@ -671,9 +672,9 @@
                     <small style="color: #666;">A verification code will be sent to your registered phone number</small>
                 </div>
                 
-                <div id="recaptcha-container" style="margin: 20px 0;"></div>
+
                 
-                <button class="transfer-btn" onclick="sendVerificationCode()" style="width: 100%; margin-top: 10px;">
+                <button id="send-code-button" class="transfer-btn" onclick="sendVerificationCode()" style="width: 100%; margin-top: 10px;">
                     📱 SEND VERIFICATION CODE
                 </button>
                 
@@ -1140,6 +1141,7 @@
                 document.getElementById('bookkeeperCard').style.display = 'block';
                 document.getElementById('playerCard').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'none';
+                updateStatusBar();
             } else if (isPlayerLoggedIn && currentPlayer) {
                 // Regular player (Andrew, etc.)
                 document.getElementById('bookkeeperCard').style.display = 'none';
@@ -1151,6 +1153,7 @@
                 document.getElementById('bookkeeperCard').style.display = 'none';
                 document.getElementById('playerCard').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'block';
+                updateStatusBar();
             }
         }
         
@@ -1237,7 +1240,8 @@
         // Player Login Functions with Phone Auth
         function showPlayerLoginModal() {
             document.getElementById('playerLoginModal').style.display = 'flex';
-            setupRecaptcha();
+            // Setup invisible reCAPTCHA only when needed
+            setTimeout(setupRecaptcha, 100);
         }
 
         function closePlayerLoginModal() {
@@ -1256,15 +1260,29 @@
 
         function setupRecaptcha() {
             if (!recaptchaVerifier) {
-                recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'recaptcha-container', {
-                    'size': 'normal',
-                    'callback': (response) => {
-                        console.log('reCAPTCHA solved');
-                    },
-                    'expired-callback': () => {
-                        console.log('reCAPTCHA expired');
-                    }
-                });
+                try {
+                    // Use invisible reCAPTCHA that runs automatically
+                    recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
+                        'size': 'invisible',
+                        'callback': (response) => {
+                            console.log('✅ reCAPTCHA solved automatically');
+                        },
+                        'expired-callback': () => {
+                            console.log('⚠️ reCAPTCHA expired, will retry on next attempt');
+                        }
+                    });
+                    
+                    // Render the reCAPTCHA
+                    recaptchaVerifier.render().then((widgetId) => {
+                        console.log('✅ Invisible reCAPTCHA ready');
+                    }).catch((error) => {
+                        console.error('❌ reCAPTCHA render error:', error);
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ reCAPTCHA setup error:', error);
+                    recaptchaVerifier = null;
+                }
             }
         }
 
@@ -1424,6 +1442,43 @@
                     option.style.display = 'block';
                 }
             });
+            
+            // Update status bar
+            updateStatusBar();
+        }
+
+        function updateStatusBar() {
+            const statusBar = document.getElementById('statusBar');
+            const statusPlayerName = document.getElementById('statusPlayerName');
+            const statusPlayerPoints = document.getElementById('statusPlayerPoints');
+            
+            if (isPlayerLoggedIn && currentPlayer) {
+                statusBar.classList.add('visible');
+                
+                if (currentPlayer === 'Evan' && isBookkeeperLoggedIn) {
+                    statusPlayerName.textContent = `👑 ${currentPlayer} (Ham Handler)`;
+                } else {
+                    statusPlayerName.textContent = `🐷 ${currentPlayer}`;
+                }
+                
+                const points = players[currentPlayer] || 0;
+                statusPlayerPoints.textContent = `${points} points`;
+            } else if (isBookkeeperLoggedIn && !isPlayerLoggedIn) {
+                // Ham Handler only (old PIG/PIG login)
+                statusBar.classList.add('visible');
+                statusPlayerName.textContent = `👑 Ham Handler`;
+                statusPlayerPoints.textContent = `Admin Mode`;
+            } else {
+                statusBar.classList.remove('visible');
+            }
+        }
+
+        function quickLogout() {
+            if (isPlayerLoggedIn) {
+                logoutPlayer();
+            } else if (isBookkeeperLoggedIn) {
+                toggleBookkeeper(); // This will log out Ham Handler
+            }
         }
 
         function playerTransferPoints() {
@@ -1571,5 +1626,14 @@
             }
         }, 5000);
     </script>
+
+    <!-- Floating Status Bar -->
+    <div class="status-bar" id="statusBar">
+        <div class="status-player">
+            <span id="statusPlayerName">Not logged in</span>
+            <span class="status-points" id="statusPlayerPoints"></span>
+        </div>
+        <button class="status-logout" onclick="quickLogout()">Logout</button>
+    </div>
 </body>
 </html>
