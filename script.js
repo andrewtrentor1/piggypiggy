@@ -1316,38 +1316,157 @@ function showDangerZoneAlert(playerName, timestamp) {
 }
 
 function playDangerZoneAudio() {
-    // Try to play the danger zone audio file
-    const audio = new Audio();
+    console.log('🔊 Attempting to play DANGER ZONE audio...');
     
     // List of possible audio file names/paths
     const possibleAudioFiles = [
         'danger-zone.mp3',
-        'dangerzone.mp3',
+        'dangerzone.mp3', 
         'danger_zone.mp3',
         'audio/danger-zone.mp3',
         'sounds/danger-zone.mp3'
     ];
     
-    let audioPlayed = false;
+    // Try each audio file sequentially
+    let currentIndex = 0;
     
-    for (const audioFile of possibleAudioFiles) {
-        if (!audioPlayed) {
-            audio.src = audioFile;
-            audio.volume = 0.7; // 70% volume
-            
-            audio.play().then(() => {
-                console.log(`🔊 DANGER ZONE audio playing: ${audioFile}`);
-                audioPlayed = true;
-            }).catch((error) => {
-                console.log(`🔇 Audio file not found or failed to play: ${audioFile}`, error);
-            });
+    function tryNextAudio() {
+        if (currentIndex >= possibleAudioFiles.length) {
+            console.log('🔇 No DANGER ZONE audio file found or playable. Checked:', possibleAudioFiles);
+            console.log('🔇 Make sure danger-zone.mp3 is in your project folder and try clicking on the page first to enable audio.');
+            return;
         }
+        
+        const audioFile = possibleAudioFiles[currentIndex];
+        console.log(`🔊 Trying audio file: ${audioFile}`);
+        
+        const audio = new Audio();
+        audio.volume = 0.8; // 80% volume
+        audio.preload = 'auto';
+        
+        // Set up event listeners
+        audio.addEventListener('canplaythrough', () => {
+            console.log(`✅ Audio file loaded successfully: ${audioFile}`);
+        });
+        
+        audio.addEventListener('loadstart', () => {
+            console.log(`📥 Loading audio: ${audioFile}`);
+        });
+        
+        audio.addEventListener('error', (e) => {
+            console.log(`❌ Audio error for ${audioFile}:`, e.target.error);
+            currentIndex++;
+            tryNextAudio(); // Try next file
+        });
+        
+        // Set source and attempt to play
+        audio.src = audioFile;
+        
+        audio.play()
+            .then(() => {
+                console.log(`🔊 SUCCESS! DANGER ZONE audio playing: ${audioFile}`);
+                
+                // Show success message briefly
+                setTimeout(() => {
+                    console.log('🔊 Audio should be playing now!');
+                }, 100);
+            })
+            .catch((error) => {
+                console.log(`🔇 Failed to play ${audioFile}:`, error.name, error.message);
+                
+                // Common error handling
+                if (error.name === 'NotAllowedError') {
+                    console.log('🔇 AUTOPLAY BLOCKED: Browser prevented audio autoplay. User needs to interact with page first.');
+                    showAudioPermissionPrompt();
+                } else if (error.name === 'NotSupportedError') {
+                    console.log('🔇 AUDIO FORMAT NOT SUPPORTED: Try converting to a different format.');
+                } else if (error.name === 'AbortError') {
+                    console.log('🔇 AUDIO LOADING ABORTED: File might be corrupted or network issue.');
+                } else {
+                    console.log('🔇 UNKNOWN AUDIO ERROR:', error);
+                }
+                
+                currentIndex++;
+                tryNextAudio(); // Try next file
+            });
     }
     
-    if (!audioPlayed) {
-        console.log('🔇 No DANGER ZONE audio file found. Add danger-zone.mp3 to your project directory!');
-    }
+    // Start trying audio files
+    tryNextAudio();
 }
+
+// Show a prompt to enable audio if autoplay is blocked
+function showAudioPermissionPrompt() {
+    // Only show once per session
+    if (window.audioPermissionShown) return;
+    window.audioPermissionShown = true;
+    
+    const audioPrompt = document.createElement('div');
+    audioPrompt.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #ff6600, #ff9900);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #ff0000;
+        z-index: 10001;
+        font-weight: bold;
+        box-shadow: 0 4px 20px rgba(255,0,0,0.5);
+        animation: dangerPulse 1s infinite alternate;
+    `;
+    
+    audioPrompt.innerHTML = `
+        <div style="margin-bottom: 10px;">🔊 ENABLE DANGER ZONE AUDIO</div>
+        <button onclick="enableDangerZoneAudio()" style="
+            background: #fff;
+            color: #ff0000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        ">🔊 CLICK TO ENABLE AUDIO</button>
+        <button onclick="this.parentElement.remove()" style="
+            background: #666;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin-left: 5px;
+            cursor: pointer;
+        ">✕</button>
+    `;
+    
+    document.body.appendChild(audioPrompt);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (audioPrompt.parentElement) {
+            audioPrompt.remove();
+        }
+    }, 10000);
+}
+
+// Function to enable audio after user interaction
+function enableDangerZoneAudio() {
+    console.log('🔊 User clicked to enable audio - attempting to play...');
+    
+    // Remove the prompt
+    const prompts = document.querySelectorAll('div');
+    prompts.forEach(prompt => {
+        if (prompt.innerHTML.includes('ENABLE DANGER ZONE AUDIO')) {
+            prompt.remove();
+        }
+    });
+    
+    // Try to play audio now that user has interacted
+    playDangerZoneAudio();
+}
+
+// Make function globally accessible
+window.enableDangerZoneAudio = enableDangerZoneAudio;
 
 function closeDangerZoneAlert() {
     const alertModal = document.getElementById('dangerZoneAlert');
@@ -1443,9 +1562,24 @@ function directDangerZoneTest() {
     alert('🚨 DANGER ZONE test broadcast sent!\nCheck all connected devices for the alert.');
 }
 
+// Audio-only test function
+function testAudioOnly() {
+    if (!isBookkeeperLoggedIn) {
+        alert('🚫 You must be logged in as Ham Handler to use testing features!');
+        return;
+    }
+    
+    console.log('🔊 Testing DANGER ZONE audio only...');
+    alert('🔊 AUDIO TEST\n\nTesting audio playback only (no popup).\nCheck browser console for detailed audio debugging info.');
+    
+    // Call the audio function directly
+    playDangerZoneAudio();
+}
+
 // Make testing functions globally accessible
 window.testDangerZoneAlert = testDangerZoneAlert;
 window.directDangerZoneTest = directDangerZoneTest;
+window.testAudioOnly = testAudioOnly;
 
 function playerTransferPoints() {
     if (!currentPlayer) return;
