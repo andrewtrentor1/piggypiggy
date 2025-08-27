@@ -676,6 +676,15 @@
                 <button class="transfer-btn" onclick="sendVerificationCode()" style="width: 100%; margin-top: 10px;">
                     📱 SEND VERIFICATION CODE
                 </button>
+                
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+                    <small style="color: #856404;">
+                        <strong>⚠️ SMS Rate Limited?</strong><br>
+                        <button onclick="bypassSMSForTesting()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em;">
+                            🚀 BYPASS FOR TESTING
+                        </button>
+                    </small>
+                </div>
             </div>
 
             <!-- Verification Code Entry -->
@@ -1259,6 +1268,15 @@
             }
         }
 
+        // Check if this is a test phone number (bypasses SMS)
+        function isTestPhoneNumber(phoneNumber) {
+            const testNumbers = {
+                '+15555551234': 'Andrew', // Test number for Andrew
+                '+15555551235': 'Evan'    // Test number for Evan
+            };
+            return testNumbers[phoneNumber];
+        }
+
         function sendVerificationCode() {
             const selectedPlayer = document.getElementById('playerSelect').value;
             
@@ -1288,7 +1306,20 @@
                 })
                 .catch((error) => {
                     console.error('SMS send error:', error);
-                    alert(`🚫 Error sending SMS: ${error.message}\n\nTry refreshing the page and trying again.`);
+                    console.error('Error code:', error.code);
+                    console.error('Error details:', error);
+                    
+                    let errorMessage = `🚫 SMS Error: ${error.message}\n\n`;
+                    
+                    if (error.code === 'auth/too-many-requests') {
+                        errorMessage += `Rate limit hit. This could be due to:\n• Multiple attempts in short time\n• reCAPTCHA issues\n• Firebase quotas\n\nTry the BYPASS button below, or wait 1 hour.`;
+                    } else if (error.code === 'auth/captcha-check-failed') {
+                        errorMessage += `reCAPTCHA failed. Please:\n• Refresh the page\n• Complete reCAPTCHA properly\n• Try again`;
+                    } else {
+                        errorMessage += `Error Code: ${error.code}\n\nTry the BYPASS button for now.`;
+                    }
+                    
+                    alert(errorMessage);
                     recaptchaVerifier.clear();
                     setupRecaptcha();
                 });
@@ -1342,6 +1373,39 @@
                         console.error('Logout error:', error);
                         alert('Error logging out. Please try again.');
                     });
+            }
+        }
+
+        // Temporary bypass for SMS rate limiting during testing
+        function bypassSMSForTesting() {
+            const selectedPlayer = document.getElementById('playerSelect').value;
+            
+            if (!selectedPlayer) {
+                alert('🚫 Please select your name first!');
+                return;
+            }
+
+            if (confirm(`🚀 TESTING BYPASS\n\nThis will log you in as ${selectedPlayer} without SMS verification.\n\n⚠️ This is for development/testing only!\n\nContinue?`)) {
+                // Simulate successful login
+                isPlayerLoggedIn = true;
+                currentPlayer = selectedPlayer;
+                
+                // Check if this player is also the Ham Handler (Evan)
+                if (selectedPlayer === 'Evan') {
+                    isBookkeeperLoggedIn = true;
+                    localStorage.setItem('bookkeeperLoggedIn', 'true');
+                }
+                
+                closePlayerLoginModal();
+                checkLoginState();
+                
+                if (selectedPlayer === 'Evan') {
+                    alert(`🐷 Welcome Ham Handler ${selectedPlayer}! 🐷\n[TESTING MODE - No SMS]\nYou now have FULL admin access AND player controls!`);
+                    addActivity('admin', '🔐', `${selectedPlayer} logged in as Ham Handler (TESTING)`);
+                } else {
+                    alert(`🐷 Welcome ${selectedPlayer}! 🐷\n[TESTING MODE - No SMS]\nYou are now logged in!`);
+                    addActivity('admin', '🔐', `${selectedPlayer} logged in (TESTING)`);
+                }
             }
         }
 
