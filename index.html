@@ -663,25 +663,45 @@
     <div class="modal" id="playerLoginModal">
         <div class="modal-content">
             <span class="close" onclick="closePlayerLoginModal()">&times;</span>
-            <h2>👤 PLAYER LOGIN 👤</h2>
-            <p style="text-align: center; margin-bottom: 20px;">Select your name to access your pig points!</p>
+            <h2>📱 SECURE PLAYER LOGIN 📱</h2>
             
-            <div class="form-group">
-                <label>Choose Your Player:</label>
-                <select id="playerLoginSelect" required>
-                    <option value="">Select your name...</option>
-                    <option value="Evan">Evan</option>
-                    <option value="Ian">Ian</option>
-                    <option value="Andrew">Andrew</option>
-                    <option value="Zack">Zack</option>
-                    <option value="Brian">Brian</option>
-                    <option value="Alex">Alex</option>
-                </select>
+            <!-- Player Selection -->
+            <div id="playerStep" style="display: block;">
+                <p style="text-align: center; margin-bottom: 20px;">Select your name to receive a verification code</p>
+                
+                <div class="form-group">
+                    <label>Who are you?</label>
+                    <select id="playerSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="">Select your name...</option>
+                        <option value="Andrew">Andrew</option>
+                    </select>
+                    <small style="color: #666;">A verification code will be sent to your registered phone number</small>
+                </div>
+                
+                <div id="recaptcha-container" style="margin: 20px 0;"></div>
+                
+                <button class="transfer-btn" onclick="sendVerificationCode()" style="width: 100%; margin-top: 10px;">
+                    📱 SEND VERIFICATION CODE
+                </button>
             </div>
-            
-            <button class="transfer-btn" onclick="attemptPlayerLogin()" style="width: 100%; margin-top: 20px;">
-                👤 LOGIN AS PLAYER
-            </button>
+
+            <!-- Verification Code Entry -->
+            <div id="codeStep" style="display: none;">
+                <p style="text-align: center; margin-bottom: 20px;">Enter the 6-digit code sent to your phone</p>
+                
+                <div class="form-group">
+                    <label>Verification Code:</label>
+                    <input type="text" id="verificationCode" placeholder="123456" maxlength="6" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; text-align: center; font-size: 1.2em; letter-spacing: 0.2em;">
+                </div>
+                
+                <button class="transfer-btn" onclick="verifyCode()" style="width: 100%; margin-top: 20px;">
+                    ✅ VERIFY & LOGIN
+                </button>
+                
+                <button class="player-login-btn" onclick="backToPlayerSelect()" style="width: 100%; margin-top: 10px;">
+                    ← BACK TO PLAYER SELECTION
+                </button>
+            </div>
         </div>
     </div>
     
@@ -690,6 +710,7 @@
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -705,13 +726,18 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        const auth = getAuth(app);
         
         // Make Firebase functions available globally
         window.firebaseDB = database;
+        window.firebaseAuth = auth;
         window.firebaseRef = ref;
         window.firebaseSet = set;
         window.firebaseUpdate = update;
         window.firebaseOnValue = onValue;
+        window.RecaptchaVerifier = RecaptchaVerifier;
+        window.signInWithPhoneNumber = signInWithPhoneNumber;
+        window.onAuthStateChanged = onAuthStateChanged;
     </script>
     
     <script>
@@ -727,10 +753,24 @@
         };
         
         let isBookkeeperLoggedIn = localStorage.getItem('bookkeeperLoggedIn') === 'true';
-        let isPlayerLoggedIn = localStorage.getItem('playerLoggedIn') === 'true';
-        let currentPlayer = localStorage.getItem('currentPlayer') || '';
+        let isPlayerLoggedIn = false; // Will be managed by Firebase Auth
+        let currentPlayer = '';
         let isFirebaseReady = false;
         let activities = [];
+        let recaptchaVerifier = null;
+        let confirmationResult = null;
+
+        // Phone number to player name mapping
+        const phoneToPlayer = {
+            '+12183909017': 'Andrew'
+            // Add more phone numbers here as needed
+        };
+
+        // Player name to phone number mapping (reverse lookup)
+        const playerToPhone = {};
+        Object.keys(phoneToPlayer).forEach(phone => {
+            playerToPhone[phoneToPlayer[phone]] = phone;
+        });
         
         // Initialize Firebase data
         function initializeFirebase() {
@@ -781,6 +821,32 @@
                     activities = [];
                     loadActivityFeed();
                     console.log('📜 No existing activities');
+                }
+            });
+
+            // Monitor authentication state
+            window.onAuthStateChanged(window.firebaseAuth, (user) => {
+                if (user) {
+                    // User is signed in with phone number
+                    const phoneNumber = user.phoneNumber;
+                    const playerName = phoneToPlayer[phoneNumber];
+                    
+                    if (playerName) {
+                        isPlayerLoggedIn = true;
+                        currentPlayer = playerName;
+                        console.log(`🔐 Player authenticated: ${playerName} (${phoneNumber})`);
+                        checkLoginState();
+                    } else {
+                        console.error('Phone number not recognized:', phoneNumber);
+                        // Sign out unrecognized user
+                        window.firebaseAuth.signOut();
+                    }
+                } else {
+                    // User is signed out
+                    isPlayerLoggedIn = false;
+                    currentPlayer = '';
+                    console.log('🔐 Player signed out');
+                    checkLoginState();
                 }
             });
         }
@@ -1142,42 +1208,118 @@
                 .catch(error => console.error('Activities save error:', error));
         }
 
-        // Player Login Functions
+        // Player Login Functions with Phone Auth
         function showPlayerLoginModal() {
             document.getElementById('playerLoginModal').style.display = 'flex';
+            setupRecaptcha();
         }
 
         function closePlayerLoginModal() {
             document.getElementById('playerLoginModal').style.display = 'none';
-            document.getElementById('playerLoginSelect').value = '';
+            document.getElementById('playerSelect').value = '';
+            document.getElementById('verificationCode').value = '';
+            document.getElementById('playerStep').style.display = 'block';
+            document.getElementById('codeStep').style.display = 'none';
+            
+            // Clean up recaptcha
+            if (recaptchaVerifier) {
+                recaptchaVerifier.clear();
+                recaptchaVerifier = null;
+            }
         }
 
-        function attemptPlayerLogin() {
-            const selectedPlayer = document.getElementById('playerLoginSelect').value;
+        function setupRecaptcha() {
+            if (!recaptchaVerifier) {
+                recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'recaptcha-container', {
+                    'size': 'normal',
+                    'callback': (response) => {
+                        console.log('reCAPTCHA solved');
+                    },
+                    'expired-callback': () => {
+                        console.log('reCAPTCHA expired');
+                    }
+                });
+            }
+        }
+
+        function sendVerificationCode() {
+            const selectedPlayer = document.getElementById('playerSelect').value;
+            
             if (!selectedPlayer) {
                 alert('🚫 Please select your name!');
                 return;
             }
 
-            // Set player login state
-            isPlayerLoggedIn = true;
-            currentPlayer = selectedPlayer;
-            localStorage.setItem('playerLoggedIn', 'true');
-            localStorage.setItem('currentPlayer', selectedPlayer);
-
-            closePlayerLoginModal();
-            checkLoginState();
+            // Get phone number for selected player
+            const phoneNumber = playerToPhone[selectedPlayer];
             
-            alert(`🐷 Welcome ${selectedPlayer}! 🐷\nYou can now send your pig points to other players!`);
+            if (!phoneNumber) {
+                alert('🚫 No phone number registered for this player!\n\nContact the Ham Handler to add your number.');
+                return;
+            }
+
+            // Send SMS verification code
+            window.signInWithPhoneNumber(window.firebaseAuth, phoneNumber, recaptchaVerifier)
+                .then((result) => {
+                    confirmationResult = result;
+                    document.getElementById('playerStep').style.display = 'none';
+                    document.getElementById('codeStep').style.display = 'block';
+                    
+                    // Show masked phone number for privacy
+                    const maskedPhone = phoneNumber.replace(/(\+1)(\d{3})(\d{3})(\d{4})/, '$1***$3$4');
+                    alert(`📱 Verification code sent to ${maskedPhone}!\nCheck your SMS messages.`);
+                })
+                .catch((error) => {
+                    console.error('SMS send error:', error);
+                    alert(`🚫 Error sending SMS: ${error.message}\n\nTry refreshing the page and trying again.`);
+                    recaptchaVerifier.clear();
+                    setupRecaptcha();
+                });
+        }
+
+        function verifyCode() {
+            const code = document.getElementById('verificationCode').value.trim();
+            
+            if (!code || code.length !== 6) {
+                alert('🚫 Please enter the 6-digit verification code!');
+                return;
+            }
+
+            confirmationResult.confirm(code)
+                .then((result) => {
+                    // User signed in successfully
+                    const user = result.user;
+                    const playerName = phoneToPlayer[user.phoneNumber];
+                    
+                    closePlayerLoginModal();
+                    alert(`🐷 Welcome ${playerName}! 🐷\nYou are now securely logged in!`);
+                    
+                    // Log activity
+                    addActivity('admin', '🔐', `${playerName} logged in securely`);
+                })
+                .catch((error) => {
+                    console.error('Code verification error:', error);
+                    alert('🚫 Invalid verification code!\nPlease check your SMS and try again.');
+                });
+        }
+
+        function backToPlayerSelect() {
+            document.getElementById('playerStep').style.display = 'block';
+            document.getElementById('codeStep').style.display = 'none';
+            document.getElementById('verificationCode').value = '';
         }
 
         function logoutPlayer() {
-            isPlayerLoggedIn = false;
-            currentPlayer = '';
-            localStorage.removeItem('playerLoggedIn');
-            localStorage.removeItem('currentPlayer');
-            checkLoginState();
-            alert('👋 Player logged out!');
+            if (confirm('👋 Are you sure you want to logout?\nYou will need to verify your phone number again to login.')) {
+                window.firebaseAuth.signOut()
+                    .then(() => {
+                        alert('👋 Logged out successfully!');
+                    })
+                    .catch((error) => {
+                        console.error('Logout error:', error);
+                        alert('Error logging out. Please try again.');
+                    });
+            }
         }
 
         function updatePlayerUI() {
