@@ -666,6 +666,7 @@
                     <select id="playerSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                         <option value="">Select your name...</option>
                         <option value="Andrew">Andrew</option>
+                        <option value="Evan">Evan (Ham Handler)</option>
                     </select>
                     <small style="color: #666;">A verification code will be sent to your registered phone number</small>
                 </div>
@@ -754,8 +755,8 @@
 
         // Phone number to player name mapping
         const phoneToPlayer = {
-            '+12183909017': 'Andrew'
-            // Add more phone numbers here as needed
+            '+12183909017': 'Andrew',
+            '+12183102673': 'Evan'
         };
 
         // Player name to phone number mapping (reverse lookup)
@@ -826,6 +827,14 @@
                     if (playerName) {
                         isPlayerLoggedIn = true;
                         currentPlayer = playerName;
+                        
+                        // Check if this player is also the Ham Handler (Evan)
+                        if (playerName === 'Evan') {
+                            isBookkeeperLoggedIn = true;
+                            localStorage.setItem('bookkeeperLoggedIn', 'true');
+                            console.log(`🔐 Ham Handler authenticated: ${playerName} (${phoneNumber})`);
+                        }
+                        
                         console.log(`🔐 Player authenticated: ${playerName} (${phoneNumber})`);
                         checkLoginState();
                     } else {
@@ -837,6 +846,13 @@
                     // User is signed out
                     isPlayerLoggedIn = false;
                     currentPlayer = '';
+                    
+                    // If Evan logs out, also remove Ham Handler privileges
+                    if (isBookkeeperLoggedIn && localStorage.getItem('bookkeeperLoggedIn') === 'true') {
+                        isBookkeeperLoggedIn = false;
+                        localStorage.removeItem('bookkeeperLoggedIn');
+                    }
+                    
                     console.log('🔐 Player signed out');
                     checkLoginState();
                 }
@@ -1104,16 +1120,25 @@
         
         // Check login state on page load
         function checkLoginState() {
-            if (isBookkeeperLoggedIn) {
+            if (isBookkeeperLoggedIn && isPlayerLoggedIn && currentPlayer === 'Evan') {
+                // Evan gets both Ham Handler AND Player controls
+                document.getElementById('bookkeeperCard').style.display = 'block';
+                document.getElementById('playerCard').style.display = 'block';
+                document.getElementById('loginSection').style.display = 'none';
+                updatePlayerUI();
+            } else if (isBookkeeperLoggedIn) {
+                // Regular Ham Handler (old PIG/PIG login)
                 document.getElementById('bookkeeperCard').style.display = 'block';
                 document.getElementById('playerCard').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'none';
             } else if (isPlayerLoggedIn && currentPlayer) {
+                // Regular player (Andrew, etc.)
                 document.getElementById('bookkeeperCard').style.display = 'none';
                 document.getElementById('playerCard').style.display = 'block';
                 document.getElementById('loginSection').style.display = 'none';
                 updatePlayerUI();
             } else {
+                // Not logged in
                 document.getElementById('bookkeeperCard').style.display = 'none';
                 document.getElementById('playerCard').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'block';
@@ -1284,10 +1309,16 @@
                     const playerName = phoneToPlayer[user.phoneNumber];
                     
                     closePlayerLoginModal();
-                    alert(`🐷 Welcome ${playerName}! 🐷\nYou are now securely logged in!`);
                     
-                    // Log activity
-                    addActivity('admin', '🔐', `${playerName} logged in securely`);
+                    if (playerName === 'Evan') {
+                        alert(`🐷 Welcome Ham Handler ${playerName}! 🐷\nYou now have FULL admin access AND player controls!`);
+                        // Log activity
+                        addActivity('admin', '🔐', `${playerName} logged in as Ham Handler`);
+                    } else {
+                        alert(`🐷 Welcome ${playerName}! 🐷\nYou are now securely logged in!`);
+                        // Log activity
+                        addActivity('admin', '🔐', `${playerName} logged in securely`);
+                    }
                 })
                 .catch((error) => {
                     console.error('Code verification error:', error);
