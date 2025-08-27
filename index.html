@@ -1161,6 +1161,9 @@
             const activityFeed = document.getElementById('activityFeed');
             const loadingIndicator = document.getElementById('activityLoadingIndicator');
             
+            // Check if elements exist (activity feed is only on activity.html page)
+            if (!activityFeed) return;
+            
             // Hide loading indicator and show feed
             if (loadingIndicator) {
                 loadingIndicator.style.display = 'none';
@@ -1260,40 +1263,30 @@
         }
 
         function setupRecaptcha() {
-            if (!recaptchaVerifier) {
+            // Clear any existing reCAPTCHA first
+            if (recaptchaVerifier) {
                 try {
-                    console.log('🔧 Setting up reCAPTCHA...');
-                    
-                    // Use invisible reCAPTCHA with proper Firebase v9+ syntax
-                    recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
-                        'size': 'invisible',
-                        'callback': (response) => {
-                            console.log('✅ reCAPTCHA solved automatically');
-                        },
-                        'expired-callback': () => {
-                            console.log('⚠️ reCAPTCHA expired, will retry on next attempt');
-                            recaptchaVerifier = null;
-                        },
-                        'error-callback': (error) => {
-                            console.error('❌ reCAPTCHA error:', error);
-                            recaptchaVerifier = null;
-                        }
-                    });
-                    
-                    console.log('✅ reCAPTCHA verifier created');
-                    
-                } catch (error) {
-                    console.error('❌ reCAPTCHA setup error:', error);
-                    recaptchaVerifier = null;
-                    recaptchaFailures++;
-                    
-                    if (recaptchaFailures >= MAX_RECAPTCHA_FAILURES) {
-                        console.warn('⚠️ Too many reCAPTCHA failures, suggesting bypass');
-                        alert('🚫 reCAPTCHA setup has failed multiple times.\n\nThis may be due to:\n• Network issues\n• Firebase configuration\n• Browser compatibility\n\nPlease use the BYPASS button for now.');
-                    } else {
-                        alert('🚫 reCAPTCHA setup failed. Please refresh the page and try again, or use the BYPASS button.');
-                    }
+                    recaptchaVerifier.clear();
+                } catch (e) {
+                    console.log('Old reCAPTCHA cleared');
                 }
+                recaptchaVerifier = null;
+            }
+            
+            try {
+                // Create new reCAPTCHA verifier
+                recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
+                    'size': 'invisible',
+                    'callback': (response) => {
+                        console.log('✅ reCAPTCHA solved');
+                    }
+                });
+                
+                console.log('✅ reCAPTCHA ready');
+                
+            } catch (error) {
+                console.error('❌ reCAPTCHA setup error:', error);
+                recaptchaVerifier = null;
             }
         }
 
@@ -1322,19 +1315,11 @@
                 return;
             }
 
-            // Ensure reCAPTCHA is set up
+            // Setup fresh reCAPTCHA for this attempt
+            setupRecaptcha();
+            
             if (!recaptchaVerifier) {
-                console.log('🔧 reCAPTCHA not ready, setting up...');
-                setupRecaptcha();
-                
-                // Wait a moment for setup, then try again
-                setTimeout(() => {
-                    if (!recaptchaVerifier) {
-                        alert('🚫 reCAPTCHA setup failed. Please refresh the page or use BYPASS button.');
-                        return;
-                    }
-                    sendVerificationCode(); // Retry
-                }, 1000);
+                alert('🚫 reCAPTCHA setup failed. Please use BYPASS button.');
                 return;
             }
 
