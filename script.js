@@ -1111,12 +1111,51 @@ function playerTransferPoints() {
 
 // HOGWASH Functions
 function showHogwashModal() {
-    document.getElementById('hogwashModal').style.display = 'flex';
+    const modal = document.getElementById('hogwashModal');
+    const playerSelect = document.getElementById('hogwashPlayer');
+    const playerLabel = document.querySelector('#hogwashModal .form-group label');
+    const modalDescription = document.querySelector('#hogwashModal p');
+    
+    if (isPlayerLoggedIn && currentPlayer) {
+        // User is logged in - auto-select them and make it non-editable
+        playerSelect.value = currentPlayer;
+        playerSelect.disabled = true;
+        playerLabel.textContent = `${currentPlayer} is gambling!`;
+        modalDescription.textContent = `You're logged in as ${currentPlayer}. Ready to risk it with the pig gods?`;
+        
+        // Add visual indication that it's auto-selected
+        playerSelect.style.backgroundColor = '#f0f8ff';
+        playerSelect.style.color = '#2c5282';
+        playerSelect.style.fontWeight = 'bold';
+    } else {
+        // User not logged in - show normal dropdown
+        playerSelect.value = '';
+        playerSelect.disabled = false;
+        playerLabel.textContent = "Who's gambling?";
+        modalDescription.textContent = 'Choose your player and risk it with the pig gods!';
+        
+        // Reset styling
+        playerSelect.style.backgroundColor = '';
+        playerSelect.style.color = '';
+        playerSelect.style.fontWeight = '';
+    }
+    
+    modal.style.display = 'flex';
 }
 
 function closeHogwashModal() {
-    document.getElementById('hogwashModal').style.display = 'none';
-    document.getElementById('hogwashPlayer').value = '';
+    const modal = document.getElementById('hogwashModal');
+    const playerSelect = document.getElementById('hogwashPlayer');
+    
+    // Reset the modal state
+    modal.style.display = 'none';
+    playerSelect.value = '';
+    playerSelect.disabled = false;
+    
+    // Reset styling
+    playerSelect.style.backgroundColor = '';
+    playerSelect.style.color = '';
+    playerSelect.style.fontWeight = '';
 }
 
 function closeHogwashResult() {
