@@ -701,6 +701,12 @@
             </div>
             
             <div class="form-group">
+                <label>Sidebet Description:</label>
+                <input type="text" id="sidebetsNote" maxlength="50" placeholder="e.g., Closest to Pin, Longest Drive, Best Approach">
+                <small style="color: #666;">Optional note describing what this sidebet was for (shows in activity feed)</small>
+            </div>
+            
+            <div class="form-group">
                 <label>Points Each Losing Player Pays:</label>
                 <input type="number" id="sidebetsPoints" min="1" max="50" value="10" placeholder="Points per losing player">
                 <small style="color: #666;">Each non-winning player pays this amount to the winning team</small>
@@ -724,6 +730,7 @@
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -739,19 +746,33 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        const auth = getAuth(app);
+        
+        // Set Firebase Auth persistence to LOCAL (survives browser restarts)
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                console.log('🔐 Firebase Auth persistence set to LOCAL on golf page');
+            })
+            .catch((error) => {
+                console.error('❌ Failed to set Firebase Auth persistence on golf page:', error);
+            });
         
         // Make Firebase functions available globally
         window.firebaseDB = database;
+        window.firebaseAuth = auth;
         window.firebaseRef = ref;
         window.firebaseSet = set;
         window.firebaseUpdate = update;
         window.firebaseOnValue = onValue;
+        window.onAuthStateChanged = onAuthStateChanged;
     </script>
     
     <script>
         // Golf sessions data
         let golfSessions = {};
         let isBookkeeperLoggedIn = localStorage.getItem('bookkeeperLoggedIn') === 'true';
+        let isPlayerLoggedIn = false; // Will be managed by Firebase Auth
+        let currentPlayer = '';
         let isFirebaseReady = false;
         let currentSessionTeams = [];
         let currentSessionId = null;
@@ -851,6 +872,51 @@
                     console.log('📜 No existing activities');
                 }
             });
+
+            // Monitor authentication state (same as index.html)
+            window.onAuthStateChanged(window.firebaseAuth, (user) => {
+                if (user) {
+                    // User is signed in with phone number
+                    const phoneNumber = user.phoneNumber;
+                    const playerName = phoneToPlayer[phoneNumber];
+                    
+                    if (playerName) {
+                        isPlayerLoggedIn = true;
+                        currentPlayer = playerName;
+                        
+                        // Check if this player is also the Ham Handler (Evan)
+                        if (playerName === 'Evan') {
+                            isBookkeeperLoggedIn = true;
+                            localStorage.setItem('bookkeeperLoggedIn', 'true');
+                            console.log(`🔐 Ham Handler authenticated on golf page: ${playerName} (${phoneNumber})`);
+                        }
+                        
+                        console.log(`🔐 Player authenticated on golf page: ${playerName} (${phoneNumber})`);
+                        checkLoginState();
+                    } else {
+                        console.error('Phone number not recognized:', phoneNumber);
+                        // Sign out unrecognized user
+                        window.firebaseAuth.signOut();
+                    }
+                } else {
+                    // User is signed out
+                    isPlayerLoggedIn = false;
+                    currentPlayer = '';
+                    
+                    // If Evan logs out, also remove Ham Handler privileges
+                    if (isBookkeeperLoggedIn && localStorage.getItem('bookkeeperLoggedIn') === 'true') {
+                        // Only clear if this was from Firebase Auth, not manual PIG/PIG login
+                        // We can tell by checking if we had a currentPlayer
+                        if (currentPlayer === 'Evan') {
+                            isBookkeeperLoggedIn = false;
+                            localStorage.removeItem('bookkeeperLoggedIn');
+                        }
+                    }
+                    
+                    console.log('🔐 Player signed out on golf page');
+                    checkLoginState();
+                }
+            });
         }
         
         // Check login state on page load
@@ -883,7 +949,19 @@
                 return;
             }
             
-            if (isBookkeeperLoggedIn) {
+            if (isPlayerLoggedIn && currentPlayer) {
+                statusBar.classList.add('visible');
+                
+                if (currentPlayer === 'Evan' && isBookkeeperLoggedIn) {
+                    statusPlayerName.textContent = `👑 ${currentPlayer} (Ham Handler)`;
+                } else {
+                    statusPlayerName.textContent = `🐷 ${currentPlayer}`;
+                }
+                
+                const points = players[currentPlayer] || 0;
+                statusPlayerPoints.textContent = `${points} points`;
+            } else if (isBookkeeperLoggedIn && !isPlayerLoggedIn) {
+                // Ham Handler only (old PIG/PIG login)
                 statusBar.classList.add('visible');
                 statusPlayerName.textContent = `👑 Ham Handler`;
                 statusPlayerPoints.textContent = `Admin Mode`;
@@ -898,9 +976,30 @@
             }
         }
         
+        // Check for bypass login state from localStorage
+        function checkBypassLoginState() {
+            const bypassLoggedIn = localStorage.getItem('bypassPlayerLoggedIn') === 'true';
+            const bypassPlayer = localStorage.getItem('bypassCurrentPlayer');
+            
+            if (bypassLoggedIn && bypassPlayer) {
+                console.log(`🚀 Restoring bypass login state on golf page: ${bypassPlayer}`);
+                isPlayerLoggedIn = true;
+                currentPlayer = bypassPlayer;
+                
+                // Check if this player is also the Ham Handler (Evan)
+                if (bypassPlayer === 'Evan') {
+                    isBookkeeperLoggedIn = true;
+                    localStorage.setItem('bookkeeperLoggedIn', 'true');
+                }
+                
+                console.log(`🔐 Bypass login restored on golf page: ${bypassPlayer}`);
+            }
+        }
+
         // Initialize Firebase and login state when page loads
         console.log('🏌️ Golf.html loaded - Version: FIXED_2024_08_27');
         setTimeout(() => {
+            checkBypassLoginState();
             initializeFirebase();
             checkLoginState(); // Check login state after DOM is ready
         }, 1000);
@@ -942,8 +1041,30 @@
         
         function logout() {
             isBookkeeperLoggedIn = false;
+            localStorage.removeItem('bookkeeperLoggedIn');
+            
+            // Clear bypass login state
+            localStorage.removeItem('bypassPlayerLoggedIn');
+            localStorage.removeItem('bypassCurrentPlayer');
+            
+            // If user is also logged in via Firebase Auth, sign them out
+            if (isPlayerLoggedIn && window.firebaseAuth.currentUser) {
+                window.firebaseAuth.signOut()
+                    .then(() => {
+                        console.log('✅ Firebase Auth logout successful');
+                    })
+                    .catch((error) => {
+                        console.error('Firebase Auth logout error:', error);
+                    });
+            }
+            
+            // Clear local state
+            isPlayerLoggedIn = false;
+            currentPlayer = '';
+            
             document.getElementById('bookkeeperControls').style.display = 'none';
             document.getElementById('loginSection').style.display = 'block';
+            updateStatusBar();
             alert('👋 Bookkeeper logged out!');
         }
         
@@ -1168,7 +1289,9 @@
                     const session = golfSessions[sessionId];
                     if (session && session.ctpWinners && session.ctpWinners[i]) {
                         ctpFlag.classList.add('won');
-                        ctpFlag.title = `Sidebet Won by: ${session.ctpWinners[i].teamName}`;
+                        const winner = session.ctpWinners[i];
+                        const noteText = winner.note ? ` (${winner.note})` : '';
+                        ctpFlag.title = `Sidebet Won by: ${winner.teamName}${noteText}`;
                     }
                     
                     label.appendChild(ctpFlag);
@@ -1275,7 +1398,8 @@
             // Check if sidebet already awarded
             if (session.ctpWinners && session.ctpWinners[holeNumber]) {
                 const winner = session.ctpWinners[holeNumber];
-                document.getElementById('sidebetsHoleInfo').innerHTML += `<br><span style="color: #28a745;">✅ Already won by: ${winner.teamName} (${winner.pointsPerWinner} points each)</span>`;
+                const noteText = winner.note ? ` - ${winner.note}` : '';
+                document.getElementById('sidebetsHoleInfo').innerHTML += `<br><span style="color: #28a745;">✅ Already won by: ${winner.teamName}${noteText} (${winner.pointsPerWinner} points each)</span>`;
             }
             
             document.getElementById('sidebetsModal').style.display = 'flex';
@@ -1283,6 +1407,9 @@
         
         function closeSidebetsModal() {
             document.getElementById('sidebetsModal').style.display = 'none';
+            document.getElementById('sidebetsNote').value = '';
+            document.getElementById('sidebetsWinningTeam').value = '';
+            document.getElementById('sidebetsPoints').value = '10';
             currentSessionId = null;
             currentCtpHole = null;
         }
@@ -1292,6 +1419,7 @@
             
             const teamIndex = parseInt(document.getElementById('sidebetsWinningTeam').value);
             const points = parseInt(document.getElementById('sidebetsPoints').value);
+            const sidebetNote = document.getElementById('sidebetsNote').value.trim();
             
             if (isNaN(teamIndex) || !points) {
                 alert('🚫 Please select a winning team and enter points!');
@@ -1334,6 +1462,7 @@
                 pointsPerLoser: points,
                 totalPointsCollected: totalPointsCollected,
                 pointsPerWinner: pointsPerWinner,
+                note: sidebetNote || '',
                 timestamp: new Date().toISOString()
             };
             
@@ -1342,13 +1471,15 @@
             savePigPoints();
             
             // Log activity
-            addActivity('admin', '⛳', `Sidebet: ${winningTeam.name} won ${pointsPerWinner} points each (${totalPointsCollected} total collected)`);
+            const noteText = sidebetNote ? ` - ${sidebetNote}` : '';
+            addActivity('admin', '⛳', `Sidebet${noteText}: ${winningTeam.name} won ${pointsPerWinner} points each (${totalPointsCollected} total collected)`);
             
             // Refresh the score modal
             openScoreModal(currentSessionId);
             closeSidebetsModal();
             
-            alert(`🏆 Sidebet awarded to ${winningTeam.name}!\n🐷 ${pointsPerWinner} points per winner\n💰 Total points collected: ${totalPointsCollected}\n📊 Each losing player paid: ${points}`);
+            const alertNoteText = sidebetNote ? `\n📝 Note: ${sidebetNote}` : '';
+            alert(`🏆 Sidebet awarded to ${winningTeam.name}!${alertNoteText}\n🐷 ${pointsPerWinner} points per winner\n💰 Total points collected: ${totalPointsCollected}\n📊 Each losing player paid: ${points}`);
         }
         
         function savePigPoints() {
@@ -1388,6 +1519,12 @@
         function loadActivityFeed() {
             const activityFeed = document.getElementById('activityFeed');
             const loadingIndicator = document.getElementById('activityLoadingIndicator');
+            
+            // Check if elements exist (they only exist on activity.html page)
+            if (!activityFeed) {
+                console.log('📜 Activity feed elements not found on this page - skipping');
+                return;
+            }
             
             // Hide loading indicator and show feed
             if (loadingIndicator) {

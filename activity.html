@@ -255,6 +255,7 @@
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -270,16 +271,38 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        const auth = getAuth(app);
+        
+        // Set Firebase Auth persistence to LOCAL (survives browser restarts)
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                console.log('🔐 Firebase Auth persistence set to LOCAL on activity page');
+            })
+            .catch((error) => {
+                console.error('❌ Failed to set Firebase Auth persistence on activity page:', error);
+            });
         
         // Make Firebase functions available globally
         window.firebaseDB = database;
+        window.firebaseAuth = auth;
         window.firebaseRef = ref;
         window.firebaseOnValue = onValue;
+        window.onAuthStateChanged = onAuthStateChanged;
     </script>
     
     <script>
         let activities = [];
         let currentFilter = 'all';
+        let isBookkeeperLoggedIn = localStorage.getItem('bookkeeperLoggedIn') === 'true';
+        let isPlayerLoggedIn = false;
+        let currentPlayer = '';
+        let players = {};
+
+        // Phone number to player name mapping (same as index.html)
+        const phoneToPlayer = {
+            '+12183909017': 'Andrew',
+            '+12183102673': 'Evan'
+        };
 
         // Initialize Firebase data
         function initializeFirebase() {
@@ -296,6 +319,61 @@
                     activities = [];
                     loadActivityFeed();
                     console.log('📜 No existing activities');
+                }
+            });
+
+            // Listen for pig points changes
+            const playersRef = window.firebaseRef(window.firebaseDB, 'players');
+            window.firebaseOnValue(playersRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    players = data;
+                    console.log('🐷 Pig points loaded on activity page:', players);
+                    updateStatusBar();
+                }
+            });
+
+            // Monitor authentication state (same as index.html)
+            window.onAuthStateChanged(window.firebaseAuth, (user) => {
+                if (user) {
+                    // User is signed in with phone number
+                    const phoneNumber = user.phoneNumber;
+                    const playerName = phoneToPlayer[phoneNumber];
+                    
+                    if (playerName) {
+                        isPlayerLoggedIn = true;
+                        currentPlayer = playerName;
+                        
+                        // Check if this player is also the Ham Handler (Evan)
+                        if (playerName === 'Evan') {
+                            isBookkeeperLoggedIn = true;
+                            localStorage.setItem('bookkeeperLoggedIn', 'true');
+                            console.log(`🔐 Ham Handler authenticated on activity page: ${playerName} (${phoneNumber})`);
+                        }
+                        
+                        console.log(`🔐 Player authenticated on activity page: ${playerName} (${phoneNumber})`);
+                        updateStatusBar();
+                    } else {
+                        console.error('Phone number not recognized:', phoneNumber);
+                        // Sign out unrecognized user
+                        window.firebaseAuth.signOut();
+                    }
+                } else {
+                    // User is signed out
+                    isPlayerLoggedIn = false;
+                    currentPlayer = '';
+                    
+                    // If Evan logs out, also remove Ham Handler privileges
+                    if (isBookkeeperLoggedIn && localStorage.getItem('bookkeeperLoggedIn') === 'true') {
+                        // Only clear if this was from Firebase Auth, not manual PIG/PIG login
+                        if (currentPlayer === 'Evan') {
+                            isBookkeeperLoggedIn = false;
+                            localStorage.removeItem('bookkeeperLoggedIn');
+                        }
+                    }
+                    
+                    console.log('🔐 Player signed out on activity page');
+                    updateStatusBar();
                 }
             });
         }
@@ -393,8 +471,88 @@
             loadActivityFeed();
         }
 
+        function updateStatusBar() {
+            const statusBar = document.getElementById('statusBar');
+            const statusPlayerName = document.getElementById('statusPlayerName');
+            const statusPlayerPoints = document.getElementById('statusPlayerPoints');
+            
+            // Check if elements exist (they might not be loaded yet)
+            if (!statusBar || !statusPlayerName || !statusPlayerPoints) {
+                return;
+            }
+            
+            if (isPlayerLoggedIn && currentPlayer) {
+                statusBar.classList.add('visible');
+                
+                if (currentPlayer === 'Evan' && isBookkeeperLoggedIn) {
+                    statusPlayerName.textContent = `👑 ${currentPlayer} (Ham Handler)`;
+                } else {
+                    statusPlayerName.textContent = `🐷 ${currentPlayer}`;
+                }
+                
+                const points = players[currentPlayer] || 0;
+                statusPlayerPoints.textContent = `${points} points`;
+            } else if (isBookkeeperLoggedIn && !isPlayerLoggedIn) {
+                // Ham Handler only (old PIG/PIG login)
+                statusBar.classList.add('visible');
+                statusPlayerName.textContent = `👑 Ham Handler`;
+                statusPlayerPoints.textContent = `Admin Mode`;
+            } else {
+                statusBar.classList.remove('visible');
+            }
+        }
+
+        function quickLogout() {
+            if (isPlayerLoggedIn && window.firebaseAuth.currentUser) {
+                window.firebaseAuth.signOut()
+                    .then(() => {
+                        console.log('✅ Firebase Auth logout successful');
+                    })
+                    .catch((error) => {
+                        console.error('Firebase Auth logout error:', error);
+                    });
+            } else if (isBookkeeperLoggedIn) {
+                isBookkeeperLoggedIn = false;
+                localStorage.removeItem('bookkeeperLoggedIn');
+                updateStatusBar();
+                alert('👋 Ham Handler logged out!');
+            }
+        }
+
+        // Check for bypass login state from localStorage
+        function checkBypassLoginState() {
+            const bypassLoggedIn = localStorage.getItem('bypassPlayerLoggedIn') === 'true';
+            const bypassPlayer = localStorage.getItem('bypassCurrentPlayer');
+            
+            if (bypassLoggedIn && bypassPlayer) {
+                console.log(`🚀 Restoring bypass login state on activity page: ${bypassPlayer}`);
+                isPlayerLoggedIn = true;
+                currentPlayer = bypassPlayer;
+                
+                // Check if this player is also the Ham Handler (Evan)
+                if (bypassPlayer === 'Evan') {
+                    isBookkeeperLoggedIn = true;
+                    localStorage.setItem('bookkeeperLoggedIn', 'true');
+                }
+                
+                console.log(`🔐 Bypass login restored on activity page: ${bypassPlayer}`);
+            }
+        }
+
         // Initialize Firebase when page loads
-        setTimeout(initializeFirebase, 1000);
+        setTimeout(() => {
+            checkBypassLoginState();
+            initializeFirebase();
+        }, 1000);
     </script>
+
+    <!-- Floating Status Bar -->
+    <div class="status-bar" id="statusBar">
+        <div class="status-player">
+            <span id="statusPlayerName">Not logged in</span>
+            <span class="status-points" id="statusPlayerPoints"></span>
+        </div>
+        <button class="status-logout" onclick="quickLogout()">Logout</button>
+    </div>
 </body>
 </html>

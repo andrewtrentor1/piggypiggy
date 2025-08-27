@@ -769,7 +769,7 @@
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -787,6 +787,15 @@
         const database = getDatabase(app);
         const auth = getAuth(app);
         
+        // Set Firebase Auth persistence to LOCAL (survives browser restarts)
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                console.log('🔐 Firebase Auth persistence set to LOCAL - will survive browser restarts');
+            })
+            .catch((error) => {
+                console.error('❌ Failed to set Firebase Auth persistence:', error);
+            });
+
         // Make Firebase functions available globally
         window.firebaseDB = database;
         window.firebaseAuth = auth;
@@ -797,6 +806,8 @@
         window.RecaptchaVerifier = RecaptchaVerifier;
         window.signInWithPhoneNumber = signInWithPhoneNumber;
         window.onAuthStateChanged = onAuthStateChanged;
+        window.setPersistence = setPersistence;
+        window.browserLocalPersistence = browserLocalPersistence;
     </script>
     
     <script>
@@ -1302,7 +1313,28 @@
             }
         }
         
+        // Check for bypass login state from localStorage
+        function checkBypassLoginState() {
+            const bypassLoggedIn = localStorage.getItem('bypassPlayerLoggedIn') === 'true';
+            const bypassPlayer = localStorage.getItem('bypassCurrentPlayer');
+            
+            if (bypassLoggedIn && bypassPlayer) {
+                console.log(`🚀 Restoring bypass login state: ${bypassPlayer}`);
+                isPlayerLoggedIn = true;
+                currentPlayer = bypassPlayer;
+                
+                // Check if this player is also the Ham Handler (Evan)
+                if (bypassPlayer === 'Evan') {
+                    isBookkeeperLoggedIn = true;
+                    localStorage.setItem('bookkeeperLoggedIn', 'true');
+                }
+                
+                console.log(`🔐 Bypass login restored: ${bypassPlayer}`);
+            }
+        }
+
         // Initialize login state
+        checkBypassLoginState();
         checkLoginState();
         
         // Don't initialize leaderboard until Firebase loads
@@ -1677,6 +1709,10 @@
             if (confirm(`🚀 TESTING BYPASS\n\nThis will log you in as ${selectedPlayer} without SMS verification.\n\n⚠️ This is for development/testing only!\n\nContinue?`)) {
                 console.log(`🚀 Bypass login for ${selectedPlayer}`);
                 
+                // Store login state in localStorage for cross-page persistence
+                localStorage.setItem('bypassPlayerLoggedIn', 'true');
+                localStorage.setItem('bypassCurrentPlayer', selectedPlayer);
+                
                 // Simulate successful login without triggering Firebase Auth
                 isPlayerLoggedIn = true;
                 currentPlayer = selectedPlayer;
@@ -1753,6 +1789,10 @@
         }
 
         function quickLogout() {
+            // Clear bypass login state
+            localStorage.removeItem('bypassPlayerLoggedIn');
+            localStorage.removeItem('bypassCurrentPlayer');
+            
             if (isPlayerLoggedIn) {
                 logoutPlayer();
             } else if (isBookkeeperLoggedIn) {
