@@ -671,9 +671,13 @@
                 
                 <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
                     <small style="color: #856404;">
-                        <strong>⚠️ SMS Rate Limited?</strong><br>
-                        <button onclick="bypassSMSForTesting()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em;">
-                            🚀 BYPASS FOR TESTING
+                        <strong>⚠️ SMS Issues?</strong><br>
+                        Common causes: Domain not authorized, reCAPTCHA problems, rate limits<br>
+                        <button onclick="bypassSMSForTesting()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px;">
+                            🚀 BYPASS SMS (TESTING)
+                        </button>
+                        <button onclick="debugFirebaseAuth()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px; margin-left: 5px;">
+                            🔍 DEBUG INFO
                         </button>
                     </small>
                 </div>
@@ -753,8 +757,7 @@
         let activities = [];
         let recaptchaVerifier = null;
         let confirmationResult = null;
-        let recaptchaFailures = 0;
-        const MAX_RECAPTCHA_FAILURES = 3;
+        let isRecaptchaReady = false;
 
         // Phone number to player name mapping
         const phoneToPlayer = {
@@ -882,7 +885,11 @@
         }
         
         // Initialize Firebase when page loads
-        setTimeout(initializeFirebase, 1000);
+        setTimeout(() => {
+            initializeFirebase();
+            // Initialize reCAPTCHA after Firebase is ready
+            setTimeout(initializeRecaptcha, 2000);
+        }, 1000);
         
         // Initialize bubbles (reduced frequency)
         function createBubbles() {
@@ -1243,9 +1250,15 @@
             console.log('- Current user:', window.firebaseAuth.currentUser);
             console.log('- App name:', window.firebaseAuth.app.name);
             console.log('- Auth domain:', window.firebaseAuth.config?.authDomain);
+            console.log('- Current domain:', window.location.hostname);
+            console.log('- Current origin:', window.location.origin);
+            console.log('- reCAPTCHA ready:', isRecaptchaReady);
+            console.log('- reCAPTCHA verifier:', recaptchaVerifier);
             
-            // Setup invisible reCAPTCHA only when needed
-            setTimeout(setupRecaptcha, 100);
+            // Initialize reCAPTCHA if not already done
+            if (!isRecaptchaReady) {
+                initializeRecaptcha();
+            }
         }
 
         function closePlayerLoginModal() {
@@ -1255,38 +1268,61 @@
             document.getElementById('playerStep').style.display = 'block';
             document.getElementById('codeStep').style.display = 'none';
             
-            // Clean up recaptcha
-            if (recaptchaVerifier) {
-                recaptchaVerifier.clear();
-                recaptchaVerifier = null;
-            }
+            // Reset confirmation result but keep reCAPTCHA ready
+            confirmationResult = null;
         }
 
-        function setupRecaptcha() {
+        function initializeRecaptcha() {
+            // Only initialize once
+            if (isRecaptchaReady && recaptchaVerifier) {
+                console.log('✅ reCAPTCHA already initialized');
+                return;
+            }
+            
             // Clear any existing reCAPTCHA first
             if (recaptchaVerifier) {
                 try {
                     recaptchaVerifier.clear();
                 } catch (e) {
-                    console.log('Old reCAPTCHA cleared');
+                    console.log('🧹 Cleared old reCAPTCHA');
                 }
                 recaptchaVerifier = null;
+                isRecaptchaReady = false;
             }
             
             try {
-                // Create new reCAPTCHA verifier
+                console.log('🔧 Initializing reCAPTCHA...');
+                
+                // Create new reCAPTCHA verifier with better error handling
                 recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
                     'size': 'invisible',
                     'callback': (response) => {
-                        console.log('✅ reCAPTCHA solved');
+                        console.log('✅ reCAPTCHA solved successfully');
+                    },
+                    'expired-callback': () => {
+                        console.warn('⚠️ reCAPTCHA expired, will refresh');
+                        isRecaptchaReady = false;
+                    },
+                    'error-callback': (error) => {
+                        console.error('❌ reCAPTCHA error:', error);
+                        isRecaptchaReady = false;
                     }
                 });
                 
-                console.log('✅ reCAPTCHA ready');
+                // Render the reCAPTCHA
+                recaptchaVerifier.render().then(() => {
+                    console.log('✅ reCAPTCHA rendered and ready');
+                    isRecaptchaReady = true;
+                }).catch((error) => {
+                    console.error('❌ reCAPTCHA render error:', error);
+                    recaptchaVerifier = null;
+                    isRecaptchaReady = false;
+                });
                 
             } catch (error) {
-                console.error('❌ reCAPTCHA setup error:', error);
+                console.error('❌ reCAPTCHA initialization error:', error);
                 recaptchaVerifier = null;
+                isRecaptchaReady = false;
             }
         }
 
@@ -1315,15 +1351,30 @@
                 return;
             }
 
-            // Setup fresh reCAPTCHA for this attempt
-            setupRecaptcha();
-            
-            if (!recaptchaVerifier) {
-                alert('🚫 reCAPTCHA setup failed. Please use BYPASS button.');
+            // Ensure reCAPTCHA is ready
+            if (!isRecaptchaReady || !recaptchaVerifier) {
+                console.log('🔧 reCAPTCHA not ready, initializing...');
+                initializeRecaptcha();
+                
+                // Wait a moment for initialization
+                setTimeout(() => {
+                    if (!isRecaptchaReady || !recaptchaVerifier) {
+                        alert('🚫 reCAPTCHA initialization failed. Please use BYPASS button or refresh the page.');
+                        return;
+                    }
+                    sendVerificationCode(); // Retry
+                }, 1000);
                 return;
             }
 
             console.log('📱 Sending SMS to:', phoneNumber);
+            console.log('🔧 Using reCAPTCHA verifier:', recaptchaVerifier);
+
+            // Disable the button to prevent multiple clicks
+            const sendButton = document.getElementById('send-code-button');
+            const originalText = sendButton.textContent;
+            sendButton.disabled = true;
+            sendButton.textContent = '📱 SENDING...';
 
             // Send SMS verification code
             window.signInWithPhoneNumber(window.firebaseAuth, phoneNumber, recaptchaVerifier)
@@ -1335,40 +1386,42 @@
                     // Show masked phone number for privacy
                     const maskedPhone = phoneNumber.replace(/(\+1)(\d{3})(\d{3})(\d{4})/, '$1***$3$4');
                     alert(`📱 Verification code sent to ${maskedPhone}!\nCheck your SMS messages.`);
+                    
+                    console.log('✅ SMS sent successfully');
                 })
                 .catch((error) => {
-                    console.error('SMS send error:', error);
+                    console.error('❌ SMS send error:', error);
                     console.error('Error code:', error.code);
-                    console.error('Error details:', error);
+                    console.error('Error message:', error.message);
                     
                     let errorMessage = `🚫 SMS Error: ${error.message}\n\n`;
                     
-                    if (error.code === 'auth/internal-error') {
-                        errorMessage += `Internal Firebase error. This could be due to:\n• reCAPTCHA configuration issues\n• Firebase service problems\n• Network connectivity\n\nTry refreshing the page or use BYPASS button.`;
+                    if (error.code === 'auth/unauthorized-domain') {
+                        errorMessage += `DOMAIN NOT AUTHORIZED!\n\nThe domain needs to be added to Firebase Console.\n\nFIX:\n1. Go to Firebase Console\n2. Authentication → Settings\n3. Authorized domains → Add your domain\n\nFor now, use BYPASS button.`;
+                    } else if (error.code === 'auth/internal-error') {
+                        errorMessage += `Internal Firebase error. Possible causes:\n• Domain authorization issue\n• reCAPTCHA configuration\n• Firebase service problems\n\nTry BYPASS button.`;
                     } else if (error.code === 'auth/too-many-requests') {
-                        errorMessage += `Rate limit hit. This could be due to:\n• Multiple attempts in short time\n• reCAPTCHA issues\n• Firebase quotas\n\nTry the BYPASS button below, or wait 1 hour.`;
+                        errorMessage += `Rate limit exceeded. Wait a few minutes or use BYPASS button.`;
                     } else if (error.code === 'auth/captcha-check-failed') {
-                        errorMessage += `reCAPTCHA failed. Please:\n• Refresh the page\n• Complete reCAPTCHA properly\n• Try again`;
+                        errorMessage += `reCAPTCHA verification failed. Try refreshing the page or use BYPASS button.`;
                     } else if (error.code === 'auth/invalid-phone-number') {
-                        errorMessage += `Invalid phone number format.\nPlease contact admin to verify phone number.`;
+                        errorMessage += `Invalid phone number format.\nContact admin to verify phone number.`;
                     } else {
-                        errorMessage += `Error Code: ${error.code}\n\nTry refreshing the page or use BYPASS button.`;
+                        errorMessage += `Error Code: ${error.code}\n\nMost likely a domain authorization issue.\nUse BYPASS button for now.`;
                     }
                     
                     alert(errorMessage);
                     
-                    // Clean up and reset reCAPTCHA
-                    if (recaptchaVerifier) {
-                        try {
-                            recaptchaVerifier.clear();
-                        } catch (clearError) {
-                            console.warn('Error clearing reCAPTCHA:', clearError);
-                        }
-                        recaptchaVerifier = null;
-                    }
-                    
-                    // Setup fresh reCAPTCHA for next attempt
-                    setTimeout(setupRecaptcha, 500);
+                    // Reset reCAPTCHA for next attempt
+                    isRecaptchaReady = false;
+                    setTimeout(() => {
+                        initializeRecaptcha();
+                    }, 1000);
+                })
+                .finally(() => {
+                    // Re-enable the button
+                    sendButton.disabled = false;
+                    sendButton.textContent = originalText;
                 });
         }
 
@@ -1421,6 +1474,36 @@
                         alert('Error logging out. Please try again.');
                     });
             }
+        }
+
+        // Debug function to show Firebase Auth configuration
+        function debugFirebaseAuth() {
+            const debugInfo = {
+                'Current Domain': window.location.hostname,
+                'Current Origin': window.location.origin,
+                'Firebase Auth Domain': window.firebaseAuth.config?.authDomain || 'Not available',
+                'Firebase Project ID': window.firebaseAuth.config?.projectId || 'Not available',
+                'reCAPTCHA Ready': isRecaptchaReady,
+                'reCAPTCHA Verifier': recaptchaVerifier ? 'Initialized' : 'Not initialized',
+                'Current User': window.firebaseAuth.currentUser ? 'Signed in' : 'Not signed in'
+            };
+            
+            let debugMessage = '🔍 FIREBASE AUTH DEBUG INFO:\n\n';
+            Object.entries(debugInfo).forEach(([key, value]) => {
+                debugMessage += `${key}: ${value}\n`;
+            });
+            
+            debugMessage += '\n📋 TROUBLESHOOTING:\n';
+            debugMessage += '• If domain issues: Add your domain to Firebase Console → Authentication → Settings → Authorized domains\n';
+            debugMessage += '• If reCAPTCHA issues: Check browser console for detailed errors\n';
+            debugMessage += '• If rate limited: Wait 15+ minutes or use bypass\n';
+            debugMessage += '• For testing: Use BYPASS SMS button';
+            
+            alert(debugMessage);
+            
+            // Also log to console for detailed inspection
+            console.log('🔍 Firebase Auth Debug Info:', debugInfo);
+            console.log('🔍 Full Firebase Auth object:', window.firebaseAuth);
         }
 
         // Temporary bypass for SMS rate limiting during testing
