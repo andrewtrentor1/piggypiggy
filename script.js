@@ -25,25 +25,57 @@ let isRecaptchaInitializing = false;
 const HOGWASH_COOLDOWN_MS = 60 * 60 * 1000; // 60 minutes
 let hogwashCooldowns = {}; // Store last HOGWASH time for each player
 
-// HOGWASH cooldown helper functions
-function getHogwashCooldownKey() {
-    return 'mbeHogwashCooldowns';
-}
+// DANGER ZONE testing flag (temporary)
+let forceDangerZoneNext = false;
 
+// HOGWASH cooldown helper functions - now using Firebase for global sync
 function loadHogwashCooldowns() {
-    const saved = localStorage.getItem(getHogwashCooldownKey());
+    // Load from localStorage as fallback
+    const saved = localStorage.getItem('mbeHogwashCooldowns');
     if (saved) {
         try {
             hogwashCooldowns = JSON.parse(saved);
         } catch (e) {
-            console.error('Error loading HOGWASH cooldowns:', e);
+            console.error('Error loading HOGWASH cooldowns from localStorage:', e);
             hogwashCooldowns = {};
         }
+    }
+    
+    // Load from Firebase for real-time sync
+    if (window.firebaseDB) {
+        const cooldownsRef = window.firebaseRef(window.firebaseDB, 'hogwashCooldowns');
+        window.firebaseOnValue(cooldownsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const firebaseCooldowns = snapshot.val();
+                console.log('🕐 HOGWASH cooldowns loaded from Firebase:', firebaseCooldowns);
+                
+                // Merge with local data, preferring Firebase (more recent)
+                hogwashCooldowns = { ...hogwashCooldowns, ...firebaseCooldowns };
+                
+                // Also save to localStorage for offline fallback
+                localStorage.setItem('mbeHogwashCooldowns', JSON.stringify(hogwashCooldowns));
+            }
+        }, (error) => {
+            console.error('❌ Firebase cooldowns listener error:', error);
+        });
     }
 }
 
 function saveHogwashCooldowns() {
-    localStorage.setItem(getHogwashCooldownKey(), JSON.stringify(hogwashCooldowns));
+    // Save to localStorage immediately
+    localStorage.setItem('mbeHogwashCooldowns', JSON.stringify(hogwashCooldowns));
+    
+    // Save to Firebase for global sync
+    if (window.firebaseDB) {
+        const cooldownsRef = window.firebaseRef(window.firebaseDB, 'hogwashCooldowns');
+        window.firebaseSet(cooldownsRef, hogwashCooldowns)
+            .then(() => {
+                console.log('🕐 HOGWASH cooldowns saved to Firebase successfully');
+            })
+            .catch((error) => {
+                console.error('❌ Failed to save HOGWASH cooldowns to Firebase:', error);
+            });
+    }
 }
 
 function isPlayerOnHogwashCooldown(playerName) {
@@ -70,6 +102,34 @@ function formatCooldownTime(milliseconds) {
 function setPlayerHogwashCooldown(playerName) {
     hogwashCooldowns[playerName] = Date.now();
     saveHogwashCooldowns();
+    console.log(`🕐 Cooldown set for ${playerName} until ${new Date(Date.now() + HOGWASH_COOLDOWN_MS).toLocaleTimeString()}`);
+}
+
+// Enhanced validation to prevent cooldown bypass
+function validateHogwashAttempt(selectedPlayerName) {
+    // Check if the selected player is on cooldown
+    if (isPlayerOnHogwashCooldown(selectedPlayerName)) {
+        return {
+            allowed: false,
+            reason: 'cooldown',
+            message: `${selectedPlayerName} is on cooldown`
+        };
+    }
+    
+    // Additional check: If user is logged in, they can only gamble as themselves
+    if (isPlayerLoggedIn && currentPlayer && selectedPlayerName !== currentPlayer) {
+        return {
+            allowed: false,
+            reason: 'wrong_player',
+            message: `You are logged in as ${currentPlayer}, but trying to gamble as ${selectedPlayerName}`
+        };
+    }
+    
+    return {
+        allowed: true,
+        reason: 'valid',
+        message: 'Gambling attempt is valid'
+    };
 }
 
 // Phone number to player name mapping
@@ -1342,6 +1402,51 @@ function addDangerZoneAnimations() {
 // Make functions globally accessible
 window.closeDangerZoneAlert = closeDangerZoneAlert;
 
+// DANGER ZONE Testing Functions (TEMPORARY)
+function testDangerZoneAlert() {
+    if (!isBookkeeperLoggedIn) {
+        alert('🚫 You must be logged in as Ham Handler to use testing features!');
+        return;
+    }
+    
+    if (confirm('🚨 DANGER ZONE TEST 🚨\n\nThis will:\n1. Force the next HOGWASH to be DANGER ZONE\n2. Trigger the alert on ALL connected devices\n3. Play audio (if available)\n\nContinue with test?')) {
+        forceDangerZoneNext = true;
+        alert('💀 DANGER ZONE TEST ACTIVATED! 💀\n\nThe next HOGWASH roll will be DANGER ZONE regardless of who uses it.\n\nGo ahead and test HOGWASH now!');
+        
+        // Visual indication that test mode is active
+        const testButton = document.querySelector('button[onclick="testDangerZoneAlert()"]');
+        if (testButton) {
+            testButton.textContent = '🚨 TEST MODE ACTIVE 🚨';
+            testButton.style.animation = 'dangerFlash 1s infinite';
+        }
+        
+        console.log('🚨 DANGER ZONE test mode activated - next HOGWASH will be DANGER ZONE');
+    }
+}
+
+// Alternative: Direct test without HOGWASH
+function directDangerZoneTest() {
+    if (!isBookkeeperLoggedIn) {
+        alert('🚫 You must be logged in as Ham Handler to use testing features!');
+        return;
+    }
+    
+    const testPlayerName = currentPlayer || 'TEST_ADMIN';
+    console.log('🚨 Direct DANGER ZONE test triggered by admin');
+    
+    // Broadcast directly
+    broadcastDangerZone(testPlayerName);
+    
+    // Also show locally for immediate feedback
+    showDangerZoneAlert(testPlayerName, new Date().toISOString());
+    
+    alert('🚨 DANGER ZONE test broadcast sent!\nCheck all connected devices for the alert.');
+}
+
+// Make testing functions globally accessible
+window.testDangerZoneAlert = testDangerZoneAlert;
+window.directDangerZoneTest = directDangerZoneTest;
+
 function playerTransferPoints() {
     if (!currentPlayer) return;
     
@@ -1402,16 +1507,25 @@ function showHogwashModal() {
             return; // Don't show the modal, just the cooldown
         }
         
-        // User is logged in and not on cooldown - auto-select them
+        // User is logged in and not on cooldown - auto-select them and lock it
         playerSelect.value = currentPlayer;
         playerSelect.disabled = true;
         playerLabel.textContent = `${currentPlayer} is gambling!`;
-        modalDescription.textContent = `You're logged in as ${currentPlayer}. Ready to risk it with the pig gods?`;
+        modalDescription.textContent = `You're logged in as ${currentPlayer}. You can only gamble as yourself!`;
         
-        // Add visual indication that it's auto-selected
+        // Add visual indication that it's locked to current user
         playerSelect.style.backgroundColor = '#f0f8ff';
         playerSelect.style.color = '#2c5282';
         playerSelect.style.fontWeight = 'bold';
+        
+        // Hide all other options in the dropdown (extra security)
+        Array.from(playerSelect.options).forEach(option => {
+            if (option.value !== currentPlayer && option.value !== '') {
+                option.style.display = 'none';
+            } else {
+                option.style.display = 'block';
+            }
+        });
     } else {
         // User not logged in - show normal dropdown
         playerSelect.value = '';
@@ -1444,6 +1558,11 @@ function closeHogwashModal() {
     playerSelect.style.backgroundColor = '';
     playerSelect.style.color = '';
     playerSelect.style.fontWeight = '';
+    
+    // Reset all dropdown options visibility
+    Array.from(playerSelect.options).forEach(option => {
+        option.style.display = 'block';
+    });
     
     // Remove event listeners
     playerSelect.removeEventListener('change', checkSelectedPlayerCooldown);
@@ -1562,10 +1681,16 @@ function rollHogwash() {
         return;
     }
 
-    // Check cooldown before allowing gambling
-    if (isPlayerOnHogwashCooldown(playerName)) {
+    // Enhanced validation
+    const validation = validateHogwashAttempt(playerName);
+    if (!validation.allowed) {
         closeHogwashModal();
-        showHogwashCooldownForPlayer(playerName);
+        
+        if (validation.reason === 'cooldown') {
+            showHogwashCooldownForPlayer(playerName);
+        } else if (validation.reason === 'wrong_player') {
+            alert(`🚫 NICE TRY, PIG! 🚫\n\n${validation.message}\n\nYou cannot gamble as someone else while logged in!\n\nLog out if you want to gamble anonymously.`);
+        }
         return;
     }
 
@@ -1623,8 +1748,26 @@ function rollHogwash() {
         }
     ];
 
-    // Random outcome
-    const outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+    // Check if DANGER ZONE test mode is active
+    let outcome;
+    if (forceDangerZoneNext) {
+        // Force DANGER ZONE for testing
+        outcome = outcomes.find(o => o.type === 'danger');
+        forceDangerZoneNext = false; // Reset flag after use
+        
+        // Reset test button appearance
+        const testButton = document.querySelector('button[onclick="testDangerZoneAlert()"]');
+        if (testButton) {
+            testButton.textContent = '💀 TEST DANGER ZONE ALERT 💀';
+            testButton.style.animation = '';
+        }
+        
+        console.log('🚨 DANGER ZONE forced for testing!');
+    } else {
+        // Normal random outcome
+        outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+    }
+    
     const resultText = outcome.action();
 
     // Show result modal
