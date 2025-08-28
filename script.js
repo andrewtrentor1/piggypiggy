@@ -1227,8 +1227,17 @@ function initializeRecaptcha() {
                 recaptchaVerifier = null;
             }
             
+            // Create a dedicated reCAPTCHA container for mobile compatibility
+            let recaptchaContainer = document.getElementById('recaptcha-container');
+            if (!recaptchaContainer) {
+                recaptchaContainer = document.createElement('div');
+                recaptchaContainer.id = 'recaptcha-container';
+                recaptchaContainer.style.display = 'none'; // Hidden for invisible reCAPTCHA
+                document.body.appendChild(recaptchaContainer);
+            }
+            
             // Simple reCAPTCHA configuration - bare minimum
-            recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
+            recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'recaptcha-container', {
                 'size': 'invisible',
                 'callback': (response) => {
                     console.log('✅ reCAPTCHA solved successfully');
@@ -1260,6 +1269,16 @@ function initializeRecaptcha() {
             
         } catch (error) {
             console.error('❌ reCAPTCHA initialization error:', error);
+            console.error('❌ Error details:', error.message);
+            
+            // Check for common domain authorization issues
+            if (error.message && error.message.includes('argument-error')) {
+                console.error('🚨 Domain authorization issue detected!');
+                console.error('🔧 Current domain:', window.location.hostname);
+                console.error('🔧 Auth domain:', 'mbepiggy.firebaseapp.com');
+                console.error('💡 Solution: Add piggypiggy.pro to Firebase Console > Authentication > Settings > Authorized domains');
+            }
+            
             recaptchaVerifier = null;
             isRecaptchaReady = false;
             isRecaptchaInitializing = false;
@@ -1304,7 +1323,15 @@ function sendVerificationCode() {
             }
         }).catch((error) => {
             console.error('❌ reCAPTCHA initialization failed:', error);
-            alert('🚫 reCAPTCHA initialization failed. Please use BYPASS button or refresh the page.');
+            
+            let initErrorMessage = '🚫 reCAPTCHA initialization failed.\n\n';
+            if (error.message && error.message.includes('argument-error')) {
+                initErrorMessage += '🚨 DOMAIN ISSUE: piggypiggy.pro needs Firebase authorization.\n\n';
+                initErrorMessage += '👨‍💻 ADMIN: Add piggypiggy.pro to Firebase Console > Authentication > Settings > Authorized domains\n\n';
+            }
+            initErrorMessage += '✅ SOLUTION: Use the green SECURE LOGIN button below!';
+            
+            alert(initErrorMessage);
         });
         return;
     }
@@ -1348,6 +1375,17 @@ function sendVerificationCode() {
             console.error('Error message:', error.message);
             
             let errorMessage = `🚫 SMS Error: ${error.message}\n\n`;
+            
+            // Provide specific guidance based on error type
+            if (error.code === 'auth/argument-error' || error.message.includes('argument-error')) {
+                errorMessage += `🚨 DOMAIN ISSUE: This domain (piggypiggy.pro) needs to be authorized in Firebase.\n\n`;
+                errorMessage += `👨‍💻 ADMIN: Add piggypiggy.pro to Firebase Console > Authentication > Settings > Authorized domains\n\n`;
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage += `⏰ TOO MANY ATTEMPTS: Please wait a few minutes before trying again.\n\n`;
+            } else if (error.code === 'auth/invalid-phone-number') {
+                errorMessage += `📱 INVALID NUMBER: Please check the phone number format.\n\n`;
+            }
+            
             errorMessage += `✅ SOLUTION: Use the green SECURE LOGIN button below!`;
             
             alert(errorMessage);
