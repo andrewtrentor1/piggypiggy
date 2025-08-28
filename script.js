@@ -3733,8 +3733,12 @@ async function notifyAlexOfProof(proofData) {
 // Proof Viewer System
 async function showProofModal(activityId) {
     try {
+        console.log('🔍 Looking for proof with activity ID:', activityId);
+        
         // Find the activity in our local activities array
         const activity = activities.find(a => a.id === activityId);
+        console.log('📜 Found activity:', activity);
+        
         if (!activity || activity.type !== 'drink_proof') {
             alert('❌ Proof not found!');
             return;
@@ -3742,15 +3746,46 @@ async function showProofModal(activityId) {
         
         // Get proof data from activity or fetch from Firebase
         let proofData = activity.extraData;
+        console.log('📊 Activity extraData:', proofData);
+        
         if (!proofData) {
+            console.log('⚠️ No extraData found, trying Firebase drinkProofs...');
             // Fallback: try to fetch from Firebase drinkProofs
             const proofRef = window.firebaseRef(window.firebaseDB, `drinkProofs/${activity.id}`);
             const snapshot = await window.firebaseGet(proofRef);
             if (snapshot.exists()) {
                 proofData = snapshot.val();
+                console.log('✅ Found proof data in Firebase:', proofData);
             } else {
-                alert('❌ Proof data not found!');
-                return;
+                console.log('❌ No proof data found in Firebase either');
+                
+                // Try alternative approach - look for proof by searching for matching timestamp/player
+                console.log('🔍 Trying alternative search...');
+                const allProofsRef = window.firebaseRef(window.firebaseDB, 'drinkProofs');
+                const allProofsSnapshot = await window.firebaseGet(allProofsRef);
+                
+                if (allProofsSnapshot.exists()) {
+                    const allProofs = allProofsSnapshot.val();
+                    console.log('📊 All proofs in database:', allProofs);
+                    
+                    // Try to find a proof that matches this activity's timestamp (within 1 minute)
+                    const activityTime = new Date(activity.timestamp).getTime();
+                    const matchingProof = Object.values(allProofs).find(proof => {
+                        const proofTime = new Date(proof.timestamp).getTime();
+                        const timeDiff = Math.abs(activityTime - proofTime);
+                        return timeDiff < 60000; // Within 1 minute
+                    });
+                    
+                    if (matchingProof) {
+                        proofData = matchingProof;
+                        console.log('✅ Found matching proof by timestamp:', proofData);
+                    }
+                }
+                
+                if (!proofData) {
+                    alert('❌ Proof data not found! This might be an older proof entry before the system was updated.');
+                    return;
+                }
             }
         }
         

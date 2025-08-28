@@ -254,7 +254,7 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Firebase configuration
@@ -288,6 +288,7 @@
         window.firebaseRef = ref;
         window.firebaseOnValue = onValue;
         window.firebaseSet = set;
+        window.firebaseGet = get;
         window.onAuthStateChanged = onAuthStateChanged;
     </script>
     
@@ -832,6 +833,148 @@
         // Make functions globally accessible
         window.closeDangerZoneAlert = closeDangerZoneAlert;
         window.acknowledgeDrinks = acknowledgeDrinks;
+
+        // Proof Viewer System (copied from script.js)
+        async function showProofModal(activityId) {
+            try {
+                console.log('🔍 Looking for proof with activity ID:', activityId);
+                
+                // Find the activity in our local activities array
+                const activity = activities.find(a => a.id === activityId);
+                console.log('📜 Found activity:', activity);
+                
+                if (!activity || activity.type !== 'drink_proof') {
+                    alert('❌ Proof not found!');
+                    return;
+                }
+                
+                // Get proof data from activity or fetch from Firebase
+                let proofData = activity.extraData;
+                console.log('📊 Activity extraData:', proofData);
+                
+                if (!proofData) {
+                    console.log('⚠️ No extraData found, trying Firebase drinkProofs...');
+                    // Fallback: try to fetch from Firebase drinkProofs
+                    const proofRef = window.firebaseRef(window.firebaseDB, `drinkProofs/${activity.id}`);
+                    const snapshot = await window.firebaseGet(proofRef);
+                    if (snapshot.exists()) {
+                        proofData = snapshot.val();
+                        console.log('✅ Found proof data in Firebase:', proofData);
+                    } else {
+                        console.log('❌ No proof data found in Firebase either');
+                        
+                        // Try alternative approach - look for proof by searching for matching timestamp/player
+                        console.log('🔍 Trying alternative search...');
+                        const allProofsRef = window.firebaseRef(window.firebaseDB, 'drinkProofs');
+                        const allProofsSnapshot = await window.firebaseGet(allProofsRef);
+                        
+                        if (allProofsSnapshot.exists()) {
+                            const allProofs = allProofsSnapshot.val();
+                            console.log('📊 All proofs in database:', allProofs);
+                            
+                            // Try to find a proof that matches this activity's timestamp (within 1 minute)
+                            const activityTime = new Date(activity.timestamp).getTime();
+                            const matchingProof = Object.values(allProofs).find(proof => {
+                                const proofTime = new Date(proof.timestamp).getTime();
+                                const timeDiff = Math.abs(activityTime - proofTime);
+                                return timeDiff < 60000; // Within 1 minute
+                            });
+                            
+                            if (matchingProof) {
+                                proofData = matchingProof;
+                                console.log('✅ Found matching proof by timestamp:', proofData);
+                            }
+                        }
+                        
+                        if (!proofData) {
+                            alert('❌ Proof data not found! This might be an older proof entry before the system was updated.');
+                            return;
+                        }
+                    }
+                }
+                
+                // Populate modal with proof data
+                document.getElementById('proofImage').src = proofData.imageUrl;
+                document.getElementById('proofPlayerInfo').textContent = `Player: ${proofData.playerName}`;
+                document.getElementById('proofDrinkInfo').textContent = `Drinks: ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''}`;
+                document.getElementById('proofMessage').textContent = proofData.message ? `"${proofData.message}"` : 'No message provided';
+                
+                const timestamp = new Date(activity.timestamp);
+                document.getElementById('proofTimestamp').textContent = `Uploaded: ${timestamp.toLocaleString()}`;
+                
+                // Show Alex actions if current user is Alex
+                const alexActions = document.getElementById('alexProofActions');
+                if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                    alexActions.style.display = 'block';
+                    // Store current proof data for request functionality
+                    window.currentViewingProof = proofData;
+                } else {
+                    alexActions.style.display = 'none';
+                }
+                
+                // Show modal
+                document.getElementById('proofViewerModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('❌ Error showing proof modal:', error);
+                alert('❌ Error loading proof: ' + error.message);
+            }
+        }
+
+        function closeProofViewerModal() {
+            document.getElementById('proofViewerModal').style.display = 'none';
+            window.currentViewingProof = null;
+        }
+
+        async function requestProofFromPlayer() {
+            if (!window.currentViewingProof) {
+                alert('❌ No proof data available!');
+                return;
+            }
+            
+            const proofData = window.currentViewingProof;
+            const playerName = proofData.playerName;
+            
+            try {
+                // Create proof request
+                const requestData = {
+                    id: `proof_request_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+                    requestedBy: 'Alex',
+                    targetPlayer: playerName,
+                    originalProofId: proofData.id,
+                    message: `Alex is requesting additional proof for your ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''} assignment.`,
+                    timestamp: new Date().toISOString(),
+                    status: 'pending'
+                };
+                
+                // Save request to Firebase
+                const requestRef = window.firebaseRef(window.firebaseDB, `proofRequests/${requestData.id}`);
+                await window.firebaseSet(requestRef, requestData);
+                
+                // Send push notification to player (simplified for activity page)
+                console.log('📢 Proof request sent to:', playerName);
+                
+                // Add to activity log (simplified)
+                const activityData = {
+                    id: Date.now() + '_' + Math.floor(Math.random() * 10000),
+                    type: 'proof_request',
+                    emoji: '📢',
+                    message: `Alex requested additional proof from ${playerName}`,
+                    timestamp: new Date().toISOString()
+                };
+                
+                const activityRef = window.firebaseRef(window.firebaseDB, `activities/${activityData.id}`);
+                await window.firebaseSet(activityRef, activityData);
+                
+                // Close modal and show success
+                closeProofViewerModal();
+                alert(`📢 PROOF REQUEST SENT! 📢\n\n${playerName} has been notified that you want additional proof for their drink assignment.`);
+                
+            } catch (error) {
+                console.error('❌ Error requesting proof:', error);
+                alert('❌ Error sending proof request: ' + error.message);
+            }
+        }
 
         // Initialize Firebase when page loads
         setTimeout(() => {
