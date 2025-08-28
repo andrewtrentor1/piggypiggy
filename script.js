@@ -3764,16 +3764,29 @@ function takePicture() {
     const canvas = document.getElementById('photoCanvas');
     const context = canvas.getContext('2d');
     
-    // Set canvas size to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Calculate optimal size for mobile upload (max 800x600 for faster uploads)
+    let sourceWidth = video.videoWidth;
+    let sourceHeight = video.videoHeight;
+    const maxWidth = 800;
+    const maxHeight = 600;
     
-    // Draw video frame to canvas
-    context.drawImage(video, 0, 0);
+    // Calculate scaling to fit within max dimensions while maintaining aspect ratio
+    const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight, 1);
+    const targetWidth = Math.floor(sourceWidth * scale);
+    const targetHeight = Math.floor(sourceHeight * scale);
     
-    // Convert to blob
+    // Set canvas to optimized size
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    
+    // Draw video frame to canvas with scaling
+    context.drawImage(video, 0, 0, targetWidth, targetHeight);
+    
+    // Convert to blob with mobile-optimized quality (0.6 for smaller file size)
     canvas.toBlob((blob) => {
         capturedPhotoBlob = blob;
+        
+        console.log(`📸 Photo captured: ${targetWidth}x${targetHeight}, ${(blob.size / 1024).toFixed(1)}KB`);
         
         // Show preview
         const photoPreview = document.getElementById('photoPreview');
@@ -3794,7 +3807,7 @@ function takePicture() {
         }
         
         console.log('📸 Photo captured successfully');
-    }, 'image/jpeg', 0.8);
+    }, 'image/jpeg', 0.6);
 }
 
 function retakePicture() {
@@ -3936,7 +3949,7 @@ async function uploadImageToFirebase(blob, filename) {
     
     // Create timeout promise to prevent infinite hanging
     const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Upload timeout after 30 seconds')), 30000);
+        setTimeout(() => reject(new Error('Upload timeout after 60 seconds')), 60000);
     });
     
     try {
@@ -3946,9 +3959,9 @@ async function uploadImageToFirebase(blob, filename) {
             
             // Compress image if it's too large (mobile optimization)
             let uploadBlob = blob;
-            if (blob.size > 2 * 1024 * 1024) { // If larger than 2MB
+            if (blob.size > 500 * 1024) { // If larger than 500KB (reduced threshold)
                 console.log('📦 Compressing large image for mobile upload...');
-                uploadBlob = await compressImage(blob, 0.7); // Compress to 70% quality
+                uploadBlob = await compressImage(blob, 0.5); // Compress to 50% quality for faster upload
                 console.log('📦 Compressed size:', uploadBlob.size, 'bytes');
             }
             
@@ -4024,10 +4037,10 @@ async function compressImage(blob, quality = 0.7) {
         const img = new Image();
         
         img.onload = () => {
-            // Calculate new dimensions (max 1920x1080 for mobile)
+            // Calculate new dimensions (max 600x400 for mobile optimization)
             let { width, height } = img;
-            const maxWidth = 1920;
-            const maxHeight = 1080;
+            const maxWidth = 600;
+            const maxHeight = 400;
             
             if (width > maxWidth || height > maxHeight) {
                 const ratio = Math.min(maxWidth / width, maxHeight / height);
