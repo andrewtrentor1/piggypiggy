@@ -970,72 +970,86 @@
                             }
                         }
                         
+                        console.log('🔍 After alternative search, proofData:', !!proofData);
+                        
                         if (!proofData) {
+                            console.log('❌ No proof data found, showing alert...');
                             alert('❌ Proof data not found! This might be an older proof entry before the system was updated.');
                             return;
                         }
+                        
+                        console.log('✅ ProofData exists, continuing to modal display...');
                     }
                 }
+                
+                console.log('🚀 Reached end of proof data search, proofData:', !!proofData);
                 
                 console.log('🎯 About to populate modal with proof data:', proofData);
                 
-                // Check if modal elements exist
-                const modal = document.getElementById('proofViewerModal');
-                const proofImage = document.getElementById('proofImage');
-                const proofPlayerInfo = document.getElementById('proofPlayerInfo');
-                
-                console.log('🔍 Modal element found:', !!modal);
-                console.log('🔍 ProofImage element found:', !!proofImage);
-                console.log('🔍 ProofPlayerInfo element found:', !!proofPlayerInfo);
-                
-                if (!modal) {
-                    alert('❌ Modal element not found!');
-                    return;
-                }
-                
-                // Populate modal with proof data
-                if (proofImage) proofImage.src = proofData.imageUrl;
-                if (proofPlayerInfo) proofPlayerInfo.textContent = `Player: ${proofData.playerName}`;
-                
-                const proofDrinkInfo = document.getElementById('proofDrinkInfo');
-                if (proofDrinkInfo) proofDrinkInfo.textContent = `Drinks: ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''}`;
-                
-                const proofMessage = document.getElementById('proofMessage');
-                if (proofMessage) proofMessage.textContent = proofData.message ? `"${proofData.message}"` : 'No message provided';
-                
-                const timestamp = new Date(activity.timestamp);
-                const proofTimestamp = document.getElementById('proofTimestamp');
-                if (proofTimestamp) proofTimestamp.textContent = `Uploaded: ${timestamp.toLocaleString()}`;
-                
-                // Show Alex actions if current user is Alex
-                const alexActions = document.getElementById('alexProofActions');
-                if (alexActions) {
-                    if (isPlayerLoggedIn && currentPlayer === 'Alex') {
-                        alexActions.style.display = 'block';
-                        // Store current proof data for request functionality
-                        window.currentViewingProof = proofData;
-                    } else {
-                        alexActions.style.display = 'none';
+                try {
+                    // Check if modal elements exist
+                    const modal = document.getElementById('proofViewerModal');
+                    const proofImage = document.getElementById('proofImage');
+                    const proofPlayerInfo = document.getElementById('proofPlayerInfo');
+                    
+                    console.log('🔍 Modal element found:', !!modal);
+                    console.log('🔍 ProofImage element found:', !!proofImage);
+                    console.log('🔍 ProofPlayerInfo element found:', !!proofPlayerInfo);
+                    
+                    if (!modal) {
+                        console.error('❌ Modal element not found!');
+                        alert('❌ Modal element not found!');
+                        return;
                     }
-                }
                 
-                console.log('🎭 About to show modal...');
-                console.log('🔍 Modal current style.display:', modal.style.display);
-                console.log('🔍 Modal current classList:', modal.classList.toString());
-                
-                // Force show modal with both methods
-                modal.style.display = 'flex';
-                modal.classList.add('show');
-                
-                console.log('✅ Modal should now be visible with class:', modal.className);
-                console.log('✅ Modal style.display after:', modal.style.display);
-                
-                // Add click-outside-to-close functionality
-                modal.onclick = (e) => {
-                    if (e.target === modal) {
-                        closeProofViewerModal();
+                    // Populate modal with proof data
+                    if (proofImage) proofImage.src = proofData.imageUrl;
+                    if (proofPlayerInfo) proofPlayerInfo.textContent = `Player: ${proofData.playerName}`;
+                    
+                    const proofDrinkInfo = document.getElementById('proofDrinkInfo');
+                    if (proofDrinkInfo) proofDrinkInfo.textContent = `Drinks: ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''}`;
+                    
+                    const proofMessage = document.getElementById('proofMessage');
+                    if (proofMessage) proofMessage.textContent = proofData.message ? `"${proofData.message}"` : 'No message provided';
+                    
+                    const timestamp = new Date(activity.timestamp);
+                    const proofTimestamp = document.getElementById('proofTimestamp');
+                    if (proofTimestamp) proofTimestamp.textContent = `Uploaded: ${timestamp.toLocaleString()}`;
+                    
+                    // Show Alex actions if current user is Alex
+                    const alexActions = document.getElementById('alexProofActions');
+                    if (alexActions) {
+                        if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                            alexActions.style.display = 'block';
+                            // Store current proof data for request functionality
+                            window.currentViewingProof = proofData;
+                        } else {
+                            alexActions.style.display = 'none';
+                        }
                     }
-                };
+                    
+                    console.log('🎭 About to show modal...');
+                    console.log('🔍 Modal current style.display:', modal.style.display);
+                    console.log('🔍 Modal current classList:', modal.classList.toString());
+                    
+                    // Force show modal with both methods
+                    modal.style.display = 'flex';
+                    modal.classList.add('show');
+                    
+                    console.log('✅ Modal should now be visible with class:', modal.className);
+                    console.log('✅ Modal style.display after:', modal.style.display);
+                    
+                    // Add click-outside-to-close functionality
+                    modal.onclick = (e) => {
+                        if (e.target === modal) {
+                            closeProofViewerModal();
+                        }
+                    };
+                    
+                } catch (modalError) {
+                    console.error('❌ Error in modal display section:', modalError);
+                    alert('❌ Error displaying modal: ' + modalError.message);
+                }
                 
             } catch (error) {
                 console.error('❌ Error showing proof modal:', error);
