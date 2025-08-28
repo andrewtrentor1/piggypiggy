@@ -3953,59 +3953,33 @@ async function uploadImageToFirebase(blob, filename) {
     });
     
     try {
-        // Check if Firebase Storage is available
-        if (window.firebaseStorage && window.firebaseStorageRef && window.firebaseUploadBytes && window.firebaseGetDownloadURL) {
-            console.log('✅ Firebase Storage available, attempting real upload');
-            
-            // Compress image if it's too large (mobile optimization)
-            let uploadBlob = blob;
-            if (blob.size > 500 * 1024) { // If larger than 500KB (reduced threshold)
-                console.log('📦 Compressing large image for mobile upload...');
-                uploadBlob = await compressImage(blob, 0.5); // Compress to 50% quality for faster upload
-                console.log('📦 Compressed size:', uploadBlob.size, 'bytes');
-            }
-            
-            const storageRef = window.firebaseStorageRef(window.firebaseStorage, `drink_proofs/${filename}`);
-            
-            // Race between upload and timeout
-            const uploadPromise = (async () => {
-                console.log('📤 Starting Firebase Storage upload...');
-                const snapshot = await window.firebaseUploadBytes(storageRef, uploadBlob);
-                console.log('✅ Image uploaded to Firebase Storage successfully');
-                
-                console.log('🔗 Getting download URL...');
-                const downloadURL = await window.firebaseGetDownloadURL(snapshot.ref);
-                console.log('✅ Download URL obtained:', downloadURL);
-                
-                return downloadURL;
-            })();
-            
-            return await Promise.race([uploadPromise, timeoutPromise]);
-            
-        } else {
-            // Fallback: Use data URL for demo purposes
-            console.log('⚠️ Firebase Storage not available, using data URL fallback');
-            
-            // Simulate upload delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Create a data URL with timeout protection
-            return await Promise.race([
-                new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        console.log('✅ Data URL created successfully');
-                        resolve(reader.result);
-                    };
-                    reader.onerror = () => {
-                        console.error('❌ FileReader error');
-                        resolve('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k='); // 1x1 transparent JPEG
-                    };
-                    reader.readAsDataURL(blob);
-                }),
-                timeoutPromise
-            ]);
+        // Skip Firebase Storage due to CORS issues, use data URL fallback directly
+        console.log('📦 Using optimized data URL storage (bypassing Firebase Storage CORS issues)');
+        
+        // Compress image if it's too large (mobile optimization)
+        let uploadBlob = blob;
+        if (blob.size > 300 * 1024) { // If larger than 300KB (further reduced for data URL storage)
+            console.log('📦 Compressing large image for data URL storage...');
+            uploadBlob = await compressImage(blob, 0.4); // More aggressive compression for data URLs
+            console.log('📦 Compressed size:', uploadBlob.size, 'bytes');
         }
+        
+        // Create a data URL with timeout protection
+        return await Promise.race([
+            new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    console.log('✅ Data URL created successfully');
+                    resolve(reader.result);
+                };
+                reader.onerror = () => {
+                    console.error('❌ FileReader error');
+                    resolve('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k='); // 1x1 transparent JPEG
+                };
+                reader.readAsDataURL(uploadBlob);
+            }),
+            timeoutPromise
+        ]);
     } catch (error) {
         console.error('❌ Firebase Storage upload error:', error);
         
