@@ -1637,10 +1637,10 @@ function showDangerZoneAlert(playerName, timestamp) {
     // Add CSS animations if they don't exist
     addDangerZoneAnimations();
     
-    // Auto-close after 10 seconds if user doesn't click
+    // Auto-close after 20 seconds if user doesn't click
     setTimeout(() => {
         closeDangerZoneAlert();
-    }, 10000);
+    }, 20000);
     
     console.log('🚨 DANGER ZONE alert displayed for all users!');
 }

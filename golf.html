@@ -1048,58 +1048,142 @@
         }
 
         // Initialize Firebase and login state when page loads
-        // Danger Zone Alert Functions (copied from script.js)
+        // Dramatic Danger Zone Alert Functions (copied from script.js)
         function showDangerZoneAlert(playerName, timestamp) {
-            // Create modal if it doesn't exist
-            let modal = document.getElementById('dangerZoneAlert');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.className = 'modal';
-                modal.id = 'dangerZoneAlert';
-                modal.style.display = 'none';
-                modal.innerHTML = `
-                    <div class="modal-content" style="background: linear-gradient(45deg, #8B0000, #FF0000); border: 3px solid #FFD700; animation: dangerPulse 0.5s infinite alternate;">
-                        <h2 style="color: #FFD700; text-shadow: 2px 2px 4px #000; margin: 0 0 15px 0; font-size: 2em;">💀 DANGER ZONE 💀</h2>
-                        <p style="color: white; font-size: 1.3em; font-weight: bold; text-shadow: 1px 1px 2px #000; margin: 10px 0;">
-                            <span id="dangerZonePlayerName">${playerName}</span> has triggered the DANGER ZONE!
-                        </p>
-                        <p style="color: #FFD700; font-size: 1.1em; margin: 15px 0;">
-                            All players are now in the DANGER ZONE!
-                        </p>
-                        <button onclick="closeDangerZoneAlert()" style="background: #FFD700; color: #8B0000; border: none; padding: 12px 24px; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 10px;">
-                            ACKNOWLEDGE DANGER
-                        </button>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                
-                // Add CSS animation if not exists
-                if (!document.getElementById('dangerZoneStyles')) {
-                    const style = document.createElement('style');
-                    style.id = 'dangerZoneStyles';
-                    style.textContent = `
-                        @keyframes dangerPulse {
-                            0% { transform: scale(1); box-shadow: 0 0 20px #FF0000; }
-                            100% { transform: scale(1.02); box-shadow: 0 0 30px #FF0000, 0 0 40px #FFD700; }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
+            // Prevent duplicate alerts for the same event
+            if (window.lastDangerZoneAlert === timestamp) {
+                console.log('🚨 Duplicate DANGER ZONE alert prevented');
+                return;
             }
+            window.lastDangerZoneAlert = timestamp;
             
-            // Update player name and show modal
-            document.getElementById('dangerZonePlayerName').textContent = playerName;
-            modal.style.display = 'flex';
-            
-            // Play audio if available
+            // Play danger zone audio if available
             playDangerZoneAudio();
+            
+            // Create dramatic warning popup
+            const alertModal = document.createElement('div');
+            alertModal.id = 'dangerZoneAlert';
+            alertModal.className = 'modal';
+            alertModal.style.display = 'flex';
+            alertModal.style.zIndex = '10000'; // Ensure it's on top
+            
+            alertModal.innerHTML = `
+                <div class="modal-content" style="
+                    background: linear-gradient(45deg, #ff0000, #ff4500, #ff0000); 
+                    color: white; 
+                    text-align: center; 
+                    border: 5px solid #ff0000;
+                    animation: dangerPulse 0.5s infinite alternate;
+                    box-shadow: 0 0 50px #ff0000;
+                ">
+                    <h1 style="
+                        font-size: 4rem; 
+                        margin: 20px 0; 
+                        text-shadow: 3px 3px 0px #000;
+                        animation: dangerShake 0.3s infinite;
+                    ">⚠️ DANGER ZONE ⚠️</h1>
+                    
+                    <div style="font-size: 6rem; margin: 30px 0; animation: dangerSpin 2s linear infinite;">
+                        💀⚠️💀
+                    </div>
+                    
+                    <h2 style="
+                        font-size: 3rem; 
+                        margin: 20px 0; 
+                        color: #ffff00;
+                        text-shadow: 2px 2px 0px #000;
+                        animation: dangerFlash 1s infinite;
+                    ">
+                        ${playerName} TRIGGERED THE DANGER ZONE!
+                    </h2>
+                    
+                    <p style="
+                        font-size: 2rem; 
+                        margin: 20px 0; 
+                        font-weight: bold;
+                        text-shadow: 1px 1px 0px #000;
+                    ">
+                        🚨 ALL PLAYERS ARE NOW IN DANGER! 🚨<br>
+                        💀 BEWARE THE CONSEQUENCES! 💀
+                    </p>
+                    
+                    <button onclick="closeDangerZoneAlert()" style="
+                        background: linear-gradient(45deg, #000, #333); 
+                        color: #ff0000; 
+                        border: 3px solid #ff0000;
+                        padding: 15px 30px; 
+                        font-size: 1.5rem; 
+                        font-weight: bold;
+                        cursor: pointer;
+                        margin-top: 20px;
+                        animation: dangerButtonPulse 1s infinite;
+                    ">
+                        💀 ACKNOWLEDGE DANGER 💀
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(alertModal);
+            
+            // Add CSS animations if they don't exist
+            addDangerZoneAnimations();
+            
+            // Auto-close after 20 seconds if user doesn't click
+            setTimeout(() => {
+                closeDangerZoneAlert();
+            }, 20000);
+            
+            console.log('🚨 DANGER ZONE alert displayed for all users!');
         }
 
         function closeDangerZoneAlert() {
-            const modal = document.getElementById('dangerZoneAlert');
-            if (modal) {
-                modal.style.display = 'none';
+            const alertModal = document.getElementById('dangerZoneAlert');
+            if (alertModal) {
+                alertModal.remove();
             }
+        }
+
+        function addDangerZoneAnimations() {
+            // Check if animations already exist
+            if (document.getElementById('dangerZoneAnimations')) {
+                return;
+            }
+            
+            const style = document.createElement('style');
+            style.id = 'dangerZoneAnimations';
+            style.textContent = `
+                @keyframes dangerPulse {
+                    0% { transform: scale(1); }
+                    100% { transform: scale(1.05); }
+                }
+                
+                @keyframes dangerShake {
+                    0% { transform: translateX(0); }
+                    25% { transform: translateX(-5px); }
+                    50% { transform: translateX(5px); }
+                    75% { transform: translateX(-5px); }
+                    100% { transform: translateX(0); }
+                }
+                
+                @keyframes dangerSpin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                @keyframes dangerFlash {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                    100% { opacity: 1; }
+                }
+                
+                @keyframes dangerButtonPulse {
+                    0% { transform: scale(1); box-shadow: 0 0 10px #ff0000; }
+                    50% { transform: scale(1.1); box-shadow: 0 0 20px #ff0000; }
+                    100% { transform: scale(1); box-shadow: 0 0 10px #ff0000; }
+                }
+            `;
+            
+            document.head.appendChild(style);
         }
 
         function playDangerZoneAudio() {
