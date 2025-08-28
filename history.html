@@ -790,10 +790,23 @@
             const allSamePoints = maxPoints === minPoints;
             console.log('🏆 Max points:', maxPoints, 'Min points:', minPoints, 'All same:', allSamePoints);
             
-            // Update MVP Champion display
-            const mvpNameElement = document.querySelector('.year-section:first-child .mvp-card .winner-name');
-            const mvpDescElement = document.querySelector('.year-section:first-child .mvp-card p');
+            // Update MVP Champion display - try multiple selectors
+            let mvpNameElement = document.querySelector('.year-section .mvp-card .winner-name');
+            let mvpDescElement = document.querySelector('.year-section .mvp-card p');
+            
+            // If first selector doesn't work, try alternative approaches
+            if (!mvpNameElement) {
+                // Try finding by the specific structure we know exists
+                const yearSections = document.querySelectorAll('.year-section');
+                if (yearSections.length > 0) {
+                    mvpNameElement = yearSections[0].querySelector('.mvp-card .winner-name');
+                    mvpDescElement = yearSections[0].querySelector('.mvp-card p');
+                }
+            }
+            
             console.log('🏆 MVP elements found:', !!mvpNameElement, !!mvpDescElement);
+            console.log('🏆 MVP name element:', mvpNameElement);
+            console.log('🏆 MVP desc element:', mvpDescElement);
             
             if (mvpNameElement && mvpDescElement) {
                 if (allSamePoints) {
@@ -804,12 +817,31 @@
                     mvpDescElement.textContent = `CURRENTLY LEADING: ${currentLeader[0]}`;
                 }
                 console.log('🏆 MVP updated to:', mvpNameElement.textContent);
+            } else {
+                console.log('🏆 Could not find MVP elements, trying direct approach...');
+                // Last resort - find all elements with these classes
+                const allWinnerNames = document.querySelectorAll('.winner-name');
+                const allWinnerPs = document.querySelectorAll('.winner-card p');
+                console.log('🏆 All winner names found:', allWinnerNames.length);
+                console.log('🏆 All winner ps found:', allWinnerPs.length);
             }
             
-            // Update THE PIG display
-            const pigNameElement = document.querySelector('.year-section:first-child .pig-card .winner-name');
-            const pigDescElement = document.querySelector('.year-section:first-child .pig-card p');
+            // Update THE PIG display - try multiple selectors
+            let pigNameElement = document.querySelector('.year-section .pig-card .winner-name');
+            let pigDescElement = document.querySelector('.year-section .pig-card p');
+            
+            // If first selector doesn't work, try alternative approaches
+            if (!pigNameElement) {
+                const yearSections = document.querySelectorAll('.year-section');
+                if (yearSections.length > 0) {
+                    pigNameElement = yearSections[0].querySelector('.pig-card .winner-name');
+                    pigDescElement = yearSections[0].querySelector('.pig-card p');
+                }
+            }
+            
             console.log('🏆 PIG elements found:', !!pigNameElement, !!pigDescElement);
+            console.log('🏆 PIG name element:', pigNameElement);
+            console.log('🏆 PIG desc element:', pigDescElement);
             
             if (pigNameElement && pigDescElement) {
                 if (allSamePoints) {
@@ -820,6 +852,31 @@
                     pigDescElement.textContent = `SNORTY MCPIGFACE 2025: ${currentPig[0]} (CURRENTLY)`;
                 }
                 console.log('🏆 PIG updated to:', pigNameElement.textContent);
+            } else {
+                console.log('🏆 Could not find PIG elements, trying direct approach...');
+                // Last resort - find all elements with these classes
+                const allWinnerNames = document.querySelectorAll('.winner-name');
+                const allWinnerPs = document.querySelectorAll('.winner-card p');
+                console.log('🏆 All winner names found:', allWinnerNames.length);
+                console.log('🏆 All winner ps found:', allWinnerPs.length);
+                
+                // Try to update by index if we found elements
+                if (allWinnerNames.length >= 2 && allWinnerPs.length >= 2) {
+                    console.log('🏆 Attempting direct index update...');
+                    // First winner-name should be MVP, second should be PIG
+                    if (allSamePoints) {
+                        allWinnerNames[0].textContent = 'ALL TIED'; // MVP
+                        allWinnerNames[1].textContent = 'ALL TIED'; // PIG
+                        allWinnerPs[0].textContent = 'CURRENTLY ALL TIED'; // MVP desc
+                        allWinnerPs[1].textContent = 'SNORTY MCPIGFACE 2025: ALL TIED (CURRENTLY)'; // PIG desc
+                    } else {
+                        allWinnerNames[0].textContent = currentLeader[0]; // MVP
+                        allWinnerNames[1].textContent = currentPig[0]; // PIG
+                        allWinnerPs[0].textContent = `CURRENTLY LEADING: ${currentLeader[0]}`; // MVP desc
+                        allWinnerPs[1].textContent = `SNORTY MCPIGFACE 2025: ${currentPig[0]} (CURRENTLY)`; // PIG desc
+                    }
+                    console.log('🏆 Direct index update completed');
+                }
             }
             
             console.log('🏆 Current standings updated - Leader:', currentLeader, 'Pig:', currentPig, 'All tied:', allSamePoints);
