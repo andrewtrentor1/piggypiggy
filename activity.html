@@ -584,23 +584,27 @@
             }
         }
 
-        // Check for bypass login state from localStorage
+        // Legacy bypass login check - now handled by Firebase Auth onAuthStateChanged
         function checkBypassLoginState() {
-            const bypassLoggedIn = localStorage.getItem('bypassPlayerLoggedIn') === 'true';
-            const bypassPlayer = localStorage.getItem('bypassCurrentPlayer');
+            // Firebase Auth now handles bypass login persistence automatically
+            console.log('🔄 Legacy bypass login check on activity page - now handled by Firebase Auth');
+        }
+
+        // Check for Ham Handler login state from localStorage
+        function checkHamHandlerLoginState() {
+            const hamHandlerLoggedIn = localStorage.getItem('hamHandlerPlayerLoggedIn') === 'true';
+            const hamHandlerPlayer = localStorage.getItem('hamHandlerCurrentPlayer');
             
-            if (bypassLoggedIn && bypassPlayer) {
-                console.log(`🚀 Restoring bypass login state on activity page: ${bypassPlayer}`);
+            if (hamHandlerLoggedIn && hamHandlerPlayer) {
+                console.log(`🚀 Restoring Ham Handler login state on activity page: ${hamHandlerPlayer}`);
                 isPlayerLoggedIn = true;
-                currentPlayer = bypassPlayer;
+                currentPlayer = hamHandlerPlayer;
                 
-                // Check if this player is also the Ham Handler (Evan)
-                if (bypassPlayer === 'Evan') {
-                    isBookkeeperLoggedIn = true;
-                    localStorage.setItem('bookkeeperLoggedIn', 'true');
-                }
+                // Ham Handler is always Evan and gets bookkeeper access
+                isBookkeeperLoggedIn = true;
+                localStorage.setItem('bookkeeperLoggedIn', 'true');
                 
-                console.log(`🔐 Bypass login restored on activity page: ${bypassPlayer}`);
+                console.log(`🔐 Ham Handler login restored on activity page: ${hamHandlerPlayer}`);
                 
                 // Update status bar to reflect login state
                 updateStatusBar();
@@ -1235,6 +1239,7 @@
         // Initialize Firebase when page loads
         setTimeout(() => {
             checkBypassLoginState();
+            checkHamHandlerLoginState();
             initializeFirebase();
             
             // Ensure status bar is updated after login state is restored

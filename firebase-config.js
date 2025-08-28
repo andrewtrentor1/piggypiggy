@@ -3,7 +3,7 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getDatabase, ref, set, onValue, update, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signInAnonymously, updateProfile, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
 // Firebase configuration
@@ -65,6 +65,8 @@ window.firebaseUploadBytes = uploadBytes;
 window.firebaseGetDownloadURL = getDownloadURL;
 window.RecaptchaVerifier = RecaptchaVerifier;
 window.signInWithPhoneNumber = signInWithPhoneNumber;
+window.signInAnonymously = signInAnonymously;
+window.updateProfile = updateProfile;
 window.onAuthStateChanged = onAuthStateChanged;
 window.setPersistence = setPersistence;
 window.browserLocalPersistence = browserLocalPersistence;

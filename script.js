@@ -259,12 +259,13 @@ function initializeFirebase() {
     // Monitor authentication state
     window.onAuthStateChanged(window.firebaseAuth, (user) => {
         if (user) {
-            // User is signed in with phone number
-            const phoneNumber = user.phoneNumber;
-            const playerName = phoneToPlayer[phoneNumber];
-            
-            if (playerName) {
-                const wasAlreadyLoggedIn = localStorage.getItem('firebaseAuthLoggedIn') === playerName;
+            // Check if this is an anonymous user (bypass login)
+            if (user.isAnonymous && user.displayName && user.photoURL && user.photoURL.startsWith('bypass-')) {
+                // This is a bypass login using anonymous authentication
+                const playerName = user.displayName;
+                const bypassLoginInProgress = localStorage.getItem('bypassLoginInProgress');
+                
+                console.log(`🔐 Anonymous bypass login detected: ${playerName}`);
                 
                 isPlayerLoggedIn = true;
                 currentPlayer = playerName;
@@ -273,34 +274,75 @@ function initializeFirebase() {
                 if (playerName === 'Evan') {
                     isBookkeeperLoggedIn = true;
                     localStorage.setItem('bookkeeperLoggedIn', 'true');
-                    console.log(`🔐 Ham Handler authenticated: ${playerName} (${phoneNumber})`);
+                    console.log(`🔐 Ham Handler authenticated via bypass: ${playerName}`);
                 }
                 
-                console.log(`🔐 Player authenticated: ${playerName} (${phoneNumber})`);
-                
-                // Only show welcome message and log activity if this is truly a NEW login
-                // (not just navigating back to the page or refreshing)
-                if (!wasAlreadyLoggedIn) {
-                    // Mark this user as logged in
+                // Only show welcome message if this is a new bypass login
+                if (bypassLoginInProgress === playerName) {
+                    localStorage.removeItem('bypassLoginInProgress');
                     localStorage.setItem('firebaseAuthLoggedIn', playerName);
                     
                     if (playerName === 'Evan') {
-                        alert(`🐷 Welcome Ham Handler ${playerName}! 🐷\nYou now have FULL admin access AND player controls!`);
-                        // Log activity
-                        addActivity('admin', '🔐', `${playerName} logged in as Ham Handler`);
+                        alert(`👑 Welcome Ham Handler ${playerName}! 👑\n🔐 SECURE LOGIN SUCCESSFUL\nYou now have FULL admin access AND player controls!`);
+                        addActivity('admin', '🔐', `${playerName} logged in as Ham Handler (Secure Login)`);
                     } else {
-                        alert(`🐷 Welcome ${playerName}! 🐷\nYou are now securely logged in!`);
-                        // Log activity
-                        addActivity('admin', '🔐', `${playerName} logged in securely`);
+                        alert(`🐷 Welcome ${playerName}! 🐷\n🔐 SECURE LOGIN SUCCESSFUL\nYou are now logged in and will stay logged in!`);
+                        addActivity('admin', '🔐', `${playerName} logged in (Secure Login)`);
                     }
                 } else {
-                    console.log(`🔐 Player session restored: ${playerName} (already logged in)`);
+                    console.log(`🔐 Bypass login session restored: ${playerName}`);
                 }
                 
                 checkLoginState();
+            } 
+            // Check if this is a phone number login (SMS verification)
+            else if (user.phoneNumber) {
+                const phoneNumber = user.phoneNumber;
+                const playerName = phoneToPlayer[phoneNumber];
+                
+                if (playerName) {
+                    const wasAlreadyLoggedIn = localStorage.getItem('firebaseAuthLoggedIn') === playerName;
+                    
+                    isPlayerLoggedIn = true;
+                    currentPlayer = playerName;
+                    
+                    // Check if this player is also the Ham Handler (Evan)
+                    if (playerName === 'Evan') {
+                        isBookkeeperLoggedIn = true;
+                        localStorage.setItem('bookkeeperLoggedIn', 'true');
+                        console.log(`🔐 Ham Handler authenticated: ${playerName} (${phoneNumber})`);
+                    }
+                    
+                    console.log(`🔐 Player authenticated: ${playerName} (${phoneNumber})`);
+                    
+                    // Only show welcome message and log activity if this is truly a NEW login
+                    // (not just navigating back to the page or refreshing)
+                    if (!wasAlreadyLoggedIn) {
+                        // Mark this user as logged in
+                        localStorage.setItem('firebaseAuthLoggedIn', playerName);
+                        
+                        if (playerName === 'Evan') {
+                            alert(`🐷 Welcome Ham Handler ${playerName}! 🐷\nYou now have FULL admin access AND player controls!`);
+                            // Log activity
+                            addActivity('admin', '🔐', `${playerName} logged in as Ham Handler`);
+                        } else {
+                            alert(`🐷 Welcome ${playerName}! 🐷\nYou are now securely logged in!`);
+                            // Log activity
+                            addActivity('admin', '🔐', `${playerName} logged in securely`);
+                        }
+                    } else {
+                        console.log(`🔐 Player session restored: ${playerName} (already logged in)`);
+                    }
+                    
+                    checkLoginState();
+                } else {
+                    console.error('Phone number not recognized:', phoneNumber);
+                    // Sign out unrecognized user
+                    window.firebaseAuth.signOut();
+                }
             } else {
-                console.error('Phone number not recognized:', phoneNumber);
-                // Sign out unrecognized user
+                console.error('Unknown authentication method:', user);
+                // Sign out unknown user
                 window.firebaseAuth.signOut();
             }
         } else {
@@ -861,9 +903,17 @@ function attemptLogin() {
         // Successful login
         isBookkeeperLoggedIn = true;
         localStorage.setItem('bookkeeperLoggedIn', 'true');
+        
+        // Also set player login state for Evan (Ham Handler gets both admin and player access)
+        isPlayerLoggedIn = true;
+        currentPlayer = 'Evan';
+        localStorage.setItem('hamHandlerPlayerLoggedIn', 'true');
+        localStorage.setItem('hamHandlerCurrentPlayer', 'Evan');
+        
         document.getElementById('loginModal').style.display = 'none';
-        document.getElementById('bookkeeperCard').style.display = 'block';
-        document.getElementById('loginSection').style.display = 'none';
+        
+        // Check login state to show appropriate UI
+        checkLoginState();
         
         // Clear the form
         document.getElementById('loginUsername').value = '';
@@ -873,6 +923,9 @@ function attemptLogin() {
         updateStatusBar();
         
         alert('👑 HAM HANDLER ACTIVATED! 👑\n\n🐷 You now have supreme power over all pig points!\n\n✨ Your pig empire awaits your command! ✨');
+        
+        // Log activity
+        addActivity('admin', '🔐', `Evan logged in as Ham Handler (Password Login)`);
     } else {
         // Wrong credentials - SHAME!
         document.getElementById('loginModal').style.display = 'none';
@@ -1011,23 +1064,29 @@ function checkLoginState() {
     }
 }
 
-// Check for bypass login state from localStorage
+// Legacy bypass login check - now handled by Firebase Auth onAuthStateChanged
+// This function is kept for compatibility but will be removed in future updates
 function checkBypassLoginState() {
-    const bypassLoggedIn = localStorage.getItem('bypassPlayerLoggedIn') === 'true';
-    const bypassPlayer = localStorage.getItem('bypassCurrentPlayer');
+    // Firebase Auth now handles bypass login persistence automatically
+    // No need for manual localStorage checks
+    console.log('🔄 Legacy bypass login check - now handled by Firebase Auth');
+}
+
+// Check for Ham Handler login state from localStorage
+function checkHamHandlerLoginState() {
+    const hamHandlerLoggedIn = localStorage.getItem('hamHandlerPlayerLoggedIn') === 'true';
+    const hamHandlerPlayer = localStorage.getItem('hamHandlerCurrentPlayer');
     
-    if (bypassLoggedIn && bypassPlayer) {
-        console.log(`🚀 Restoring bypass login state: ${bypassPlayer}`);
+    if (hamHandlerLoggedIn && hamHandlerPlayer) {
+        console.log(`🚀 Restoring Ham Handler login state: ${hamHandlerPlayer}`);
         isPlayerLoggedIn = true;
-        currentPlayer = bypassPlayer;
+        currentPlayer = hamHandlerPlayer;
         
-        // Check if this player is also the Ham Handler (Evan)
-        if (bypassPlayer === 'Evan') {
-            isBookkeeperLoggedIn = true;
-            localStorage.setItem('bookkeeperLoggedIn', 'true');
-        }
+        // Ham Handler is always Evan and gets bookkeeper access
+        isBookkeeperLoggedIn = true;
+        localStorage.setItem('bookkeeperLoggedIn', 'true');
         
-        console.log(`🔐 Bypass login restored: ${bypassPlayer}`);
+        console.log(`🔐 Ham Handler login restored: ${hamHandlerPlayer}`);
         
         // Update UI to reflect login state (with delay to ensure insults are loaded)
         setTimeout(() => {
@@ -1040,6 +1099,7 @@ function checkBypassLoginState() {
 
 // Initialize login state
 checkBypassLoginState();
+checkHamHandlerLoginState();
 checkLoginState();
 
 // Ensure UI is updated after login state is restored
@@ -1455,6 +1515,10 @@ function logoutPlayer() {
                 currentPlayer = '';
                 isBookkeeperLoggedIn = false;
                 localStorage.removeItem('bookkeeperLoggedIn');
+                localStorage.removeItem('hamHandlerPlayerLoggedIn');
+                localStorage.removeItem('hamHandlerCurrentPlayer');
+                localStorage.removeItem('firebaseAuthLoggedIn');
+                localStorage.removeItem('bypassLoginInProgress');
                 checkLoginState();
                 
                 if (error.code === 'auth/too-many-requests') {
@@ -1496,7 +1560,7 @@ function debugFirebaseAuth() {
     console.log('🔍 Full Firebase Auth object:', window.firebaseAuth);
 }
 
-// Temporary bypass for SMS rate limiting during testing
+// Temporary bypass for SMS rate limiting during testing - now uses Firebase Anonymous Auth
 function bypassSMSForTesting() {
     const selectedPlayer = document.getElementById('playerSelect').value;
     
@@ -1518,33 +1582,37 @@ function bypassSMSForTesting() {
         return;
     }
 
-    console.log(`🔐 Secure bypass login for ${selectedPlayer}`);
+    console.log(`🔐 Secure bypass login for ${selectedPlayer} using Firebase Anonymous Auth`);
     
-    // Store login state in localStorage for cross-page persistence (same as SMS login)
-    localStorage.setItem('bypassPlayerLoggedIn', 'true');
-    localStorage.setItem('bypassCurrentPlayer', selectedPlayer);
-    
-    // Simulate successful login without triggering Firebase Auth
-    isPlayerLoggedIn = true;
-    currentPlayer = selectedPlayer;
-    
-    // Check if this player is also the Ham Handler (Evan)
-    if (selectedPlayer === 'Evan') {
-        isBookkeeperLoggedIn = true;
-        localStorage.setItem('bookkeeperLoggedIn', 'true');
-    }
-    
-    closePlayerLoginModal();
-    checkLoginState();
-    
-    // Show success message
-    if (selectedPlayer === 'Evan') {
-        alert(`👑 Welcome Ham Handler ${selectedPlayer}! 👑\n🔐 SECURE LOGIN SUCCESSFUL\nYou now have FULL admin access AND player controls!`);
-        addActivity('admin', '🔐', `${selectedPlayer} logged in as Ham Handler (Secure Login)`);
-    } else {
-        alert(`🐷 Welcome ${selectedPlayer}! 🐷\n🔐 SECURE LOGIN SUCCESSFUL\nYou are now logged in and will stay logged in!`);
-        addActivity('admin', '🔐', `${selectedPlayer} logged in (Secure Login)`);
-    }
+    // Use Firebase Anonymous Authentication
+    window.signInAnonymously(window.firebaseAuth)
+        .then((userCredential) => {
+            console.log(`✅ Firebase Anonymous Auth successful for ${selectedPlayer}`);
+            
+            // Update the user profile with the player name
+            return window.updateProfile(userCredential.user, {
+                displayName: selectedPlayer,
+                photoURL: `bypass-${selectedPlayer.toLowerCase()}`  // Use photoURL to store bypass flag
+            });
+        })
+        .then(() => {
+            console.log(`✅ User profile updated for ${selectedPlayer}`);
+            closePlayerLoginModal();
+            
+            // Store bypass login flag to distinguish from SMS login in onAuthStateChanged
+            localStorage.setItem('bypassLoginInProgress', selectedPlayer);
+            
+            // The onAuthStateChanged listener will handle the rest of the login process
+        })
+        .catch((error) => {
+            console.error('Firebase Anonymous Auth bypass login error:', error);
+            
+            if (error.code === 'auth/operation-not-allowed') {
+                alert('🚫 Anonymous authentication is not enabled in Firebase Console.\nPlease enable it or contact the Ham Handler.');
+            } else {
+                alert('🚫 Bypass login failed. Please try again or contact the Ham Handler.');
+            }
+        });
 }
 
 function updatePlayerUI() {
