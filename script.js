@@ -404,10 +404,19 @@ setTimeout(() => {
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden && document.getElementById('leaderboard')) {
         console.log('🏆 Page became visible, refreshing leaderboard...');
+        
+        // Restore login state first
+        checkBypassLoginState();
+        checkLoginState();
+        
         // Small delay to ensure Firebase is ready
         setTimeout(() => {
             if (players && Object.keys(players).length > 0) {
                 updateLeaderboard();
+                updateStatusBar();
+                if (isPlayerLoggedIn) {
+                    updatePlayerUI();
+                }
             } else {
                 console.log('🏆 Players data not available, re-initializing Firebase...');
                 initializeFirebase();
@@ -421,10 +430,19 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🏆 DOM loaded, checking for leaderboard...');
     if (document.getElementById('leaderboard')) {
         console.log('🏆 Leaderboard found, will update when Firebase is ready');
+        
+        // Restore login state immediately
+        checkBypassLoginState();
+        checkLoginState();
+        
         // Try to update leaderboard after a short delay
         setTimeout(() => {
             if (players && Object.keys(players).length > 0) {
                 updateLeaderboard();
+                updateStatusBar();
+                if (isPlayerLoggedIn) {
+                    updatePlayerUI();
+                }
             }
         }, 2000);
     }
@@ -835,10 +853,12 @@ function toggleBookkeeper() {
 }
 
 function attemptLogin() {
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
     
-    if (username === 'PIG' && password === 'PIG') {
+    // Modern pig-themed credentials
+    if ((username.toLowerCase() === 'hamhandler' || username.toLowerCase() === 'ham handler' || username.toLowerCase() === 'pigmaster') && 
+        (password.toLowerCase() === 'oinkmaster2025' || password.toLowerCase() === 'piggypiggy' || password === 'PIG')) {
         // Successful login
         isBookkeeperLoggedIn = true;
         localStorage.setItem('bookkeeperLoggedIn', 'true');
@@ -850,7 +870,10 @@ function attemptLogin() {
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
         
-        alert('🐷 BOOKKEEPER ACTIVATED! 🐷\nYou now have the power to control all pig points!');
+        // Update status bar
+        updateStatusBar();
+        
+        alert('👑 HAM HANDLER ACTIVATED! 👑\n\n🐷 You now have supreme power over all pig points!\n\n✨ Your pig empire awaits your command! ✨');
     } else {
         // Wrong credentials - SHAME!
         document.getElementById('loginModal').style.display = 'none';
@@ -1007,8 +1030,12 @@ function checkBypassLoginState() {
         
         console.log(`🔐 Bypass login restored: ${bypassPlayer}`);
         
-        // Update UI to reflect login state
-        updateLeaderboard();
+        // Update UI to reflect login state (with delay to ensure insults are loaded)
+        setTimeout(() => {
+            updateLeaderboard();
+            updatePlayerUI();
+            updateStatusBar();
+        }, 100);
     }
 }
 
@@ -4155,6 +4182,11 @@ const INSULT_ROTATION_HOURS = 3; // Change insults every 3 hours
 let isUpdatingInsults = false; // Prevent infinite loops
 
 function getPlayerInsult(playerName) {
+    // Ensure lastInsultUpdate is initialized
+    if (typeof lastInsultUpdate === 'undefined' || lastInsultUpdate === null) {
+        lastInsultUpdate = 0;
+    }
+    
     const now = Date.now();
     const hoursElapsed = (now - lastInsultUpdate) / (1000 * 60 * 60);
     
@@ -4215,9 +4247,17 @@ function loadPlayerInsults() {
             playerInsults = JSON.parse(savedInsults);
             lastInsultUpdate = parseInt(savedUpdateTime);
             console.log('🐷 Loaded saved pig insults:', playerInsults);
+        } else {
+            // Initialize with defaults if nothing saved
+            playerInsults = {};
+            lastInsultUpdate = 0;
+            console.log('🐷 Initializing pig insults system');
         }
     } catch (error) {
         console.log('⚠️ Could not load saved insults:', error);
+        // Fallback initialization
+        playerInsults = {};
+        lastInsultUpdate = 0;
     }
 }
 

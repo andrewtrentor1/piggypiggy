@@ -148,21 +148,27 @@
         </div>
     </div>
     
-    <!-- Login Modal -->
+    <!-- Ham Handler Login Modal -->
     <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <span class="close" onclick="closeLoginModal()">&times;</span>
-            <h2>🐷 BOOKKEEPER LOGIN 🐷</h2>
+        <div class="modal-content" style="background: linear-gradient(135deg, #8B4513, #daa520); color: white; border: 3px solid #FFD700;">
+            <span class="close" onclick="closeLoginModal()" style="color: white; font-size: 2rem; font-weight: bold;">&times;</span>
+            <h2 style="color: #FFD700; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 30px;">🐷 HAM HANDLER ACCESS 🐷</h2>
             <div class="login-form">
                 <div class="form-group">
-                    <label>Username:</label>
-                    <input type="text" id="loginUsername" placeholder="Enter username">
+                    <label style="color: #FFD700; font-weight: bold; font-size: 1.1rem;">👑 Ham Handler Username:</label>
+                    <input type="text" id="loginUsername" placeholder="Enter your pig handler name..." style="padding: 12px; border: 2px solid #FFD700; border-radius: 8px; font-size: 1rem; margin-top: 8px;">
                 </div>
                 <div class="form-group">
-                    <label>Password:</label>
-                    <input type="password" id="loginPassword" placeholder="Enter password">
+                    <label style="color: #FFD700; font-weight: bold; font-size: 1.1rem;">🔐 Secret Pig Password:</label>
+                    <input type="password" id="loginPassword" placeholder="Enter the sacred pig password..." style="padding: 12px; border: 2px solid #FFD700; border-radius: 8px; font-size: 1rem; margin-top: 8px;">
                 </div>
-                <button class="transfer-btn" onclick="attemptLogin()">🔐 LOGIN</button>
+                <button class="login-btn" onclick="attemptLogin()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #8B4513; font-weight: bold; font-size: 1.2rem; padding: 15px 30px; margin-top: 20px; border: none; border-radius: 10px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);">
+                    👑 BECOME HAM HANDLER 👑
+                </button>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; font-size: 0.9rem;">
+                    <p style="margin: 0; color: #FFD700;">🐷 <strong>Ham Handler Powers:</strong></p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.8rem;">• Control all pig points • Reset the game • Test danger zones • Transfer points between players</p>
+                </div>
             </div>
         </div>
     </div>
