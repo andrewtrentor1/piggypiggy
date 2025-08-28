@@ -2,8 +2,9 @@
 
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getDatabase, ref, set, onValue, update, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -20,6 +21,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 // Set Firebase Auth persistence to LOCAL (survives browser restarts)
 setPersistence(auth, browserLocalPersistence)
@@ -52,10 +54,15 @@ if (window.location.hostname === 'piggypiggy.pro' || window.location.hostname ==
 // Make Firebase functions available globally
 window.firebaseDB = database;
 window.firebaseAuth = auth;
+window.firebaseStorage = storage;
 window.firebaseRef = ref;
 window.firebaseSet = set;
 window.firebaseUpdate = update;
 window.firebaseOnValue = onValue;
+window.firebaseGet = get;
+window.firebaseStorageRef = storageRef;
+window.firebaseUploadBytes = uploadBytes;
+window.firebaseGetDownloadURL = getDownloadURL;
 window.RecaptchaVerifier = RecaptchaVerifier;
 window.signInWithPhoneNumber = signInWithPhoneNumber;
 window.onAuthStateChanged = onAuthStateChanged;

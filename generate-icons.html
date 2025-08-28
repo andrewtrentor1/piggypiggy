@@ -121,32 +121,61 @@
             canvas.width = size;
             canvas.height = size;
             
-            // Create gradient background
+            // Create gradient background (pig-themed pink/green)
             const gradient = ctx.createLinearGradient(0, 0, size, size);
             gradient.addColorStop(0, '#4CAF50');
-            gradient.addColorStop(1, '#45a049');
+            gradient.addColorStop(0.3, '#66BB6A');
+            gradient.addColorStop(0.7, '#81C784');
+            gradient.addColorStop(1, '#A5D6A7');
             
             // Draw background with rounded corners
             ctx.fillStyle = gradient;
-            ctx.roundRect(0, 0, size, size, size * 0.1);
+            ctx.roundRect(0, 0, size, size, size * 0.15);
             ctx.fill();
             
-            // Draw pig emoji
-            ctx.font = `${size * 0.3}px Arial`;
+            // Add subtle border
+            ctx.strokeStyle = '#2E7D32';
+            ctx.lineWidth = size * 0.01;
+            ctx.roundRect(0, 0, size, size, size * 0.15);
+            ctx.stroke();
+            
+            // Draw large pig emoji
+            ctx.font = `${size * 0.4}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('🐷', size / 2, size * 0.35);
             
-            // Draw app name
+            // Add shadow for pig emoji
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = size * 0.02;
+            ctx.shadowOffsetY = size * 0.01;
+            ctx.fillText('🐷', size / 2, size * 0.4);
+            
+            // Reset shadow for text
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = size * 0.01;
+            ctx.shadowOffsetY = size * 0.005;
+            
+            // Draw app name with better styling
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${size * 0.08}px Arial`;
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 2;
-            ctx.fillText('PIG POINTS', size / 2, size * 0.7);
+            ctx.font = `bold ${size * 0.09}px Arial, sans-serif`;
+            ctx.fillText('PIG POINTS', size / 2, size * 0.72);
             
             // Draw subtitle
-            ctx.font = `${size * 0.05}px Arial`;
-            ctx.fillText('MBE', size / 2, size * 0.8);
+            ctx.font = `${size * 0.055}px Arial, sans-serif`;
+            ctx.fillStyle = '#E8F5E8';
+            ctx.fillText('MBE', size / 2, size * 0.82);
+            
+            // Add small gambling elements
+            ctx.font = `${size * 0.06}px Arial`;
+            ctx.fillStyle = '#FFD700';
+            ctx.shadowBlur = size * 0.005;
+            ctx.fillText('🎰', size * 0.15, size * 0.85);
+            ctx.fillText('🍺', size * 0.85, size * 0.85);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
         }
         
         // Add roundRect method if not available

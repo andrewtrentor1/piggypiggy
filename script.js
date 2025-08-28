@@ -434,12 +434,11 @@ window.addEventListener('beforeinstallprompt', (e) => {
     deferredPrompt = e;
     
     // Show install prompt after user has been on the site for a bit
-    // TEMPORARILY DISABLED - will enable when ready for PWA rollout
-    // setTimeout(() => {
-    //     if (!installPromptShown) {
-    //         showInstallPrompt();
-    //     }
-    // }, 10000); // Show after 10 seconds
+    setTimeout(() => {
+        if (!installPromptShown) {
+            showInstallPrompt();
+        }
+    }, 10000); // Show after 10 seconds
 });
 
 window.addEventListener('appinstalled', () => {
@@ -649,16 +648,15 @@ function showDirectNotification(data) {
 }
 
 // Initialize push notifications when app loads
-// TEMPORARILY DISABLED - will enable when ready for PWA rollout
-// setTimeout(() => {
-//     requestNotificationPermission().then(granted => {
-//         if (granted) {
-//             console.log('✅ PWA: Notification permission granted');
-//         } else {
-//             console.log('❌ PWA: Notification permission denied');
-//         }
-//     });
-// }, 2000);
+setTimeout(() => {
+    requestNotificationPermission().then(granted => {
+        if (granted) {
+            console.log('✅ PWA: Notification permission granted');
+        } else {
+            console.log('❌ PWA: Notification permission denied');
+        }
+    });
+}, 2000);
 
 // Initialize bubbles (reduced frequency)
 function createBubbles() {
