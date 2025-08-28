@@ -273,7 +273,7 @@
                         <div class="winner-emoji">🐷</div>
                         <div class="winner-title">THE PIG</div>
                         <div class="winner-name">TBD</div>
-                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">Fewest Pig Points</p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">SNORTY MCPIGFACE 2025</p>
                     </div>
                 </div>
                 
@@ -315,7 +315,7 @@
                         <div class="winner-emoji">🐷</div>
                         <div class="winner-title">THE PIG</div>
                         <div class="winner-name">Evan</div>
-                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">PIG Winner</p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">SLOP GOBBLER 2024: Evan</p>
                     </div>
                 </div>
                 
@@ -346,7 +346,7 @@
                         <div class="winner-emoji">🐷</div>
                         <div class="winner-title">THE PIG</div>
                         <div class="winner-name">Brian</div>
-                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">PIG Winner</p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">MUD WALLOWER 2023: Brian</p>
                     </div>
                 </div>
                 
@@ -376,7 +376,7 @@
                         <div class="winner-emoji">🐷</div>
                         <div class="winner-title">THE PIG</div>
                         <div class="winner-name">Brian</div>
-                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">PIG Winner</p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">BACON BREATH 2022: Brian</p>
                     </div>
                 </div>
                 
@@ -408,7 +408,7 @@
                         <div class="winner-emoji">🐷</div>
                         <div class="winner-title">THE PIG</div>
                         <div class="winner-name">Andrew</div>
-                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">PIG Winner</p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">SNORT MASTER 2021: Andrew</p>
                     </div>
                 </div>
                 
@@ -441,7 +441,7 @@
                         <div class="winner-emoji">🐷</div>
                         <div class="winner-title">THE PIG</div>
                         <div class="winner-name">Andrew</div>
-                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">PIG Winner</p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">HOG BOY 2020: Andrew</p>
                     </div>
                 </div>
                 
@@ -595,6 +595,7 @@
                     players = data;
                     console.log('🐷 Pig points loaded on history page:', players);
                     updateStatusBar();
+                    updateCurrentStandings(); // Update current year standings
                 }
             });
 
@@ -755,6 +756,62 @@
             document.getElementById('currentTransferCount').textContent = transferCount;
             document.getElementById('currentGolfSessions').textContent = sessionsCount;
             document.getElementById('currentSidebets').textContent = sidebetsCount;
+        }
+
+        function updateCurrentStandings() {
+            // Only update if we have player data
+            if (!players || Object.keys(players).length === 0) {
+                return;
+            }
+
+            // Get regular players (exclude GOD)
+            const regularPlayers = Object.entries(players).filter(player => player[0] !== 'GOD');
+            
+            if (regularPlayers.length === 0) {
+                return;
+            }
+
+            // Sort by points (highest first)
+            const sortedPlayers = regularPlayers.sort((a, b) => b[1] - a[1]);
+            
+            // Get current leader and pig
+            const currentLeader = sortedPlayers[0]; // Highest points
+            const currentPig = sortedPlayers[sortedPlayers.length - 1]; // Lowest points
+            
+            // Check for ties
+            const maxPoints = currentLeader[1];
+            const minPoints = currentPig[1];
+            const allSamePoints = maxPoints === minPoints;
+            
+            // Update MVP Champion display
+            const mvpNameElement = document.querySelector('.year-section:first-child .mvp-card .winner-name');
+            const mvpDescElement = document.querySelector('.year-section:first-child .mvp-card p');
+            
+            if (mvpNameElement && mvpDescElement) {
+                if (allSamePoints) {
+                    mvpNameElement.textContent = 'TIE';
+                    mvpDescElement.textContent = 'CURRENTLY TIED';
+                } else {
+                    mvpNameElement.textContent = currentLeader[0];
+                    mvpDescElement.textContent = `CURRENTLY LEADING: ${currentLeader[0]}`;
+                }
+            }
+            
+            // Update THE PIG display
+            const pigNameElement = document.querySelector('.year-section:first-child .pig-card .winner-name');
+            const pigDescElement = document.querySelector('.year-section:first-child .pig-card p');
+            
+            if (pigNameElement && pigDescElement) {
+                if (allSamePoints) {
+                    pigNameElement.textContent = 'TIE';
+                    pigDescElement.textContent = 'CURRENTLY TIED';
+                } else {
+                    pigNameElement.textContent = currentPig[0];
+                    pigDescElement.textContent = `SNORTY MCPIGFACE 2025: ${currentPig[0]} (CURRENTLY)`;
+                }
+            }
+            
+            console.log('🏆 Current standings updated - Leader:', currentLeader, 'Pig:', currentPig);
         }
 
         function showAddYearModal() {
@@ -1459,6 +1516,7 @@
             // Ensure status bar is updated after login state is restored
             setTimeout(() => {
                 updateStatusBar();
+                updateCurrentStandings(); // Update current standings on page load
                 if (isPlayerLoggedIn) {
                     console.log(`🔐 History page: Login state confirmed for ${currentPlayer}`);
                 }

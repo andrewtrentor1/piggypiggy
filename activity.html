@@ -533,15 +533,31 @@
                         activityItem.classList.add('clickable-proof');
                         activityItem.style.cursor = 'pointer';
                         activityItem.onclick = () => showProofModal(activity.id);
+                        activityItem.style.background = 'linear-gradient(45deg, rgba(76, 175, 80, 0.1), rgba(69, 160, 73, 0.1))';
+                        activityItem.style.border = '2px solid rgba(76, 175, 80, 0.3)';
                     
-                        activityItem.innerHTML = `
+                        let proofContent = `
                             <div class="activity-time">${timeString}</div>
                             <div class="activity-text">
                                 <span class="activity-emoji">${activity.emoji}</span>
                                 ${activity.message}
-                                <span class="view-proof-hint" style="color: #2196F3; font-size: 0.9em; margin-left: 8px;">📱 Click to view</span>
+                        `;
+                        
+                        // Add image if present in extraData
+                        if (activity.extraData && activity.extraData.imageUrl) {
+                            proofContent += `
+                                <div style="margin-top: 10px;">
+                                    <img src="${activity.extraData.imageUrl}" alt="Proof photo" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #4CAF50;">
+                                </div>
+                            `;
+                        }
+                        
+                        proofContent += `
+                                <span class="view-proof-hint" style="color: #2196F3; font-size: 0.9em; margin-left: 8px;">📱 Click for details</span>
                             </div>
                         `;
+                        
+                        activityItem.innerHTML = proofContent;
                     } else if (activity.type === 'moment') {
                         // Special handling for moment activities
                         activityItem.classList.add('moment-activity');
