@@ -1057,15 +1057,15 @@ function loadActivityFeed() {
             activityItem.classList.add('clickable-proof');
             activityItem.style.cursor = 'pointer';
             activityItem.onclick = () => showProofModal(activity.id);
-            
-            activityItem.innerHTML = `
-                <div class="activity-time">${timeString}</div>
-                <div class="activity-text">
-                    <span class="activity-emoji">${activity.emoji}</span>
-                    ${activity.message}
+        
+        activityItem.innerHTML = `
+            <div class="activity-time">${timeString}</div>
+            <div class="activity-text">
+                <span class="activity-emoji">${activity.emoji}</span>
+                ${activity.message}
                     <span class="view-proof-hint" style="color: #2196F3; font-size: 0.9em; margin-left: 8px;">📱 Click to view</span>
-                </div>
-            `;
+            </div>
+        `;
         } else {
             activityItem.innerHTML = `
                 <div class="activity-time">${timeString}</div>
@@ -4151,6 +4151,7 @@ const pigInsults = [
 let playerInsults = {}; // Store current insults for each player
 let lastInsultUpdate = 0; // Track when insults were last updated
 const INSULT_ROTATION_HOURS = 3; // Change insults every 3 hours
+let isUpdatingInsults = false; // Prevent infinite loops
 
 function getPlayerInsult(playerName) {
     const now = Date.now();
@@ -4166,6 +4167,13 @@ function getPlayerInsult(playerName) {
 }
 
 function updatePlayerInsults() {
+    // Prevent infinite loops
+    if (isUpdatingInsults) {
+        console.log('🐷 Already updating insults, skipping...');
+        return;
+    }
+    
+    isUpdatingInsults = true;
     console.log('🐷 Updating insulting pig names...');
     
     const playerNames = Object.keys(players);
@@ -4192,8 +4200,8 @@ function updatePlayerInsults() {
     
     console.log('🐷 New pig insults assigned:', playerInsults);
     
-    // Update UI if needed
-    updatePlayerUI();
+    // Reset the flag
+    isUpdatingInsults = false;
 }
 
 // Load insults from localStorage on startup
