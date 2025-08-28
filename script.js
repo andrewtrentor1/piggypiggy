@@ -1872,8 +1872,13 @@ function initializeAlexDrinkSystem() {
                 const timeDiff = now - eventTime;
                 
                 if (timeDiff < 10000) { // Within 10 seconds
-                    console.log('🍺 Showing drink assignment alert for all users!');
-                    showDrinkAssignmentAlert(drinkData);
+                    // Don't show alert to Alex (the person who assigned the drinks)
+                    if (currentPlayer !== 'Alex') {
+                        console.log('🍺 Showing drink assignment alert for non-Alex users!');
+                        showDrinkAssignmentAlert(drinkData);
+                    } else {
+                        console.log('🍺 Skipping drink assignment alert for Alex (sender)');
+                    }
                 }
             }
         }, (error) => {
@@ -2501,28 +2506,52 @@ function showDrinkAssignmentAlert(drinkData) {
     }
     window.lastDrinkAssignmentAlert = drinkData.timestamp;
     
-    // Play drink assignment audio if available (you can add this later)
-    // playDrinkAssignmentAudio();
+    // Check if current player is assigned drinks
+    const currentPlayerDrinks = drinkData.assignments[currentPlayer] || 0;
+    const isAssignedDrinks = currentPlayerDrinks > 0;
     
-    // Create drink assignment alert content
-    let alertContent = `
-        <div style="font-size: 2rem; margin-bottom: 20px;">🍻</div>
-        <div style="font-weight: bold; margin-bottom: 15px;">Alex assigned drinks to:</div>
-    `;
+    let alertContent = '';
+    let buttonText = '';
+    let buttonColor = '';
     
-    Object.entries(drinkData.assignments).forEach(([player, drinks]) => {
-        alertContent += `
-            <div style="margin: 10px 0; padding: 10px; background: rgba(76,175,80,0.1); border-radius: 5px;">
-                <strong>${player}</strong>: ${drinks} drink${drinks > 1 ? 's' : ''}
+    if (isAssignedDrinks) {
+        // Player is assigned drinks - show drink assignment
+        alertContent = `
+            <div style="font-size: 2rem; margin-bottom: 20px;">🍺</div>
+            <div style="font-weight: bold; margin-bottom: 15px; font-size: 1.3em;">DRINK ASSIGNMENT</div>
+            <div style="margin: 15px 0; padding: 15px; background: rgba(76,175,80,0.2); border-radius: 8px; border: 2px solid #4CAF50;">
+                <div style="font-size: 1.2em; font-weight: bold; color: #2E7D32;">
+                    You have been assigned: ${currentPlayerDrinks} drink${currentPlayerDrinks > 1 ? 's' : ''}!
+                </div>
             </div>
         `;
-    });
-    
-    alertContent += `
-        <div style="margin-top: 20px; font-size: 1.1em; color: #4CAF50; font-weight: bold;">
-            Total: ${drinkData.totalDrinks} drink${drinkData.totalDrinks > 1 ? 's' : ''} assigned!
-        </div>
-    `;
+        buttonText = "I'LL DRINK! 🍻";
+        buttonColor = "#4CAF50";
+    } else {
+        // Player is not assigned drinks - show accountability message
+        const assignedPlayers = Object.entries(drinkData.assignments)
+            .filter(([player, drinks]) => drinks > 0)
+            .map(([player, drinks]) => `${player} (${drinks} drink${drinks > 1 ? 's' : ''})`)
+            .join(', ');
+            
+        alertContent = `
+            <div style="font-size: 2rem; margin-bottom: 20px;">👀</div>
+            <div style="font-weight: bold; margin-bottom: 15px; font-size: 1.3em;">HOLD THE HOG ACCOUNTABLE</div>
+            <div style="margin: 15px 0; padding: 15px; background: rgba(255,152,0,0.2); border-radius: 8px; border: 2px solid #FF9800;">
+                <div style="font-size: 1.1em; font-weight: bold; color: #E65100; margin-bottom: 10px;">
+                    Alex assigned drinks to:
+                </div>
+                <div style="font-size: 1.1em; color: #BF360C;">
+                    ${assignedPlayers}
+                </div>
+            </div>
+            <div style="margin-top: 15px; font-size: 1em; color: #666; font-style: italic;">
+                Make sure they follow through! 👁️
+            </div>
+        `;
+        buttonText = "I'LL HOLD THEM ACCOUNTABLE! 👀";
+        buttonColor = "#FF9800";
+    }
     
     // Add Alex's message if provided
     if (drinkData.message && drinkData.message.trim()) {
@@ -2538,19 +2567,23 @@ function showDrinkAssignmentAlert(drinkData) {
         `;
     }
     
-    alertContent += `
-        <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
-            Keep each other accountable! 🍺
-        </div>
-    `;
-    
+    // Update the modal content and button
     document.getElementById('drinkAlertContent').innerHTML = alertContent;
+    
+    // Update button text and color
+    const button = document.querySelector('#drinkAssignmentAlert button');
+    if (button) {
+        button.textContent = buttonText;
+        button.style.background = buttonColor;
+        button.style.color = 'white';
+    }
+    
     document.getElementById('drinkAssignmentAlert').style.display = 'flex';
     
     // Store assignment data for acknowledgment
     window.currentDrinkAssignment = drinkData;
     
-    console.log('🍺 Drink assignment alert displayed for all users!');
+    console.log(`🍺 Drink assignment alert displayed - ${isAssignedDrinks ? 'Drink assignment' : 'Accountability'} mode`);
 }
 
 function acknowledgeDrinks() {
@@ -2562,8 +2595,17 @@ function acknowledgeDrinks() {
         const playerDrinks = drinkData.assignments[currentPlayer] || 0;
         
         if (playerDrinks > 0) {
+            // Player acknowledged their own drinks
             const activityMessage = `${currentPlayer} acknowledged ${playerDrinks} drink${playerDrinks > 1 ? 's' : ''} from Alex`;
             addActivity('drink_acknowledgment', '✅', activityMessage);
+        } else {
+            // Player acknowledged they will hold others accountable
+            const assignedPlayers = Object.entries(drinkData.assignments)
+                .filter(([player, drinks]) => drinks > 0)
+                .map(([player, drinks]) => player)
+                .join(', ');
+            const activityMessage = `${currentPlayer} will hold ${assignedPlayers} accountable for their drinks`;
+            addActivity('accountability_acknowledgment', '👀', activityMessage);
         }
     }
     

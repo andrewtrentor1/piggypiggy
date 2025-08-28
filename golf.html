@@ -908,8 +908,13 @@
                     const timeDiff = now - eventTime;
                     
                     if (timeDiff < 10000) { // Within 10 seconds
-                        console.log('🍺 Showing drink assignment alert on golf page!');
-                        showDrinkAssignmentAlert(drinkData);
+                        // Don't show alert to Alex (the person who assigned the drinks)
+                        if (currentPlayer !== 'Alex') {
+                            console.log('🍺 Showing drink assignment alert on golf page!');
+                            showDrinkAssignmentAlert(drinkData);
+                        } else {
+                            console.log('🍺 Skipping drink assignment alert for Alex (sender) on golf page');
+                        }
                     }
                 }
             }, (error) => {
@@ -1130,29 +1135,78 @@
                 document.body.appendChild(modal);
             }
             
-            // Build alert content
-            let alertContent = `<p style="color: white; font-size: 1.2em; margin: 10px 0;"><strong>Alex has assigned drinks!</strong></p>`;
+            // Check if current player is assigned drinks
+            const currentPlayerDrinks = drinkData.assignments[currentPlayer] || 0;
+            const isAssignedDrinks = currentPlayerDrinks > 0;
             
-            // Show assignments
-            if (drinkData.assignments) {
-                alertContent += `<div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px; margin: 10px 0;">`;
-                Object.entries(drinkData.assignments).forEach(([player, drinks]) => {
-                    if (drinks > 0) {
-                        alertContent += `<p style="color: white; margin: 5px 0;"><strong>${player}:</strong> ${drinks} drink${drinks > 1 ? 's' : ''}</p>`;
-                    }
-                });
-                alertContent += `</div>`;
+            let alertContent = '';
+            let buttonText = '';
+            let buttonColor = '';
+            
+            if (isAssignedDrinks) {
+                // Player is assigned drinks - show drink assignment
+                alertContent = `
+                    <div style="font-size: 2rem; margin-bottom: 20px;">🍺</div>
+                    <div style="font-weight: bold; margin-bottom: 15px; font-size: 1.3em; color: white;">DRINK ASSIGNMENT</div>
+                    <div style="margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.3); border-radius: 8px; border: 2px solid #FFD700;">
+                        <div style="font-size: 1.2em; font-weight: bold; color: white;">
+                            You have been assigned: ${currentPlayerDrinks} drink${currentPlayerDrinks > 1 ? 's' : ''}!
+                        </div>
+                    </div>
+                `;
+                buttonText = "I'LL DRINK! 🍻";
+                buttonColor = "#4CAF50";
+            } else {
+                // Player is not assigned drinks - show accountability message
+                const assignedPlayers = Object.entries(drinkData.assignments)
+                    .filter(([player, drinks]) => drinks > 0)
+                    .map(([player, drinks]) => `${player} (${drinks} drink${drinks > 1 ? 's' : ''})`)
+                    .join(', ');
+                    
+                alertContent = `
+                    <div style="font-size: 2rem; margin-bottom: 20px;">👀</div>
+                    <div style="font-weight: bold; margin-bottom: 15px; font-size: 1.3em; color: white;">HOLD THE HOG ACCOUNTABLE</div>
+                    <div style="margin: 15px 0; padding: 15px; background: rgba(255,152,0,0.3); border-radius: 8px; border: 2px solid #FFD700;">
+                        <div style="font-size: 1.1em; font-weight: bold; color: white; margin-bottom: 10px;">
+                            Alex assigned drinks to:
+                        </div>
+                        <div style="font-size: 1.1em; color: #FFE0B2;">
+                            ${assignedPlayers}
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 1em; color: #E8F5E8; font-style: italic;">
+                        Make sure they follow through! 👁️
+                    </div>
+                `;
+                buttonText = "I'LL HOLD THEM ACCOUNTABLE! 👀";
+                buttonColor = "#FF9800";
             }
             
-            // Show message if exists
+            // Add Alex's message if provided
             if (drinkData.message && drinkData.message.trim()) {
-                alertContent += `<div style="background: rgba(255,215,0,0.2); padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #FFD700;">
-                    <p style="color: #FFD700; font-weight: bold; margin: 0 0 5px 0;">Message from Alex:</p>
-                    <p style="color: white; margin: 0; font-style: italic;">"${drinkData.message.trim()}"</p>
-                </div>`;
+                alertContent += `
+                    <div style="margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.2); border-radius: 8px; border-left: 4px solid #FFD700;">
+                        <div style="font-weight: bold; color: #FFD700; margin-bottom: 8px; display: flex; align-items: center;">
+                            📝 Message from Alex:
+                        </div>
+                        <div style="font-style: italic; color: white; font-size: 1.1em; line-height: 1.4;">
+                            "${drinkData.message}"
+                        </div>
+                    </div>
+                `;
             }
             
+            // Update the modal content and button
             document.getElementById('drinkAlertContent').innerHTML = alertContent;
+            
+            // Update button text and color
+            const button = modal.querySelector('button');
+            if (button) {
+                button.textContent = buttonText;
+                button.style.background = buttonColor;
+                button.style.color = 'white';
+            }
+            
             modal.style.display = 'flex';
             
             // Store assignment data for acknowledgment
@@ -1163,6 +1217,24 @@
             const modal = document.getElementById('drinkAssignmentAlert');
             if (modal) {
                 modal.style.display = 'none';
+            }
+            
+            // Log acknowledgment
+            if (window.currentDrinkAssignment && currentPlayer) {
+                const drinkData = window.currentDrinkAssignment;
+                const playerDrinks = drinkData.assignments[currentPlayer] || 0;
+                
+                if (playerDrinks > 0) {
+                    // Player acknowledged their own drinks
+                    console.log(`Golf page: ${currentPlayer} acknowledged ${playerDrinks} drinks`);
+                } else {
+                    // Player acknowledged they will hold others accountable
+                    const assignedPlayers = Object.entries(drinkData.assignments)
+                        .filter(([player, drinks]) => drinks > 0)
+                        .map(([player, drinks]) => player)
+                        .join(', ');
+                    console.log(`Golf page: ${currentPlayer} will hold ${assignedPlayers} accountable`);
+                }
             }
             
             // Send acknowledgment back to Firebase
