@@ -228,7 +228,7 @@ body {
 }
 
 /* Login and Main Action Buttons */
-.login-btn, .god-btn, .transfer-btn, .action-btn {
+.login-btn, .god-btn, .transfer-btn, .action-btn, .player-login-btn {
     background: linear-gradient(45deg, #daa520, #f0e68c);
     border: none;
     padding: 12px 24px;
@@ -244,9 +244,32 @@ body {
     color: #333;
 }
 
-.login-btn:hover, .god-btn:hover, .transfer-btn:hover, .action-btn:hover {
+.login-btn:hover, .god-btn:hover, .transfer-btn:hover, .action-btn:hover, .player-login-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Special Player Login Button - Extra Pig Theme */
+.player-login-btn {
+    background: linear-gradient(45deg, #ff69b4, #ff1493);
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 105, 180, 0.4);
+    animation: pigBounce 3s infinite ease-in-out;
+}
+
+.player-login-btn:hover {
+    background: linear-gradient(45deg, #ff1493, #ff69b4);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(255, 105, 180, 0.6);
+}
+
+@keyframes pigBounce {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-2px); }
 }
 
 .god-btn {
