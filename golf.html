@@ -924,26 +924,58 @@
             // Monitor authentication state (same as index.html)
             window.onAuthStateChanged(window.firebaseAuth, (user) => {
                 if (user) {
-                    // User is signed in with phone number
-                    const phoneNumber = user.phoneNumber;
-                    const playerName = phoneToPlayer[phoneNumber];
-                    
-                    if (playerName) {
-                        isPlayerLoggedIn = true;
-                        currentPlayer = playerName;
+                    // Check if this is an anonymous user (bypass login)
+                    if (user.isAnonymous) {
+                        // Check if we have a bypass login in progress or if the profile is already set
+                        const bypassLoginInProgress = localStorage.getItem('bypassLoginInProgress');
+                        const playerName = user.displayName || bypassLoginInProgress;
                         
-                        // Check if this player is also the Ham Handler (Evan)
-                        if (playerName === 'Evan') {
-                            isBookkeeperLoggedIn = true;
-                            localStorage.setItem('bookkeeperLoggedIn', 'true');
-                            console.log(`🔐 Ham Handler authenticated on golf page: ${playerName} (${phoneNumber})`);
+                        if (playerName) {
+                            console.log(`🔐 Anonymous bypass login detected on golf page: ${playerName}`);
+                            
+                            isPlayerLoggedIn = true;
+                            currentPlayer = playerName;
+                            
+                            // Check if this player is also the Ham Handler (Evan)
+                            if (playerName === 'Evan') {
+                                isBookkeeperLoggedIn = true;
+                                localStorage.setItem('bookkeeperLoggedIn', 'true');
+                                console.log(`🔐 Ham Handler authenticated via bypass on golf page: ${playerName}`);
+                            }
+                            
+                            console.log(`🔐 Bypass login session restored on golf page: ${playerName}`);
+                            checkLoginState();
+                        } else {
+                            console.log('🔐 Anonymous user without bypass login context on golf page - signing out');
+                            window.firebaseAuth.signOut();
                         }
+                    }
+                    // Check if this is a phone number login (SMS verification)
+                    else if (user.phoneNumber) {
+                        const phoneNumber = user.phoneNumber;
+                        const playerName = phoneToPlayer[phoneNumber];
                         
-                        console.log(`🔐 Player authenticated on golf page: ${playerName} (${phoneNumber})`);
-                        checkLoginState();
+                        if (playerName) {
+                            isPlayerLoggedIn = true;
+                            currentPlayer = playerName;
+                            
+                            // Check if this player is also the Ham Handler (Evan)
+                            if (playerName === 'Evan') {
+                                isBookkeeperLoggedIn = true;
+                                localStorage.setItem('bookkeeperLoggedIn', 'true');
+                                console.log(`🔐 Ham Handler authenticated on golf page: ${playerName} (${phoneNumber})`);
+                            }
+                            
+                            console.log(`🔐 Player authenticated on golf page: ${playerName} (${phoneNumber})`);
+                            checkLoginState();
+                        } else {
+                            console.error('Phone number not recognized:', phoneNumber);
+                            // Sign out unrecognized user
+                            window.firebaseAuth.signOut();
+                        }
                     } else {
-                        console.error('Phone number not recognized:', phoneNumber);
-                        // Sign out unrecognized user
+                        console.error('Unknown authentication method on golf page:', user);
+                        // Sign out unknown user
                         window.firebaseAuth.signOut();
                     }
                 } else {
