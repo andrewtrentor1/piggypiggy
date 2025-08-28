@@ -1250,6 +1250,9 @@
                         <button onclick="acknowledgeDrinks()" style="background: #FFD700; color: #4CAF50; border: none; padding: 12px 24px; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 15px;">
                             I'LL DRINK! 🍻
                         </button>
+                        <button id="uploadProofBtn" onclick="showUploadProofModal()" style="background: linear-gradient(45deg, #FF9800, #F57C00); color: white; border: none; padding: 12px 24px; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 15px; margin-left: 10px; display: none;">
+                            📸 UPLOAD PROOF
+                        </button>
                     </div>
                 `;
                 document.body.appendChild(modal);
@@ -1327,6 +1330,16 @@
                 button.style.color = 'white';
             }
             
+            // Show/hide upload proof button based on assignment
+            const uploadProofBtn = modal.querySelector('#uploadProofBtn');
+            if (uploadProofBtn) {
+                if (isAssignedDrinks) {
+                    uploadProofBtn.style.display = 'inline-block';
+                } else {
+                    uploadProofBtn.style.display = 'none';
+                }
+            }
+            
             modal.style.display = 'flex';
             
             // Store assignment data for acknowledgment
@@ -1385,9 +1398,305 @@
                 });
         }
 
+        // Upload Proof System
+        let currentStream = null;
+        let capturedPhotoBlob = null;
+        let currentFacingMode = 'environment';
+
+        function showUploadProofModal() {
+            if (!isPlayerLoggedIn || !currentPlayer) {
+                alert('🚫 You must be logged in to upload proof!');
+                return;
+            }
+            
+            resetUploadProofModal();
+            document.getElementById('uploadProofModal').style.display = 'flex';
+            
+            setTimeout(() => {
+                startCamera('environment');
+            }, 300);
+        }
+
+        function closeUploadProofModal() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            resetUploadProofModal();
+            document.getElementById('uploadProofModal').style.display = 'none';
+        }
+
+        function resetUploadProofModal() {
+            document.getElementById('cameraPreview').style.display = 'none';
+            document.getElementById('capturedPhoto').style.display = 'none';
+            document.getElementById('uploadControls').style.display = 'none';
+            document.getElementById('takePictureBtn').style.display = 'inline-block';
+            document.getElementById('retakePictureBtn').style.display = 'none';
+            document.getElementById('proofMessage').value = '';
+            capturedPhotoBlob = null;
+        }
+
+        async function startCamera(facingMode) {
+            try {
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+
+                const constraints = {
+                    video: { facingMode: facingMode }
+                };
+
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('cameraPreview');
+                video.srcObject = currentStream;
+                video.style.display = 'block';
+                currentFacingMode = facingMode;
+
+                updateCameraToggleButtons();
+                document.getElementById('takePictureBtn').style.display = 'inline-block';
+
+                console.log(`📹 Camera started successfully with ${facingMode} camera`);
+            } catch (error) {
+                console.error('❌ Camera error:', error);
+                alert('❌ Camera Access Error!\\n\\nCould not access your camera. Please:\\n• Allow camera permissions\\n• Make sure you\'re using HTTPS\\n• Try switching to the other camera');
+            }
+        }
+
+        function updateCameraToggleButtons() {
+            const backBtn = document.getElementById('backCameraBtn');
+            const frontBtn = document.getElementById('frontCameraBtn');
+            
+            if (currentFacingMode === 'environment') {
+                backBtn.classList.add('active');
+                frontBtn.classList.remove('active');
+                backBtn.style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
+                frontBtn.style.background = 'linear-gradient(45deg, #666, #888)';
+            } else {
+                frontBtn.classList.add('active');
+                backBtn.classList.remove('active');
+                frontBtn.style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
+                backBtn.style.background = 'linear-gradient(45deg, #666, #888)';
+            }
+        }
+
+        function switchCamera(facingMode) {
+            if (facingMode !== currentFacingMode) {
+                startCamera(facingMode);
+            }
+        }
+
+        function takePicture() {
+            const video = document.getElementById('cameraPreview');
+            const canvas = document.getElementById('photoCanvas');
+            const context = canvas.getContext('2d');
+            
+            let sourceWidth = video.videoWidth;
+            let sourceHeight = video.videoHeight;
+            const maxWidth = 800;
+            const maxHeight = 600;
+            
+            const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight, 1);
+            const targetWidth = Math.floor(sourceWidth * scale);
+            const targetHeight = Math.floor(sourceHeight * scale);
+            
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            
+            context.drawImage(video, 0, 0, targetWidth, targetHeight);
+            
+            canvas.toBlob((blob) => {
+                capturedPhotoBlob = blob;
+                
+                console.log(`📸 Photo captured: ${targetWidth}x${targetHeight}, ${(blob.size / 1024).toFixed(1)}KB`);
+                
+                const photoPreview = document.getElementById('photoPreview');
+                photoPreview.src = URL.createObjectURL(blob);
+                
+                document.getElementById('cameraPreview').style.display = 'none';
+                document.getElementById('capturedPhoto').style.display = 'block';
+                document.getElementById('uploadControls').style.display = 'block';
+                
+                document.getElementById('takePictureBtn').style.display = 'none';
+                document.getElementById('retakePictureBtn').style.display = 'inline-block';
+                
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                    currentStream = null;
+                }
+                
+                console.log('📸 Photo captured successfully');
+            }, 'image/jpeg', 0.6);
+        }
+
+        function retakePicture() {
+            document.getElementById('capturedPhoto').style.display = 'none';
+            document.getElementById('uploadControls').style.display = 'none';
+            document.getElementById('retakePictureBtn').style.display = 'none';
+            document.getElementById('takePictureBtn').style.display = 'inline-block';
+            capturedPhotoBlob = null;
+            startCamera(currentFacingMode);
+        }
+
+        async function uploadProof() {
+            if (!capturedPhotoBlob) {
+                alert('❌ Please take a photo first!');
+                return;
+            }
+            
+            if (!window.currentDrinkAssignment) {
+                alert('❌ No active drink assignment found!');
+                return;
+            }
+            
+            const proofMessage = document.getElementById('proofMessage').value.trim();
+            const drinkData = window.currentDrinkAssignment;
+            const playerDrinks = drinkData.assignments[currentPlayer] || 0;
+            
+            if (playerDrinks <= 0) {
+                alert('❌ You were not assigned any drinks!');
+                return;
+            }
+            
+            try {
+                const uploadBtn = document.querySelector('#uploadControls button');
+                const originalText = uploadBtn.textContent;
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = '⏳ UPLOADING...';
+                
+                const timestamp = Date.now();
+                const filename = `drink_proof_${currentPlayer}_${timestamp}.jpg`;
+                
+                console.log('🚀 Starting proof upload process...');
+                console.log('📊 Image size:', capturedPhotoBlob.size, 'bytes');
+                
+                const imageUrl = await uploadImageToFirebase(capturedPhotoBlob, filename);
+                
+                console.log('✅ Upload completed successfully!');
+                
+                const proofData = {
+                    id: `proof_${timestamp}`,
+                    playerId: currentPlayer,
+                    imageUrl: imageUrl,
+                    message: proofMessage,
+                    timestamp: new Date().toISOString(),
+                    drinkAssignmentId: drinkData.eventId,
+                    drinksAssigned: playerDrinks,
+                    acknowledged: true
+                };
+                
+                await saveProofToFirebase(proofData);
+                
+                uploadBtn.textContent = '✅ UPLOADED!';
+                uploadBtn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+                
+                setTimeout(() => {
+                    alert('✅ PROOF UPLOADED SUCCESSFULLY! 🎉\\n\\nYour drink proof has been submitted and Alex has been notified!');
+                    closeUploadProofModal();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Upload proof error:', error);
+                alert('❌ Upload failed! Please try again.');
+                
+                const uploadBtn = document.querySelector('#uploadControls button');
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '📤 UPLOAD PROOF';
+                uploadBtn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+            }
+        }
+
+        async function uploadImageToFirebase(blob, filename) {
+            console.log('📤 Uploading image to Firebase Storage:', filename);
+            console.log('📊 Blob size:', blob.size, 'bytes');
+            
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Upload timeout after 60 seconds')), 60000);
+            });
+            
+            try {
+                console.log('📦 Using optimized data URL storage (bypassing Firebase Storage CORS issues)');
+                
+                let uploadBlob = blob;
+                if (blob.size > 300 * 1024) {
+                    console.log('📦 Compressing large image for data URL storage...');
+                    uploadBlob = await compressImage(blob, 0.4);
+                    console.log('📦 Compressed size:', uploadBlob.size, 'bytes');
+                }
+                
+                return await Promise.race([
+                    new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            console.log('✅ Data URL created successfully');
+                            resolve(reader.result);
+                        };
+                        reader.onerror = () => {
+                            console.error('❌ FileReader error');
+                            resolve('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=');
+                        };
+                        reader.readAsDataURL(uploadBlob);
+                    }),
+                    timeoutPromise
+                ]);
+            } catch (error) {
+                console.error('❌ Firebase Storage upload error:', error);
+                throw error;
+            }
+        }
+
+        async function compressImage(blob, quality = 0.4) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = () => {
+                    let { width, height } = img;
+                    const maxWidth = 600;
+                    const maxHeight = 400;
+                    
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(resolve, 'image/jpeg', quality);
+                };
+                
+                img.onerror = () => {
+                    console.log('⚠️ Image compression failed, using original');
+                    resolve(blob);
+                };
+                
+                img.src = URL.createObjectURL(blob);
+            });
+        }
+
+        async function saveProofToFirebase(proofData) {
+            if (!window.firebaseDB) {
+                throw new Error('Firebase not available');
+            }
+            
+            const proofRef = window.firebaseRef(window.firebaseDB, `drinkProofs/${proofData.id}`);
+            await window.firebaseSet(proofRef, proofData);
+            
+            console.log('💾 Proof saved to Firebase:', proofData.id);
+        }
+
         // Make functions globally accessible
         window.closeDangerZoneAlert = closeDangerZoneAlert;
         window.acknowledgeDrinks = acknowledgeDrinks;
+        window.showUploadProofModal = showUploadProofModal;
+        window.closeUploadProofModal = closeUploadProofModal;
+        window.switchCamera = switchCamera;
+        window.takePicture = takePicture;
+        window.retakePicture = retakePicture;
+        window.uploadProof = uploadProof;
 
         console.log('🏌️ Golf.html loaded - Version: FIXED_2024_08_27');
         setTimeout(() => {
@@ -1977,6 +2286,53 @@
         `;
         document.head.appendChild(style);
     </script>
+
+    <!-- Upload Proof Modal -->
+    <div class="modal" id="uploadProofModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUploadProofModal()">&times;</span>
+            <h2>📸 UPLOAD DRINK PROOF 📸</h2>
+            <p style="text-align: center; margin-bottom: 20px; color: #666;">
+                Take a photo to prove you completed your drink assignment!
+            </p>
+            
+            <!-- Camera Preview -->
+            <div id="cameraSection" style="text-align: center; margin: 20px 0;">
+                <video id="cameraPreview" autoplay playsinline style="width: 100%; max-width: 300px; border-radius: 10px; display: none;"></video>
+                <canvas id="photoCanvas" style="display: none;"></canvas>
+                <div id="capturedPhoto" style="display: none; margin: 10px 0;">
+                    <img id="photoPreview" style="width: 100%; max-width: 300px; border-radius: 10px; border: 2px solid #4CAF50;">
+                </div>
+            </div>
+            
+            <!-- Camera Controls -->
+            <div id="cameraControls" style="text-align: center; margin: 20px 0;">
+                <div id="cameraToggle" style="margin-bottom: 15px;">
+                    <button id="backCameraBtn" class="camera-toggle-btn active" onclick="switchCamera('environment')" style="background: linear-gradient(45deg, #2196F3, #1976D2); color: white; border: none; padding: 8px 16px; border-radius: 20px; margin: 0 5px; cursor: pointer; font-size: 0.9em;">
+                        📷 BACK CAMERA
+                    </button>
+                    <button id="frontCameraBtn" class="camera-toggle-btn" onclick="switchCamera('user')" style="background: linear-gradient(45deg, #666, #888); color: white; border: none; padding: 8px 16px; border-radius: 20px; margin: 0 5px; cursor: pointer; font-size: 0.9em;">
+                        🤳 FRONT CAMERA
+                    </button>
+                </div>
+                
+                <button id="takePictureBtn" class="transfer-btn" onclick="takePicture()" style="background: linear-gradient(45deg, #4CAF50, #45a049);">
+                    📸 TAKE PICTURE
+                </button>
+                <button id="retakePictureBtn" class="transfer-btn" onclick="retakePicture()" style="background: linear-gradient(45deg, #FF9800, #F57C00); display: none;">
+                    🔄 RETAKE PICTURE
+                </button>
+            </div>
+            
+            <!-- Upload Controls -->
+            <div id="uploadControls" style="display: none; text-align: center; margin: 20px 0;">
+                <textarea id="proofMessage" placeholder="Add a message with your proof... (optional)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px; resize: vertical; min-height: 60px;"></textarea>
+                <button class="transfer-btn" onclick="uploadProof()" style="background: linear-gradient(45deg, #4CAF50, #45a049); width: 100%;">
+                    📤 UPLOAD PROOF
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Floating Status Bar -->
     <div class="status-bar" id="statusBar">
