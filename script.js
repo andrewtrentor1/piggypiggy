@@ -1219,20 +1219,41 @@ function initializeRecaptcha() {
                 recaptchaVerifier = null;
             }
             
-            // Create new reCAPTCHA verifier
-            recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
-                'size': 'invisible',
+            // Detect if we're on mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // Create new reCAPTCHA verifier with mobile-optimized settings
+            const recaptchaConfig = {
+                'size': isMobile ? 'normal' : 'invisible', // Use visible reCAPTCHA on mobile
                 'callback': (response) => {
                     console.log('✅ reCAPTCHA solved successfully');
                 },
                 'expired-callback': () => {
                     console.warn('⚠️ reCAPTCHA expired');
                     isRecaptchaReady = false;
+                    // Auto-retry on mobile
+                    if (isMobile) {
+                        setTimeout(() => {
+                            console.log('🔄 Auto-retrying reCAPTCHA on mobile...');
+                            initializeRecaptcha();
+                        }, 1000);
+                    }
                 },
                 'error-callback': (error) => {
                     console.error('❌ reCAPTCHA error during use:', error);
+                    // More aggressive retry on mobile
+                    if (isMobile) {
+                        isRecaptchaReady = false;
+                        setTimeout(() => {
+                            console.log('🔄 Retrying reCAPTCHA after error on mobile...');
+                            initializeRecaptcha();
+                        }, 2000);
+                    }
                 }
-            });
+            };
+            
+            console.log(`📱 Initializing reCAPTCHA for ${isMobile ? 'mobile' : 'desktop'} with ${recaptchaConfig.size} size`);
+            recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', recaptchaConfig);
             
             // Render the reCAPTCHA
             recaptchaVerifier.render().then(() => {
@@ -1317,13 +1338,22 @@ function sendVerificationCode() {
     sendButton.disabled = true;
     sendButton.textContent = '📱 SENDING...';
 
+    // Detect mobile for shorter timeout
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const timeoutDuration = isMobile ? 10000 : 15000; // Shorter timeout on mobile
+    
     // Add timeout to prevent hanging
     const timeoutId = setTimeout(() => {
         console.error('⏰ SMS sending timeout - operation took too long');
         sendButton.disabled = false;
         sendButton.textContent = originalText;
-        alert('🚫 SMS sending timed out. This is likely due to domain authorization issues.\n\nPlease use the BYPASS button for now.');
-    }, 15000); // 15 second timeout
+        
+        const timeoutMessage = isMobile ? 
+            '🚫 SMS sending timed out on mobile.\n\nMobile browsers often have reCAPTCHA issues.\n\n✅ SOLUTION: Use the green SECURE LOGIN button below!' :
+            '🚫 SMS sending timed out. This is likely due to domain authorization issues.\n\nPlease use the SECURE LOGIN button for now.';
+            
+        alert(timeoutMessage);
+    }, timeoutDuration);
 
     // Send SMS verification code
     console.log('🚀 Starting signInWithPhoneNumber...');
@@ -1346,20 +1376,27 @@ function sendVerificationCode() {
             console.error('Error code:', error.code);
             console.error('Error message:', error.message);
             
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             let errorMessage = `🚫 SMS Error: ${error.message}\n\n`;
             
             if (error.code === 'auth/unauthorized-domain') {
-                errorMessage += `DOMAIN NOT AUTHORIZED!\n\nThe domain needs to be added to Firebase Console.\n\nFIX:\n1. Go to Firebase Console\n2. Authentication → Settings\n3. Authorized domains → Add your domain\n\nFor now, use BYPASS button.`;
+                errorMessage += `DOMAIN NOT AUTHORIZED!\n\nThe domain needs to be added to Firebase Console.\n\nFIX:\n1. Go to Firebase Console\n2. Authentication → Settings\n3. Authorized domains → Add your domain\n\nFor now, use SECURE LOGIN button.`;
             } else if (error.code === 'auth/internal-error') {
-                errorMessage += `Internal Firebase error. Possible causes:\n• Domain authorization issue\n• reCAPTCHA configuration\n• Firebase service problems\n\nTry BYPASS button.`;
+                errorMessage += isMobile ? 
+                    `Internal Firebase error on mobile.\n\nMobile browsers often have issues with SMS.\n\n✅ SOLUTION: Use the green SECURE LOGIN button!` :
+                    `Internal Firebase error. Possible causes:\n• Domain authorization issue\n• reCAPTCHA configuration\n• Firebase service problems\n\nTry SECURE LOGIN button.`;
             } else if (error.code === 'auth/too-many-requests') {
-                errorMessage += `Rate limit exceeded. Wait a few minutes or use BYPASS button.`;
+                errorMessage += `Rate limit exceeded. Wait a few minutes or use SECURE LOGIN button.`;
             } else if (error.code === 'auth/captcha-check-failed') {
-                errorMessage += `reCAPTCHA verification failed. Try refreshing the page or use BYPASS button.`;
+                errorMessage += isMobile ?
+                    `reCAPTCHA failed on mobile device.\n\nMobile browsers are strict about reCAPTCHA.\n\n✅ SOLUTION: Use the green SECURE LOGIN button!` :
+                    `reCAPTCHA verification failed. Try refreshing the page or use SECURE LOGIN button.`;
             } else if (error.code === 'auth/invalid-phone-number') {
                 errorMessage += `Invalid phone number format.\nContact admin to verify phone number.`;
             } else {
-                errorMessage += `Error Code: ${error.code}\n\nMost likely a domain authorization issue.\nUse BYPASS button for now.`;
+                errorMessage += isMobile ?
+                    `SMS failed on mobile device.\n\nMobile browsers often block SMS verification.\n\n✅ SOLUTION: Use the green SECURE LOGIN button below!` :
+                    `Error Code: ${error.code}\n\nMost likely a domain authorization issue.\nUse SECURE LOGIN button for now.`;
             }
             
             alert(errorMessage);
@@ -1482,33 +1519,45 @@ function bypassSMSForTesting() {
         return;
     }
 
-    if (confirm(`🚀 TESTING BYPASS\n\nThis will log you in as ${selectedPlayer} without SMS verification.\n\n⚠️ This is for development/testing only!\n\nContinue?`)) {
-        console.log(`🚀 Bypass login for ${selectedPlayer}`);
-        
-        // Store login state in localStorage for cross-page persistence
-        localStorage.setItem('bypassPlayerLoggedIn', 'true');
-        localStorage.setItem('bypassCurrentPlayer', selectedPlayer);
-        
-        // Simulate successful login without triggering Firebase Auth
-        isPlayerLoggedIn = true;
-        currentPlayer = selectedPlayer;
-        
-        // Check if this player is also the Ham Handler (Evan)
+    // Prompt for secure bypass password
+    const enteredPassword = prompt(`🔐 SECURE LOGIN\n\nEnter the secure pig password to log in as ${selectedPlayer}:`);
+    
+    if (!enteredPassword) {
+        return; // User cancelled
+    }
+    
+    // Check if password is correct
+    if (enteredPassword !== 'IMAPIGOINK123') {
+        alert('🚫 INCORRECT PASSWORD!\n\nAccess denied. Contact the Ham Handler if you need the password.');
+        return;
+    }
+
+    console.log(`🔐 Secure bypass login for ${selectedPlayer}`);
+    
+    // Store login state in localStorage for cross-page persistence (same as SMS login)
+    localStorage.setItem('bypassPlayerLoggedIn', 'true');
+    localStorage.setItem('bypassCurrentPlayer', selectedPlayer);
+    
+    // Simulate successful login without triggering Firebase Auth
+    isPlayerLoggedIn = true;
+    currentPlayer = selectedPlayer;
+    
+    // Check if this player is also the Ham Handler (Evan)
+    if (selectedPlayer === 'Evan') {
+        isBookkeeperLoggedIn = true;
+        localStorage.setItem('bookkeeperLoggedIn', 'true');
+    }
+    
+    closePlayerLoginModal();
+    checkLoginState();
+    
+            // Show success message
         if (selectedPlayer === 'Evan') {
-            isBookkeeperLoggedIn = true;
-            localStorage.setItem('bookkeeperLoggedIn', 'true');
-        }
-        
-        closePlayerLoginModal();
-        checkLoginState();
-        
-        // Show success message
-        if (selectedPlayer === 'Evan') {
-            alert(`🐷 Welcome Ham Handler ${selectedPlayer}! 🐷\n[TESTING MODE - No SMS]\nYou now have FULL admin access AND player controls!`);
-            addActivity('admin', '🔐', `${selectedPlayer} logged in as Ham Handler (TESTING)`);
+            alert(`👑 Welcome Ham Handler ${selectedPlayer}! 👑\n🔐 SECURE LOGIN SUCCESSFUL\nYou now have FULL admin access AND player controls!`);
+            addActivity('admin', '🔐', `${selectedPlayer} logged in as Ham Handler (Secure Login)`);
         } else {
-            alert(`🐷 Welcome ${selectedPlayer}! 🐷\n[TESTING MODE - No SMS]\nYou are now logged in!`);
-            addActivity('admin', '🔐', `${selectedPlayer} logged in (TESTING)`);
+            alert(`🐷 Welcome ${selectedPlayer}! 🐷\n🔐 SECURE LOGIN SUCCESSFUL\nYou are now logged in and will stay logged in!`);
+            addActivity('admin', '🔐', `${selectedPlayer} logged in (Secure Login)`);
         }
     }
 }

@@ -314,9 +314,9 @@
                 <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
                     <small style="color: #856404;">
                         <strong>⚠️ SMS Issues?</strong><br>
-                        Common causes: Domain not authorized, reCAPTCHA problems, rate limits<br>
+                        <span id="smsHelpText">Common causes: Domain not authorized, reCAPTCHA problems, rate limits</span><br>
                         <button onclick="bypassSMSForTesting()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px;">
-                            🚀 BYPASS SMS (TESTING)
+                            🔐 SECURE LOGIN (NO SMS)
                         </button>
                         <button onclick="debugFirebaseAuth()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px; margin-left: 5px;">
                             🔍 DEBUG INFO
@@ -326,6 +326,14 @@
                         </button>
                     </small>
                 </div>
+                
+                <script>
+                    // Show mobile-specific help text
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        document.getElementById('smsHelpText').innerHTML = '<strong>📱 ON MOBILE:</strong> SMS often fails due to browser restrictions. <strong>Use SECURE LOGIN button!</strong>';
+                    }
+                </script>
             </div>
 
             <!-- Verification Code Entry -->
