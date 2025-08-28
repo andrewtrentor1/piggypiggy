@@ -463,6 +463,32 @@ body {
     overflow-y: auto;
 }
 
+/* Proof Viewer Modal Styles */
+#proofViewerModal {
+    display: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0,0,0,0.8) !important;
+    z-index: 10000 !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+#proofViewerModal.show {
+    display: flex !important;
+}
+
+#proofViewerModal .modal-content {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    position: relative;
+    margin: 20px;
+}
+
 #cameraPreview {
     background: #000;
     border: 2px solid #ddd;

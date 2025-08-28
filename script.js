@@ -3809,7 +3809,15 @@ async function showProofModal(activityId) {
         }
         
         // Show modal
-        document.getElementById('proofViewerModal').style.display = 'flex';
+        const modal = document.getElementById('proofViewerModal');
+        modal.classList.add('show');
+        
+        // Add click-outside-to-close functionality
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                closeProofViewerModal();
+            }
+        };
         
     } catch (error) {
         console.error('❌ Error showing proof modal:', error);
@@ -3818,7 +3826,8 @@ async function showProofModal(activityId) {
 }
 
 function closeProofViewerModal() {
-    document.getElementById('proofViewerModal').style.display = 'none';
+    const modal = document.getElementById('proofViewerModal');
+    modal.classList.remove('show');
     window.currentViewingProof = null;
 }
 
