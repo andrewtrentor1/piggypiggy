@@ -1109,6 +1109,14 @@
         setTimeout(() => {
             checkBypassLoginState();
             initializeFirebase();
+            
+            // Ensure status bar is updated after login state is restored
+            setTimeout(() => {
+                updateStatusBar();
+                if (isPlayerLoggedIn) {
+                    console.log(`🔐 History page: Login state confirmed for ${currentPlayer}`);
+                }
+            }, 500);
         }, 1000);
     </script>
 

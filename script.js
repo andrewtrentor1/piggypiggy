@@ -1042,6 +1042,15 @@ function checkBypassLoginState() {
 checkBypassLoginState();
 checkLoginState();
 
+// Ensure UI is updated after login state is restored
+setTimeout(() => {
+    if (isPlayerLoggedIn) {
+        updatePlayerUI();
+        updateStatusBar();
+        console.log(`🔐 Login state confirmed: ${currentPlayer} is logged in`);
+    }
+}, 500);
+
 // Initialize HOGWASH cooldowns
 loadHogwashCooldowns();
 

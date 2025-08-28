@@ -1358,6 +1358,14 @@
             checkBypassLoginState();
             initializeFirebase();
             checkLoginState(); // Check login state after DOM is ready
+            
+            // Ensure status bar is updated after login state is restored
+            setTimeout(() => {
+                updateStatusBar();
+                if (isPlayerLoggedIn) {
+                    console.log(`🔐 Golf page: Login state confirmed for ${currentPlayer}`);
+                }
+            }, 500);
         }, 1000);
         
         // Authentication functions
