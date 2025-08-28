@@ -399,6 +399,266 @@ setTimeout(() => {
     // reCAPTCHA will be initialized only when needed for SMS sending
 }, 1000);
 
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('✅ PWA: Service Worker registered successfully', registration.scope);
+                
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('🔄 PWA: New version available');
+                            showUpdateAvailablePrompt();
+                        }
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('❌ PWA: Service Worker registration failed', error);
+            });
+    });
+}
+
+// PWA Install Prompt
+let deferredPrompt;
+let installPromptShown = false;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('📱 PWA: Install prompt available');
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show install prompt after user has been on the site for a bit
+    // TEMPORARILY DISABLED - will enable when ready for PWA rollout
+    // setTimeout(() => {
+    //     if (!installPromptShown) {
+    //         showInstallPrompt();
+    //     }
+    // }, 10000); // Show after 10 seconds
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('🎉 PWA: App installed successfully');
+    deferredPrompt = null;
+    alert('🎉 MBE PIG POINTS installed successfully!\n\nYou can now access the app from your home screen and receive push notifications!');
+});
+
+function showInstallPrompt() {
+    if (!deferredPrompt || installPromptShown) return;
+    
+    installPromptShown = true;
+    
+    const installBanner = document.createElement('div');
+    installBanner.id = 'installBanner';
+    installBanner.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+        padding: 15px;
+        text-align: center;
+        z-index: 10000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        transform: translateY(-100%);
+        transition: transform 0.3s ease;
+    `;
+    
+    installBanner.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; max-width: 600px; margin: 0 auto;">
+            <div style="display: flex; align-items: center;">
+                <span style="font-size: 1.5em; margin-right: 10px;">📱</span>
+                <div>
+                    <div style="font-weight: bold;">Install MBE PIG POINTS</div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Get the full app experience with notifications!</div>
+                </div>
+            </div>
+            <div>
+                <button onclick="installPWA()" style="background: #FFD700; color: #2E7D32; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin-right: 10px; cursor: pointer;">
+                    Install
+                </button>
+                <button onclick="dismissInstallPrompt()" style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+                    Later
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(installBanner);
+    
+    // Animate in
+    setTimeout(() => {
+        installBanner.style.transform = 'translateY(0)';
+    }, 100);
+}
+
+function installPWA() {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('✅ PWA: User accepted install prompt');
+        } else {
+            console.log('❌ PWA: User dismissed install prompt');
+        }
+        deferredPrompt = null;
+        dismissInstallPrompt();
+    });
+}
+
+function dismissInstallPrompt() {
+    const banner = document.getElementById('installBanner');
+    if (banner) {
+        banner.style.transform = 'translateY(-100%)';
+        setTimeout(() => {
+            banner.remove();
+        }, 300);
+    }
+}
+
+function showUpdateAvailablePrompt() {
+    const updateBanner = document.createElement('div');
+    updateBanner.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #FF9800, #F57C00);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    `;
+    
+    updateBanner.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <strong>🔄 Update Available</strong><br>
+            A new version of MBE PIG POINTS is ready!
+        </div>
+        <button onclick="updatePWA()" style="background: white; color: #FF9800; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin-right: 10px; cursor: pointer;">
+            Update Now
+        </button>
+        <button onclick="this.parentElement.remove()" style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+            Later
+        </button>
+    `;
+    
+    document.body.appendChild(updateBanner);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (updateBanner.parentElement) {
+            updateBanner.remove();
+        }
+    }, 10000);
+}
+
+function updatePWA() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(registration => {
+            if (registration && registration.waiting) {
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                window.location.reload();
+            }
+        });
+    }
+}
+
+// Make PWA functions globally accessible
+window.installPWA = installPWA;
+window.dismissInstallPrompt = dismissInstallPrompt;
+window.updatePWA = updatePWA;
+
+// Push Notification Functions
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log('❌ PWA: This browser does not support notifications');
+        return false;
+    }
+    
+    if (Notification.permission === 'granted') {
+        return true;
+    }
+    
+    if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+    }
+    
+    return false;
+}
+
+async function sendPushNotification(data) {
+    console.log('📱 PWA: Sending push notification', data);
+    
+    // Check if we have permission
+    const hasPermission = await requestNotificationPermission();
+    if (!hasPermission) {
+        console.log('❌ PWA: No notification permission');
+        return;
+    }
+    
+    // If service worker is available, use it for better notification handling
+    if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+            // Send to service worker for processing
+            registration.active?.postMessage({
+                type: 'SHOW_NOTIFICATION',
+                data: data
+            });
+            return;
+        }
+    }
+    
+    // Fallback to direct notification
+    showDirectNotification(data);
+}
+
+function showDirectNotification(data) {
+    let title = data.title || 'MBE PIG POINTS';
+    let options = {
+        body: data.body || 'New activity in the app!',
+        icon: '/icon-192x192.png',
+        badge: '/icon-72x72.png',
+        tag: data.type || 'mbe-notification',
+        requireInteraction: true,
+        data: data
+    };
+    
+    // Add vibration for mobile
+    if (data.type === 'danger_zone') {
+        options.vibrate = [200, 100, 200, 100, 200];
+    } else if (data.type === 'drink_assignment') {
+        options.vibrate = [100, 50, 100];
+    } else {
+        options.vibrate = [150];
+    }
+    
+    // Show notification
+    new Notification(title, options);
+}
+
+// Initialize push notifications when app loads
+// TEMPORARILY DISABLED - will enable when ready for PWA rollout
+// setTimeout(() => {
+//     requestNotificationPermission().then(granted => {
+//         if (granted) {
+//             console.log('✅ PWA: Notification permission granted');
+//         } else {
+//             console.log('❌ PWA: Notification permission denied');
+//         }
+//     });
+// }, 2000);
+
 // Initialize bubbles (reduced frequency)
 function createBubbles() {
     const bubblesContainer = document.getElementById('bubbles');
@@ -2218,6 +2478,14 @@ function initiateDangerZone() {
         // Trigger the danger zone alert
         broadcastDangerZone('Alex (Manual Initiation)');
         
+        // Send push notification
+        sendPushNotification({
+            type: 'danger_zone',
+            title: '💀 DANGER ZONE 💀',
+            body: 'Alex initiated DANGER ZONE for all players!',
+            playerName: 'Alex'
+        });
+        
         // Update UI
         updateAlexDrinkUI();
         
@@ -2458,6 +2726,15 @@ function assignDrinks() {
         // Broadcast drink assignment with message
         broadcastDrinkAssignment(assignments, totalDrinks, alexMessage);
         
+        // Send push notification for drink assignment
+        sendPushNotification({
+            type: 'drink_assignment',
+            title: '🍺 DRINK ASSIGNMENT',
+            body: `Alex assigned ${totalDrinks} drinks! Check the app.`,
+            assignments: assignments,
+            message: alexMessage
+        });
+        
         // Close modal
         closeDrinkAssignmentModal();
         
@@ -2571,11 +2848,21 @@ function showDrinkAssignmentAlert(drinkData) {
     document.getElementById('drinkAlertContent').innerHTML = alertContent;
     
     // Update button text and color
-    const button = document.querySelector('#drinkAssignmentAlert button');
+    const button = document.querySelector('#drinkAssignmentAlert .transfer-btn[onclick="acknowledgeDrinks()"]');
     if (button) {
         button.textContent = buttonText;
-        button.style.background = buttonColor;
+        button.style.background = `linear-gradient(45deg, ${buttonColor}, ${buttonColor}dd)`;
         button.style.color = 'white';
+    }
+    
+    // Show/hide upload proof button based on whether player is assigned drinks
+    const uploadProofBtn = document.getElementById('uploadProofBtn');
+    if (uploadProofBtn) {
+        if (isAssignedDrinks) {
+            uploadProofBtn.style.display = 'inline-block';
+        } else {
+            uploadProofBtn.style.display = 'none';
+        }
     }
     
     document.getElementById('drinkAssignmentAlert').style.display = 'flex';
@@ -2934,6 +3221,15 @@ function rollHogwash() {
             action: () => {
                 // Broadcast DANGER ZONE to all connected devices
                 broadcastDangerZone(playerName);
+                
+                // Send push notification for Danger Zone
+                sendPushNotification({
+                    type: 'danger_zone',
+                    title: '💀 DANGER ZONE 💀',
+                    body: `${playerName} triggered DANGER ZONE! All players affected!`,
+                    playerName: playerName
+                });
+                
                 return `${playerName} triggered the DANGER ZONE! 💀 ALL PLAYERS BEWARE!`;
             },
             color: '#ff4757'
@@ -3081,6 +3377,335 @@ function saveScoreEdit() {
     
     alert(`✅ Score updated successfully!\n🐷 ${currentEditPlayer}: ${oldScore} → ${newScore} (${scoreDifference > 0 ? '+' : ''}${scoreDifference})`);
 }
+
+// Upload Proof System for Drink Assignments
+let currentStream = null;
+let capturedPhotoBlob = null;
+
+function showUploadProofModal() {
+    if (!isPlayerLoggedIn || !currentPlayer) {
+        alert('🚫 You must be logged in to upload proof!');
+        return;
+    }
+    
+    // Reset modal state
+    resetUploadProofModal();
+    
+    // Show modal
+    document.getElementById('uploadProofModal').style.display = 'flex';
+}
+
+function closeUploadProofModal() {
+    // Stop camera if running
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+    }
+    
+    // Reset modal state
+    resetUploadProofModal();
+    
+    // Hide modal
+    document.getElementById('uploadProofModal').style.display = 'none';
+}
+
+function resetUploadProofModal() {
+    // Reset all UI elements
+    document.getElementById('cameraPreview').style.display = 'none';
+    document.getElementById('capturedPhoto').style.display = 'none';
+    document.getElementById('uploadControls').style.display = 'none';
+    
+    document.getElementById('startCameraBtn').style.display = 'inline-block';
+    document.getElementById('takePictureBtn').style.display = 'none';
+    document.getElementById('retakePictureBtn').style.display = 'none';
+    
+    // Clear form data
+    document.getElementById('proofMessage').value = '';
+    capturedPhotoBlob = null;
+}
+
+async function startCamera() {
+    try {
+        // Request camera access
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment', // Use back camera if available
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        });
+        
+        currentStream = stream;
+        const video = document.getElementById('cameraPreview');
+        video.srcObject = stream;
+        video.style.display = 'block';
+        
+        // Update UI
+        document.getElementById('startCameraBtn').style.display = 'none';
+        document.getElementById('takePictureBtn').style.display = 'inline-block';
+        
+        console.log('📹 Camera started successfully');
+    } catch (error) {
+        console.error('❌ Camera access error:', error);
+        alert('❌ Camera Access Error!\n\nCould not access your camera. Please:\n• Allow camera permissions\n• Try using the file upload option instead\n• Make sure you\'re using HTTPS');
+    }
+}
+
+function takePicture() {
+    const video = document.getElementById('cameraPreview');
+    const canvas = document.getElementById('photoCanvas');
+    const context = canvas.getContext('2d');
+    
+    // Set canvas size to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw video frame to canvas
+    context.drawImage(video, 0, 0);
+    
+    // Convert to blob
+    canvas.toBlob((blob) => {
+        capturedPhotoBlob = blob;
+        
+        // Show preview
+        const photoPreview = document.getElementById('photoPreview');
+        photoPreview.src = URL.createObjectURL(blob);
+        
+        // Update UI
+        document.getElementById('cameraPreview').style.display = 'none';
+        document.getElementById('capturedPhoto').style.display = 'block';
+        document.getElementById('uploadControls').style.display = 'block';
+        
+        document.getElementById('takePictureBtn').style.display = 'none';
+        document.getElementById('retakePictureBtn').style.display = 'inline-block';
+        
+        // Stop camera
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+        
+        console.log('📸 Photo captured successfully');
+    }, 'image/jpeg', 0.8);
+}
+
+function retakePicture() {
+    // Reset to camera mode
+    document.getElementById('capturedPhoto').style.display = 'none';
+    document.getElementById('uploadControls').style.display = 'none';
+    document.getElementById('retakePictureBtn').style.display = 'none';
+    
+    capturedPhotoBlob = null;
+    
+    // Restart camera
+    startCamera();
+}
+
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('❌ Please select an image file!');
+        return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('❌ Image too large! Please choose an image smaller than 5MB.');
+        return;
+    }
+    
+    capturedPhotoBlob = file;
+    
+    // Show preview
+    const photoPreview = document.getElementById('photoPreview');
+    photoPreview.src = URL.createObjectURL(file);
+    
+    // Update UI
+    document.getElementById('cameraPreview').style.display = 'none';
+    document.getElementById('capturedPhoto').style.display = 'block';
+    document.getElementById('uploadControls').style.display = 'block';
+    
+    document.getElementById('startCameraBtn').style.display = 'none';
+    document.getElementById('takePictureBtn').style.display = 'none';
+    document.getElementById('retakePictureBtn').style.display = 'inline-block';
+    
+    console.log('📁 File selected successfully:', file.name);
+}
+
+async function uploadProof() {
+    if (!capturedPhotoBlob) {
+        alert('❌ Please take a photo or select an image first!');
+        return;
+    }
+    
+    if (!window.currentDrinkAssignment) {
+        alert('❌ No active drink assignment found!');
+        return;
+    }
+    
+    const proofMessage = document.getElementById('proofMessage').value.trim();
+    const drinkData = window.currentDrinkAssignment;
+    const playerDrinks = drinkData.assignments[currentPlayer] || 0;
+    
+    if (playerDrinks <= 0) {
+        alert('❌ You were not assigned any drinks!');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const uploadBtn = document.querySelector('#uploadControls button');
+        const originalText = uploadBtn.textContent;
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = '⏳ UPLOADING...';
+        
+        // Create unique filename
+        const timestamp = Date.now();
+        const filename = `drink_proof_${currentPlayer}_${timestamp}.jpg`;
+        
+        // Upload to Firebase Storage (we'll implement this next)
+        const imageUrl = await uploadImageToFirebase(capturedPhotoBlob, filename);
+        
+        // Create proof data
+        const proofData = {
+            id: `proof_${timestamp}_${Math.floor(Math.random() * 10000)}`,
+            playerName: currentPlayer,
+            drinkAssignmentId: drinkData.eventId,
+            drinksAssigned: playerDrinks,
+            imageUrl: imageUrl,
+            message: proofMessage,
+            timestamp: new Date().toISOString(),
+            uploadedBy: currentPlayer
+        };
+        
+        // Save proof to Firebase
+        await saveProofToFirebase(proofData);
+        
+        // Add to activity log
+        let activityMessage = `${currentPlayer} uploaded proof for ${playerDrinks} drink${playerDrinks > 1 ? 's' : ''}`;
+        if (proofMessage) {
+            activityMessage += ` - "${proofMessage}"`;
+        }
+        addActivity('drink_proof', '📸', activityMessage);
+        
+        // Notify Alex
+        await notifyAlexOfProof(proofData);
+        
+        // Close modals
+        closeUploadProofModal();
+        document.getElementById('drinkAssignmentAlert').style.display = 'none';
+        
+        // Clear current assignment
+        window.currentDrinkAssignment = null;
+        
+        alert('🎉 PROOF UPLOADED! 🎉\n\nYour drink proof has been uploaded successfully!\nAlex has been notified and it\'s been added to the activity log.');
+        
+    } catch (error) {
+        console.error('❌ Upload proof error:', error);
+        alert('❌ Upload Failed!\n\nThere was an error uploading your proof. Please try again.\n\nError: ' + error.message);
+        
+        // Reset button
+        const uploadBtn = document.querySelector('#uploadControls button');
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = originalText;
+    }
+}
+
+async function uploadImageToFirebase(blob, filename) {
+    console.log('📤 Uploading image to Firebase Storage:', filename);
+    
+    try {
+        // Check if Firebase Storage is available
+        if (window.firebaseStorage && window.firebaseStorageRef && window.firebaseUploadBytes && window.firebaseGetDownloadURL) {
+            // Real Firebase Storage implementation
+            const storageRef = window.firebaseStorageRef(window.firebaseStorage, `drink_proofs/${filename}`);
+            
+            // Upload the file
+            const snapshot = await window.firebaseUploadBytes(storageRef, blob);
+            console.log('📤 Image uploaded to Firebase Storage');
+            
+            // Get download URL
+            const downloadURL = await window.firebaseGetDownloadURL(snapshot.ref);
+            console.log('🔗 Download URL obtained:', downloadURL);
+            
+            return downloadURL;
+        } else {
+            // Fallback: Use data URL for demo purposes
+            console.log('⚠️ Firebase Storage not available, using data URL fallback');
+            
+            // Simulate upload delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Create a data URL
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        }
+    } catch (error) {
+        console.error('❌ Firebase Storage upload error:', error);
+        
+        // Fallback to data URL on error
+        console.log('⚠️ Falling back to data URL due to upload error');
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+    }
+}
+
+async function saveProofToFirebase(proofData) {
+    if (!window.firebaseDB) {
+        throw new Error('Firebase not available');
+    }
+    
+    const proofRef = window.firebaseRef(window.firebaseDB, `drinkProofs/${proofData.id}`);
+    await window.firebaseSet(proofRef, proofData);
+    
+    console.log('💾 Proof saved to Firebase:', proofData.id);
+}
+
+async function notifyAlexOfProof(proofData) {
+    // Send push notification to Alex
+    await sendPushNotification({
+        type: 'drink_proof',
+        title: '📸 DRINK PROOF UPLOADED',
+        body: `${proofData.playerName} uploaded proof for ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''}!`,
+        playerName: proofData.playerName,
+        proofId: proofData.id
+    });
+    
+    // Also save notification to Firebase for Alex to see
+    const notificationData = {
+        id: `notification_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+        type: 'drink_proof',
+        title: '📸 DRINK PROOF UPLOADED',
+        message: `${proofData.playerName} uploaded proof for ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''}!`,
+        proofData: proofData,
+        timestamp: new Date().toISOString(),
+        read: false,
+        targetPlayer: 'Alex'
+    };
+    
+    const notificationRef = window.firebaseRef(window.firebaseDB, `notifications/${notificationData.id}`);
+    await window.firebaseSet(notificationRef, notificationData);
+    
+    console.log('🔔 Alex notified of proof upload');
+}
+
+// Make upload proof functions globally accessible
+window.showUploadProofModal = showUploadProofModal;
+window.closeUploadProofModal = closeUploadProofModal;
+window.startCamera = startCamera;
+window.takePicture = takePicture;
+window.retakePicture = retakePicture;
+window.handleFileUpload = handleFileUpload;
+window.uploadProof = uploadProof;
 
 // Add some random pig sounds
 const pigSounds = ['🐷 OINK!', '🐷 SNORT!', '🐷 SQUEAL!'];

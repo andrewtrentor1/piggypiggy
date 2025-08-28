@@ -435,10 +435,118 @@ body {
     box-shadow: 0 4px 15px rgba(139,69,19,0.3);
 }
 
+/* Upload Proof Modal Styles */
+#uploadProofModal .modal-content {
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+#cameraPreview {
+    background: #000;
+    border: 2px solid #ddd;
+}
+
+#photoPreview {
+    max-width: 100%;
+    height: auto;
+}
+
+.drink-assignment-alert {
+    animation: bounceIn 0.5s ease-out;
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+#drinkActionButtons {
+    animation: slideInUp 0.3s ease-out 0.2s both;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Camera controls styling */
+#cameraControls button {
+    margin: 5px;
+    min-width: 120px;
+}
+
+#uploadControls textarea {
+    font-family: inherit;
+    resize: vertical;
+}
+
+/* Status bar styles */
+.status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(45deg, #8B4513, #daa520);
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 999;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+    font-size: 0.9rem;
+}
+
+.status-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-points {
+    font-weight: bold;
+    color: #FFD700;
+}
+
+.status-logout {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.2s ease;
+}
+
+.status-logout:hover {
+    background: rgba(255,255,255,0.3);
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .container {
         padding: 10px;
+        padding-bottom: 60px; /* Account for status bar */
     }
     
     .main-content {
@@ -465,5 +573,31 @@ body {
     
     .pig-emoji {
         font-size: 3rem;
+    }
+    
+    #uploadProofModal .modal-content {
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+    }
+    
+    #drinkActionButtons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    #drinkActionButtons button {
+        width: 100%;
+    }
+    
+    .status-bar {
+        padding: 8px 15px;
+        font-size: 0.8rem;
+    }
+    
+    .status-player {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
     }
 }

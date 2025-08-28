@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐷 MBE PIG POINTS EXTRAVAGANZA 🐷</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="MBE Pig Points - The ultimate gambling and accountability app for the boys">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="PIG POINTS">
+    <meta name="msapplication-TileColor" content="#4CAF50">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180x180.png">
+    
     <link rel="stylesheet" href="shared-styles.css">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -370,9 +387,74 @@
         <div class="modal-content drink-assignment-alert">
             <h2 id="drinkAlertTitle">🍻 ALEX ASSIGNED DRINKS! 🍻</h2>
             <div id="drinkAlertContent" style="text-align: center; font-size: 1.3em; margin: 30px 0;"></div>
-            <button class="transfer-btn" onclick="acknowledgeDrinks()" style="background: linear-gradient(45deg, #4CAF50, #45a049);">
-                🍺 DRINKS ACKNOWLEDGED 🍺
-            </button>
+            <div id="drinkActionButtons" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button class="transfer-btn" onclick="acknowledgeDrinks()" style="background: linear-gradient(45deg, #4CAF50, #45a049);">
+                    🍺 DRINKS ACKNOWLEDGED 🍺
+                </button>
+                <button id="uploadProofBtn" class="transfer-btn" onclick="showUploadProofModal()" style="background: linear-gradient(45deg, #FF9800, #F57C00); display: none;">
+                    📸 UPLOAD PROOF 📸
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Proof Modal -->
+    <div class="modal" id="uploadProofModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUploadProofModal()">&times;</span>
+            <h2>📸 UPLOAD DRINK PROOF 📸</h2>
+            <p style="text-align: center; margin-bottom: 20px; color: #666;">
+                Take a photo to prove you completed your drink assignment!
+            </p>
+            
+            <!-- Camera Preview -->
+            <div id="cameraSection" style="text-align: center; margin: 20px 0;">
+                <video id="cameraPreview" autoplay playsinline style="width: 100%; max-width: 300px; border-radius: 10px; display: none;"></video>
+                <canvas id="photoCanvas" style="display: none;"></canvas>
+                <div id="capturedPhoto" style="display: none; margin: 10px 0;">
+                    <img id="photoPreview" style="width: 100%; max-width: 300px; border-radius: 10px; border: 2px solid #4CAF50;">
+                </div>
+            </div>
+            
+            <!-- Camera Controls -->
+            <div id="cameraControls" style="text-align: center; margin: 20px 0;">
+                <button id="startCameraBtn" class="transfer-btn" onclick="startCamera()" style="background: linear-gradient(45deg, #2196F3, #1976D2);">
+                    📹 START CAMERA
+                </button>
+                <button id="takePictureBtn" class="transfer-btn" onclick="takePicture()" style="background: linear-gradient(45deg, #4CAF50, #45a049); display: none;">
+                    📸 TAKE PICTURE
+                </button>
+                <button id="retakePictureBtn" class="transfer-btn" onclick="retakePicture()" style="background: linear-gradient(45deg, #FF9800, #F57C00); display: none;">
+                    🔄 RETAKE
+                </button>
+            </div>
+            
+            <!-- Upload Controls -->
+            <div id="uploadControls" style="text-align: center; margin: 20px 0; display: none;">
+                <div style="margin-bottom: 15px;">
+                    <label for="proofMessage" style="display: block; font-weight: bold; margin-bottom: 8px; color: #4CAF50;">
+                        📝 Optional Message:
+                    </label>
+                    <textarea id="proofMessage" placeholder="Add a message with your proof... (optional)" 
+                              style="width: 100%; height: 60px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical; font-family: inherit;"
+                              maxlength="150"></textarea>
+                    <small style="color: #666; font-size: 0.9em;">
+                        💬 This message will be shown to Alex and in the activity log (150 characters max)
+                    </small>
+                </div>
+                <button class="transfer-btn" onclick="uploadProof()" style="background: linear-gradient(45deg, #4CAF50, #45a049); width: 100%;">
+                    🚀 UPLOAD PROOF 🚀
+                </button>
+            </div>
+            
+            <!-- Alternative File Upload -->
+            <div style="text-align: center; margin: 20px 0; padding-top: 15px; border-top: 2px solid #ddd;">
+                <p style="color: #666; margin-bottom: 10px;">Or upload from your device:</p>
+                <input type="file" id="fileUpload" accept="image/*" capture="environment" style="display: none;" onchange="handleFileUpload(event)">
+                <button class="player-login-btn" onclick="document.getElementById('fileUpload').click()">
+                    📁 CHOOSE FROM DEVICE
+                </button>
+            </div>
         </div>
     </div>
 
