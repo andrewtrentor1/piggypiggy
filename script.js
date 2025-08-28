@@ -1539,7 +1539,8 @@ function updateStatusBar() {
         if (currentPlayer === 'Evan' && isBookkeeperLoggedIn) {
             statusPlayerName.textContent = `👑 ${currentPlayer} (Ham Handler)`;
         } else {
-            statusPlayerName.textContent = `🐷 ${currentPlayer}`;
+            const playerInsult = getPlayerInsult(currentPlayer);
+            statusPlayerName.textContent = `Greetings ${playerInsult} ${currentPlayer}!`;
         }
         
         const points = players[currentPlayer] || 0;
