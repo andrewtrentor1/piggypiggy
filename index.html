@@ -307,24 +307,33 @@
                     <small style="color: #666;">A verification code will be sent to your registered phone number</small>
                 </div>
                 
-                <button id="send-code-button" class="transfer-btn" onclick="sendVerificationCode()" style="width: 100%; margin-top: 10px;">
-                    📱 SEND VERIFICATION CODE
+                <!-- PRIMARY LOGIN METHOD - SECURE LOGIN -->
+                <button onclick="bypassSMSForTesting()" class="transfer-btn" style="width: 100%; margin-top: 10px; background: #28a745; font-size: 1.1em;">
+                    🔐 SECURE LOGIN
                 </button>
+                <small style="color: #666; display: block; text-align: center; margin-top: 5px;">
+                    Enter the secure pig password to login instantly
+                </small>
                 
-                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
-                    <small style="color: #856404;">
-                        <strong>⚠️ SMS Issues?</strong><br>
-                        <span id="smsHelpText">Common causes: Domain not authorized, reCAPTCHA problems, rate limits</span><br>
-                        <button onclick="bypassSMSForTesting()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px;">
-                            🔐 SECURE LOGIN (NO SMS)
-                        </button>
-                        <button onclick="debugFirebaseAuth()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px; margin-left: 5px;">
-                            🔍 DEBUG INFO
-                        </button>
-                        <button onclick="clearBypassLogin()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-top: 5px; margin-left: 5px;">
-                            🧹 CLEAR BYPASS
-                        </button>
+                <!-- BACKUP LOGIN METHOD - SMS -->
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px;">
+                    <small style="color: #6c757d; display: block; margin-bottom: 10px;">
+                        <strong>📱 Alternative: SMS Verification</strong><br>
+                        (May not work due to Firebase rate limits)
                     </small>
+                    
+                    <button id="send-code-button" onclick="sendVerificationCode()" style="width: 100%; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.9em;">
+                        📱 SEND VERIFICATION CODE
+                    </button>
+                    
+                    <div style="margin-top: 10px;">
+                        <button onclick="debugFirebaseAuth()" style="background: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.7em;">
+                            🔍 DEBUG
+                        </button>
+                        <button onclick="clearBypassLogin()" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.7em; margin-left: 5px;">
+                            🧹 CLEAR
+                        </button>
+                    </div>
                 </div>
                 
                 <script>

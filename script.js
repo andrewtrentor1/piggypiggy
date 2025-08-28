@@ -1434,21 +1434,26 @@ function sendVerificationCode() {
             console.error('Error code:', error.code);
             console.error('Error message:', error.message);
             
-            let errorMessage = `🚫 SMS Error: ${error.message}\n\n`;
+            // Don't show annoying popups - just update the UI
+            console.log('📱 SMS failed, updating UI to suggest secure login');
             
-            // Provide specific guidance based on error type
-            if (error.code === 'auth/argument-error' || error.message.includes('argument-error')) {
-                errorMessage += `🚨 DOMAIN ISSUE: This domain (piggypiggy.pro) needs to be authorized in Firebase.\n\n`;
-                errorMessage += `👨‍💻 ADMIN: Add piggypiggy.pro to Firebase Console > Authentication > Settings > Authorized domains\n\n`;
-            } else if (error.code === 'auth/too-many-requests') {
-                errorMessage += `⏰ TOO MANY ATTEMPTS: Please wait a few minutes before trying again.\n\n`;
-            } else if (error.code === 'auth/invalid-phone-number') {
-                errorMessage += `📱 INVALID NUMBER: Please check the phone number format.\n\n`;
+            // Update the SMS section to show it's not working
+            const smsSection = document.querySelector('[style*="background: #f8f9fa"]');
+            if (smsSection) {
+                smsSection.style.background = '#f8d7da';
+                smsSection.style.borderColor = '#f5c6cb';
+                const smsText = smsSection.querySelector('small');
+                if (smsText) {
+                    if (error.code === 'auth/too-many-requests') {
+                        smsText.innerHTML = '<strong>❌ SMS Rate Limited</strong><br>Firebase has blocked SMS requests. Use SECURE LOGIN above instead.';
+                    } else {
+                        smsText.innerHTML = '<strong>❌ SMS Currently Unavailable</strong><br>Firebase SMS issues. Use SECURE LOGIN above instead.';
+                    }
+                }
             }
             
-            errorMessage += `✅ SOLUTION: Use the green SECURE LOGIN button below!`;
-            
-            alert(errorMessage);
+            // Show a brief, non-intrusive message
+            console.log(`💡 SMS Error (${error.code}): Use SECURE LOGIN instead`);
             
             // Reset reCAPTCHA for next attempt
             isRecaptchaReady = false;
@@ -1560,7 +1565,7 @@ function debugFirebaseAuth() {
     console.log('🔍 Full Firebase Auth object:', window.firebaseAuth);
 }
 
-// Temporary bypass for SMS rate limiting during testing - now uses Firebase Anonymous Auth
+// PRIMARY LOGIN METHOD - Secure bypass login using Firebase Anonymous Auth
 function bypassSMSForTesting() {
     const selectedPlayer = document.getElementById('playerSelect').value;
     
@@ -1582,8 +1587,23 @@ function bypassSMSForTesting() {
         return;
     }
 
-    console.log(`🔐 Secure bypass login for ${selectedPlayer} using Firebase Anonymous Auth`);
+    console.log(`🔐 PRIMARY: Secure login for ${selectedPlayer} using Firebase Anonymous Auth`);
     
+    // Clear any existing auth state first
+    if (window.firebaseAuth.currentUser) {
+        console.log('🧹 Clearing existing Firebase Auth state...');
+        window.firebaseAuth.signOut().then(() => {
+            performBypassLogin(selectedPlayer);
+        }).catch(() => {
+            // Even if signOut fails, try the bypass login
+            performBypassLogin(selectedPlayer);
+        });
+    } else {
+        performBypassLogin(selectedPlayer);
+    }
+}
+
+function performBypassLogin(selectedPlayer) {
     // Use Firebase Anonymous Authentication
     window.signInAnonymously(window.firebaseAuth)
         .then((userCredential) => {
@@ -1608,11 +1628,40 @@ function bypassSMSForTesting() {
             console.error('Firebase Anonymous Auth bypass login error:', error);
             
             if (error.code === 'auth/operation-not-allowed') {
-                alert('🚫 Anonymous authentication is not enabled in Firebase Console.\nPlease enable it or contact the Ham Handler.');
+                alert('🚫 Anonymous authentication is not enabled in Firebase Console.\n\n🔧 SOLUTION:\n1. Go to Firebase Console\n2. Authentication → Sign-in method\n3. Enable "Anonymous"\n4. Save changes\n\nContact the Ham Handler if you need help.');
             } else {
-                alert('🚫 Bypass login failed. Please try again or contact the Ham Handler.');
+                alert(`🚫 Secure login failed: ${error.message}\n\nTry refreshing the page or contact the Ham Handler.`);
             }
         });
+}
+
+// Clear bypass login function
+function clearBypassLogin() {
+    if (confirm('🧹 Clear all login data?\n\nThis will log you out and clear all cached login information.')) {
+        console.log('🧹 Clearing all login data...');
+        
+        // Clear Firebase Auth
+        if (window.firebaseAuth.currentUser) {
+            window.firebaseAuth.signOut();
+        }
+        
+        // Clear all localStorage
+        localStorage.removeItem('bookkeeperLoggedIn');
+        localStorage.removeItem('hamHandlerPlayerLoggedIn');
+        localStorage.removeItem('hamHandlerCurrentPlayer');
+        localStorage.removeItem('firebaseAuthLoggedIn');
+        localStorage.removeItem('bypassLoginInProgress');
+        
+        // Reset local state
+        isPlayerLoggedIn = false;
+        currentPlayer = '';
+        isBookkeeperLoggedIn = false;
+        
+        // Update UI
+        checkLoginState();
+        
+        alert('🧹 All login data cleared!\nYou can now try logging in again.');
+    }
 }
 
 function updatePlayerUI() {
