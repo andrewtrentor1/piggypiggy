@@ -759,20 +759,26 @@
         }
 
         function updateCurrentStandings() {
+            console.log('🏆 updateCurrentStandings called, players:', players);
+            
             // Only update if we have player data
             if (!players || Object.keys(players).length === 0) {
+                console.log('🏆 No player data available');
                 return;
             }
 
             // Get regular players (exclude GOD)
             const regularPlayers = Object.entries(players).filter(player => player[0] !== 'GOD');
+            console.log('🏆 Regular players:', regularPlayers);
             
             if (regularPlayers.length === 0) {
+                console.log('🏆 No regular players found');
                 return;
             }
 
             // Sort by points (highest first)
             const sortedPlayers = regularPlayers.sort((a, b) => b[1] - a[1]);
+            console.log('🏆 Sorted players:', sortedPlayers);
             
             // Get current leader and pig
             const currentLeader = sortedPlayers[0]; // Highest points
@@ -782,36 +788,41 @@
             const maxPoints = currentLeader[1];
             const minPoints = currentPig[1];
             const allSamePoints = maxPoints === minPoints;
+            console.log('🏆 Max points:', maxPoints, 'Min points:', minPoints, 'All same:', allSamePoints);
             
             // Update MVP Champion display
             const mvpNameElement = document.querySelector('.year-section:first-child .mvp-card .winner-name');
             const mvpDescElement = document.querySelector('.year-section:first-child .mvp-card p');
+            console.log('🏆 MVP elements found:', !!mvpNameElement, !!mvpDescElement);
             
             if (mvpNameElement && mvpDescElement) {
                 if (allSamePoints) {
-                    mvpNameElement.textContent = 'TIE';
-                    mvpDescElement.textContent = 'CURRENTLY TIED';
+                    mvpNameElement.textContent = 'ALL TIED';
+                    mvpDescElement.textContent = 'CURRENTLY ALL TIED';
                 } else {
                     mvpNameElement.textContent = currentLeader[0];
                     mvpDescElement.textContent = `CURRENTLY LEADING: ${currentLeader[0]}`;
                 }
+                console.log('🏆 MVP updated to:', mvpNameElement.textContent);
             }
             
             // Update THE PIG display
             const pigNameElement = document.querySelector('.year-section:first-child .pig-card .winner-name');
             const pigDescElement = document.querySelector('.year-section:first-child .pig-card p');
+            console.log('🏆 PIG elements found:', !!pigNameElement, !!pigDescElement);
             
             if (pigNameElement && pigDescElement) {
                 if (allSamePoints) {
-                    pigNameElement.textContent = 'TIE';
-                    pigDescElement.textContent = 'CURRENTLY TIED';
+                    pigNameElement.textContent = 'ALL TIED';
+                    pigDescElement.textContent = 'SNORTY MCPIGFACE 2025: ALL TIED (CURRENTLY)';
                 } else {
                     pigNameElement.textContent = currentPig[0];
                     pigDescElement.textContent = `SNORTY MCPIGFACE 2025: ${currentPig[0]} (CURRENTLY)`;
                 }
+                console.log('🏆 PIG updated to:', pigNameElement.textContent);
             }
             
-            console.log('🏆 Current standings updated - Leader:', currentLeader, 'Pig:', currentPig);
+            console.log('🏆 Current standings updated - Leader:', currentLeader, 'Pig:', currentPig, 'All tied:', allSamePoints);
         }
 
         function showAddYearModal() {
@@ -1506,6 +1517,7 @@
         window.takePicture = takePicture;
         window.retakePicture = retakePicture;
         window.uploadProof = uploadProof;
+        window.updateCurrentStandings = updateCurrentStandings; // For debugging
 
         // Initialize Firebase when page loads
         setTimeout(() => {
@@ -1516,7 +1528,11 @@
             // Ensure status bar is updated after login state is restored
             setTimeout(() => {
                 updateStatusBar();
-                updateCurrentStandings(); // Update current standings on page load
+                // Give extra time for DOM to be ready and Firebase data to load
+                setTimeout(() => {
+                    updateCurrentStandings(); // Update current standings on page load
+                    console.log('🏆 Manual updateCurrentStandings called after page load');
+                }, 1000);
                 if (isPlayerLoggedIn) {
                     console.log(`🔐 History page: Login state confirmed for ${currentPlayer}`);
                 }
