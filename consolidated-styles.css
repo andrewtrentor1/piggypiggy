@@ -654,6 +654,29 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
     overflow-y: auto;
 }
 
+/* Upload Moment Modal Styles */
+#uploadMomentModal .modal-content {
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Mobile optimizations for upload moment modal */
+@media (max-width: 768px) {
+    #uploadMomentModal .modal-content {
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+        overflow-y: auto;
+    }
+    
+    /* Reduce image size on mobile for upload moment */
+    #uploadMomentModal #momentCameraPreview,
+    #uploadMomentModal #momentPhotoPreview {
+        max-width: 250px !important;
+    }
+}
+
 #proofViewerModal {
     display: none;
 }
