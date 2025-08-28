@@ -478,15 +478,15 @@
                         activityItem.classList.add('clickable-proof');
                         activityItem.style.cursor = 'pointer';
                         activityItem.onclick = () => showProofModal(activity.id);
-                        
-                        activityItem.innerHTML = `
-                            <div class="activity-time">${timeString}</div>
-                            <div class="activity-text">
-                                <span class="activity-emoji">${activity.emoji}</span>
-                                ${activity.message}
+                    
+                    activityItem.innerHTML = `
+                        <div class="activity-time">${timeString}</div>
+                        <div class="activity-text">
+                            <span class="activity-emoji">${activity.emoji}</span>
+                            ${activity.message}
                                 <span class="view-proof-hint" style="color: #2196F3; font-size: 0.9em; margin-left: 8px;">📱 Click to view</span>
-                            </div>
-                        `;
+                        </div>
+                    `;
                     } else {
                         activityItem.innerHTML = `
                             <div class="activity-time">${timeString}</div>
@@ -678,9 +678,9 @@
                         animation: dangerButtonPulse 1s infinite;
                     ">
                         💀 ACKNOWLEDGE DANGER 💀
-                    </button>
-                </div>
-            `;
+                        </button>
+                    </div>
+                `;
             
             document.body.appendChild(alertModal);
             
@@ -708,10 +708,10 @@
                 return;
             }
             
-            const style = document.createElement('style');
+                    const style = document.createElement('style');
             style.id = 'dangerZoneAnimations';
-            style.textContent = `
-                @keyframes dangerPulse {
+                    style.textContent = `
+                        @keyframes dangerPulse {
                     0% { transform: scale(1); }
                     100% { transform: scale(1.05); }
                 }
@@ -977,28 +977,58 @@
                     }
                 }
                 
+                console.log('🎯 About to populate modal with proof data:', proofData);
+                
+                // Check if modal elements exist
+                const modal = document.getElementById('proofViewerModal');
+                const proofImage = document.getElementById('proofImage');
+                const proofPlayerInfo = document.getElementById('proofPlayerInfo');
+                
+                console.log('🔍 Modal element found:', !!modal);
+                console.log('🔍 ProofImage element found:', !!proofImage);
+                console.log('🔍 ProofPlayerInfo element found:', !!proofPlayerInfo);
+                
+                if (!modal) {
+                    alert('❌ Modal element not found!');
+                    return;
+                }
+                
                 // Populate modal with proof data
-                document.getElementById('proofImage').src = proofData.imageUrl;
-                document.getElementById('proofPlayerInfo').textContent = `Player: ${proofData.playerName}`;
-                document.getElementById('proofDrinkInfo').textContent = `Drinks: ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''}`;
-                document.getElementById('proofMessage').textContent = proofData.message ? `"${proofData.message}"` : 'No message provided';
+                if (proofImage) proofImage.src = proofData.imageUrl;
+                if (proofPlayerInfo) proofPlayerInfo.textContent = `Player: ${proofData.playerName}`;
+                
+                const proofDrinkInfo = document.getElementById('proofDrinkInfo');
+                if (proofDrinkInfo) proofDrinkInfo.textContent = `Drinks: ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''}`;
+                
+                const proofMessage = document.getElementById('proofMessage');
+                if (proofMessage) proofMessage.textContent = proofData.message ? `"${proofData.message}"` : 'No message provided';
                 
                 const timestamp = new Date(activity.timestamp);
-                document.getElementById('proofTimestamp').textContent = `Uploaded: ${timestamp.toLocaleString()}`;
+                const proofTimestamp = document.getElementById('proofTimestamp');
+                if (proofTimestamp) proofTimestamp.textContent = `Uploaded: ${timestamp.toLocaleString()}`;
                 
                 // Show Alex actions if current user is Alex
                 const alexActions = document.getElementById('alexProofActions');
-                if (isPlayerLoggedIn && currentPlayer === 'Alex') {
-                    alexActions.style.display = 'block';
-                    // Store current proof data for request functionality
-                    window.currentViewingProof = proofData;
-                } else {
-                    alexActions.style.display = 'none';
+                if (alexActions) {
+                    if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+                        alexActions.style.display = 'block';
+                        // Store current proof data for request functionality
+                        window.currentViewingProof = proofData;
+                    } else {
+                        alexActions.style.display = 'none';
+                    }
                 }
                 
-                // Show modal
-                const modal = document.getElementById('proofViewerModal');
+                console.log('🎭 About to show modal...');
+                console.log('🔍 Modal current style.display:', modal.style.display);
+                console.log('🔍 Modal current classList:', modal.classList.toString());
+                
+                // Force show modal with both methods
+                modal.style.display = 'flex';
                 modal.classList.add('show');
+                
+                console.log('✅ Modal should now be visible with class:', modal.className);
+                console.log('✅ Modal style.display after:', modal.style.display);
                 
                 // Add click-outside-to-close functionality
                 modal.onclick = (e) => {
@@ -1016,7 +1046,9 @@
         function closeProofViewerModal() {
             const modal = document.getElementById('proofViewerModal');
             modal.classList.remove('show');
+            modal.style.display = 'none';
             window.currentViewingProof = null;
+            console.log('🚪 Modal closed');
         }
 
         async function requestProofFromPlayer() {
@@ -1069,10 +1101,37 @@
             }
         }
 
+        // Test function to manually show modal
+        function testShowModal() {
+            console.log('🧪 Testing modal display...');
+            const modal = document.getElementById('proofViewerModal');
+            if (modal) {
+                console.log('✅ Modal found');
+                modal.classList.add('show');
+                modal.style.display = 'flex';
+                console.log('🎭 Modal classes:', modal.className);
+                console.log('🎭 Modal style:', modal.style.display);
+                
+                // Add some test content
+                const proofImage = document.getElementById('proofImage');
+                if (proofImage) {
+                    proofImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzRDQUY1MCIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VEVTVCA8L3RleHQ+PC9zdmc+';
+                }
+                
+                const proofPlayerInfo = document.getElementById('proofPlayerInfo');
+                if (proofPlayerInfo) {
+                    proofPlayerInfo.textContent = 'Player: TEST USER';
+                }
+            } else {
+                console.log('❌ Modal not found');
+            }
+        }
+        
         // Make proof viewer functions globally accessible
         window.showProofModal = showProofModal;
         window.closeProofViewerModal = closeProofViewerModal;
         window.requestProofFromPlayer = requestProofFromPlayer;
+        window.testShowModal = testShowModal;
 
         // Initialize Firebase when page loads
         setTimeout(() => {
