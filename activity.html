@@ -1486,7 +1486,7 @@
                 let imageUrl = null;
                 
                 // Upload photo if one was taken
-                if (momentPhotoBlob) {
+                if (momentPhotoBlob && momentPhotoBlob.size) {
                     console.log('🚀 Starting moment photo upload...');
                     console.log('📊 Image size:', momentPhotoBlob.size, 'bytes');
                     
@@ -1506,12 +1506,22 @@
                     emoji: '📸'
                 };
                 
-                // Save to Firebase
+                // Save to Firebase moments collection
                 await saveMomentToFirebase(momentData);
                 
-                // Add to activity feed
-                const activityMessage = `${currentPlayer} shared a moment: ${momentMessage}`;
-                addActivity('moment', '📸', activityMessage, momentData);
+                // Also save to activities collection for the activity feed
+                const activityData = {
+                    id: `activity_${timestamp}`,
+                    type: 'moment',
+                    emoji: '📸',
+                    message: `${currentPlayer} shared a moment: ${momentMessage}`,
+                    timestamp: new Date().toISOString(),
+                    playerId: currentPlayer,
+                    imageUrl: imageUrl,
+                    momentMessage: momentMessage
+                };
+                
+                await saveActivityToFirebase(activityData);
                 
                 uploadBtn.textContent = '✅ SHARED!';
                 uploadBtn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
@@ -1541,6 +1551,17 @@
             await window.firebaseSet(momentRef, momentData);
             
             console.log('💾 Moment saved to Firebase:', momentData.id);
+        }
+
+        async function saveActivityToFirebase(activityData) {
+            if (!window.firebaseDB) {
+                throw new Error('Firebase not available');
+            }
+            
+            const activityRef = window.firebaseRef(window.firebaseDB, `activities/${activityData.id}`);
+            await window.firebaseSet(activityRef, activityData);
+            
+            console.log('💾 Activity saved to Firebase:', activityData.id);
         }
 
         // Upload Proof System
