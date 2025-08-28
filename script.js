@@ -1551,14 +1551,13 @@ function bypassSMSForTesting() {
     closePlayerLoginModal();
     checkLoginState();
     
-            // Show success message
-        if (selectedPlayer === 'Evan') {
-            alert(`👑 Welcome Ham Handler ${selectedPlayer}! 👑\n🔐 SECURE LOGIN SUCCESSFUL\nYou now have FULL admin access AND player controls!`);
-            addActivity('admin', '🔐', `${selectedPlayer} logged in as Ham Handler (Secure Login)`);
-        } else {
-            alert(`🐷 Welcome ${selectedPlayer}! 🐷\n🔐 SECURE LOGIN SUCCESSFUL\nYou are now logged in and will stay logged in!`);
-            addActivity('admin', '🔐', `${selectedPlayer} logged in (Secure Login)`);
-        }
+    // Show success message
+    if (selectedPlayer === 'Evan') {
+        alert(`👑 Welcome Ham Handler ${selectedPlayer}! 👑\n🔐 SECURE LOGIN SUCCESSFUL\nYou now have FULL admin access AND player controls!`);
+        addActivity('admin', '🔐', `${selectedPlayer} logged in as Ham Handler (Secure Login)`);
+    } else {
+        alert(`🐷 Welcome ${selectedPlayer}! 🐷\n🔐 SECURE LOGIN SUCCESSFUL\nYou are now logged in and will stay logged in!`);
+        addActivity('admin', '🔐', `${selectedPlayer} logged in (Secure Login)`);
     }
 }
 
@@ -1567,7 +1566,7 @@ function updatePlayerUI() {
     
     const playerInsult = getPlayerInsult(currentPlayer);
     document.getElementById('playerWelcome').textContent = `Greetings ${playerInsult} ${currentPlayer}!`;
-    document.getElementById('playerPoints').textContent = `Your Points: ${players[currentPlayer] || 0} 🐷`;
+    document.getElementById('playerPoints').textContent = 'Your Points: ' + (players[currentPlayer] || 0) + ' 🐷';
     
     // Remove current player from transfer dropdown
     const transferSelect = document.getElementById('playerTransferTo');
