@@ -1,0 +1,551 @@
+/* MBE PIG POINTS - Consolidated Styles */
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
+/* ==============================================
+   RESET & BASE STYLES
+   ============================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
+    background: linear-gradient(135deg, #f5deb3 0%, #deb887 100%);
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    padding-bottom: 80px; /* Space for floating status bar */
+    overflow-x: hidden;
+}
+
+/* ==============================================
+   ANIMATIONS & EFFECTS
+   ============================================== */
+/* Beer Bubbles Animation */
+.beer-bubbles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.bubble {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    animation: float 6s infinite ease-in-out;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Danger Zone Pulse Animation */
+@keyframes dangerPulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
+}
+
+/* Danger Zone Flash Animation */
+@keyframes dangerFlash {
+    0%, 50%, 100% { background-color: #ff0000; }
+    25%, 75% { background-color: #ff4500; }
+}
+
+/* ==============================================
+   NAVIGATION & BUTTONS
+   ============================================== */
+/* Navigation Buttons - CONSISTENT STYLE */
+.nav-btn, .nav-link, .nav-tab {
+    background: linear-gradient(45deg, #daa520, #f0e68c) !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    text-decoration: none !important;
+    color: #333 !important;
+    display: inline-block !important;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
+}
+
+.nav-btn:hover, .nav-link:hover, .nav-tab:hover {
+    background: linear-gradient(45deg, #b8860b, #daa520) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+/* Main Action Buttons */
+.transfer-btn, .action-btn {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 10px 5px;
+}
+
+.transfer-btn:hover, .action-btn:hover {
+    background: linear-gradient(45deg, #45a049, #4CAF50);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+/* ==============================================
+   MODALS & OVERLAYS
+   ============================================== */
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 2147483646; /* Second highest z-index (Danger Zone gets the max) */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+.close:hover {
+    color: #000;
+}
+
+/* ==============================================
+   LEADERBOARD & TABLES
+   ============================================== */
+.leaderboard {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px auto;
+    max-width: 800px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+}
+
+.leaderboard h1 {
+    text-align: center;
+    color: #8B4513;
+    margin-bottom: 25px;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    margin: 10px 0;
+    background: linear-gradient(45deg, #fff, #f9f9f9);
+    border-radius: 10px;
+    border-left: 5px solid #4CAF50;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.player-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.player-name {
+    font-weight: bold;
+    font-size: 1.3rem;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.pig-insult {
+    font-size: 0.8rem;
+    color: #8B4513;
+    font-weight: normal;
+    font-style: italic;
+    margin-top: 2px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.player-score {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 8px 15px;
+    border-radius: 20px;
+}
+
+/* ==============================================
+   ACTIVITY FEED
+   ============================================== */
+.activity-feed {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px auto;
+    max-width: 800px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin: 10px 0;
+    background: linear-gradient(45deg, #fff, #f9f9f9);
+    border-radius: 10px;
+    border-left: 4px solid #2196F3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.activity-time {
+    font-size: 0.9rem;
+    color: #666;
+    margin-right: 15px;
+    min-width: 60px;
+}
+
+.activity-text {
+    flex: 1;
+    font-size: 1rem;
+}
+
+.activity-emoji {
+    font-size: 1.2rem;
+    margin-right: 8px;
+}
+
+/* Clickable proof activities */
+.clickable-proof {
+    cursor: pointer;
+    border-left-color: #FF9800 !important;
+}
+
+.clickable-proof:hover {
+    background: linear-gradient(45deg, #fff8e1, #ffecb3) !important;
+}
+
+.view-proof-hint {
+    color: #2196F3;
+    font-size: 0.9em;
+    margin-left: 8px;
+}
+
+/* ==============================================
+   STATUS BAR & FLOATING ELEMENTS
+   ============================================== */
+.floating-status {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(76, 175, 80, 0.95);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    font-size: 0.9rem;
+}
+
+/* ==============================================
+   FORMS & INPUTS
+   ============================================== */
+input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
+    margin: 8px 0;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+    border-color: #4CAF50;
+    outline: none;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+/* ==============================================
+   SPECIAL MODALS & ALERTS
+   ============================================== */
+
+/* DANGER ZONE ALERT - MAXIMUM PRIORITY STYLING */
+#dangerZoneAlert {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.95) !important;
+    z-index: 2147483647 !important; /* Maximum possible z-index */
+    justify-content: center !important;
+    align-items: center !important;
+    backdrop-filter: blur(5px) !important;
+    animation: none !important;
+}
+
+#dangerZoneAlert .modal-content {
+    background: linear-gradient(45deg, #ff0000, #ff4500, #ff0000) !important;
+    color: white !important;
+    text-align: center !important;
+    border: 5px solid #ff0000 !important;
+    animation: dangerPulse 0.5s infinite alternate !important;
+    box-shadow: 0 0 50px #ff0000, 0 0 100px #ff0000 !important;
+    border-radius: 15px !important;
+    padding: 40px !important;
+    max-width: 600px !important;
+    width: 90% !important;
+    position: relative !important;
+    transform: none !important;
+}
+
+#dangerZoneAlert h1 {
+    font-size: 4rem !important;
+    margin: 20px 0 !important;
+    text-shadow: 3px 3px 0px #000, 0 0 20px #fff !important;
+    font-weight: bold !important;
+    letter-spacing: 3px !important;
+    animation: dangerFlash 1s infinite !important;
+}
+
+#dangerZoneAlert h2 {
+    font-size: 2rem !important;
+    margin: 15px 0 !important;
+    text-shadow: 2px 2px 0px #000 !important;
+    color: #ffff00 !important;
+}
+
+#dangerZoneAlert p {
+    font-size: 1.5rem !important;
+    margin: 10px 0 !important;
+    text-shadow: 1px 1px 0px #000 !important;
+    font-weight: bold !important;
+}
+
+/* Ensure Danger Zone alert is above everything else */
+#dangerZoneAlert * {
+    pointer-events: auto !important;
+    user-select: none !important;
+}
+/* Upload Proof Modal Styles */
+#uploadProofModal .modal-content {
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+#proofViewerModal {
+    display: none;
+}
+
+#proofViewerModal.show {
+    display: flex !important;
+}
+
+#proofViewerModal .modal-content {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    position: relative;
+    margin: 20px;
+}
+
+/* Drink Assignment Alert Styles */
+.drink-assignment-alert {
+    background: linear-gradient(45deg, #4CAF50, #45a049) !important;
+    color: white !important;
+    border: 3px solid #2E7D32 !important;
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.5) !important;
+}
+
+.drink-assignment-alert h2 {
+    color: white !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+/* ==============================================
+   RESPONSIVE DESIGN
+   ============================================== */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        padding-bottom: 100px;
+    }
+    
+    .leaderboard, .activity-feed {
+        padding: 15px;
+        margin: 10px auto;
+    }
+    
+    .leaderboard h1 {
+        font-size: 2rem;
+    }
+    
+    .player-row {
+        padding: 12px 15px;
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .nav-btn, .nav-link, .nav-tab {
+        padding: 10px 20px !important;
+        font-size: 0.9rem !important;
+        margin: 5px !important;
+    }
+    
+    .transfer-btn, .action-btn {
+        padding: 12px 24px;
+        font-size: 1rem;
+        margin: 8px 3px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .pig-emoji {
+        font-size: 3rem;
+    }
+    
+    #uploadProofModal .modal-content {
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+    }
+    
+    .floating-status {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        transform: none;
+        text-align: center;
+        font-size: 0.8rem;
+        padding: 10px 15px;
+    }
+    
+    /* DANGER ZONE ALERT - MOBILE OPTIMIZATION */
+    #dangerZoneAlert .modal-content {
+        padding: 20px !important;
+        margin: 10px !important;
+        width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+    
+    #dangerZoneAlert h1 {
+        font-size: 2.5rem !important;
+        margin: 15px 0 !important;
+        line-height: 1.2 !important;
+    }
+    
+    #dangerZoneAlert h2 {
+        font-size: 1.5rem !important;
+        margin: 10px 0 !important;
+    }
+    
+    #dangerZoneAlert p {
+        font-size: 1.2rem !important;
+        margin: 8px 0 !important;
+    }
+    
+    /* Mobile pig insult styling */
+    .pig-insult {
+        font-size: 0.7rem;
+        line-height: 1.1;
+    }
+    
+    .player-name {
+        font-size: 1.1rem;
+    }
+}
+
+/* ==============================================
+   UTILITY CLASSES
+   ============================================== */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mt-10 { margin-top: 10px; }
+.mt-20 { margin-top: 20px; }
+.mb-10 { margin-bottom: 10px; }
+.mb-20 { margin-bottom: 20px; }
+
+.hidden { display: none !important; }
+.visible { display: block !important; }
+
+.success { color: #4CAF50; }
+.error { color: #f44336; }
+.warning { color: #FF9800; }
+.info { color: #2196F3; }

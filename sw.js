@@ -9,8 +9,7 @@ const urlsToCache = [
   '/history.html',
   '/golf.html',
   '/script.js',
-  '/styles.css',
-  '/shared-styles.css',
+  '/consolidated-styles.css',
   '/firebase-config.js',
   '/danger-zone.mp3',
   '/manifest.json'

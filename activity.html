@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MBE Activity Feed - Pig Points Tracker</title>
-    <link rel="stylesheet" href="shared-styles.css">
+    <link rel="stylesheet" href="consolidated-styles.css">
     <style>
         body {
             font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
@@ -624,7 +624,7 @@
             alertModal.id = 'dangerZoneAlert';
             alertModal.className = 'modal';
             alertModal.style.display = 'flex';
-            alertModal.style.zIndex = '10000'; // Ensure it's on top
+            alertModal.style.zIndex = '999999'; // Extremely high z-index to ensure it's always on top
             
             alertModal.innerHTML = `
                 <div class="modal-content" style="

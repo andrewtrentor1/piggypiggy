@@ -719,11 +719,14 @@ function updateLeaderboard() {
             li.classList.add('pig');
         }
         
+        const playerInsult = getPlayerInsult(player[0]);
+        
         li.innerHTML = `
             <div class="player-name">
                 ${!allSamePoints && player[1] === maxPoints ? '<span class="crown">👑</span>' : ''}
                 ${!allSamePoints && player[1] === minPoints ? '<span>🐷 THE PIG 🐷</span>' : ''}
                 <span>${player[0]}</span>
+                <span class="pig-insult">${playerInsult}</span>
             </div>
             <div class="points">
                 ${player[1]} 🐷
@@ -1426,7 +1429,8 @@ function bypassSMSForTesting() {
 function updatePlayerUI() {
     if (!currentPlayer) return;
     
-    document.getElementById('playerWelcome').textContent = `Welcome, ${currentPlayer}!`;
+    const playerInsult = getPlayerInsult(currentPlayer);
+    document.getElementById('playerWelcome').textContent = `Greetings ${playerInsult} ${currentPlayer}!`;
     document.getElementById('playerPoints').textContent = `Your Points: ${players[currentPlayer] || 0} 🐷`;
     
     // Remove current player from transfer dropdown
@@ -1572,7 +1576,7 @@ function showDangerZoneAlert(playerName, timestamp) {
     alertModal.id = 'dangerZoneAlert';
     alertModal.className = 'modal';
     alertModal.style.display = 'flex';
-    alertModal.style.zIndex = '10000'; // Ensure it's on top
+    alertModal.style.zIndex = '999999'; // Extremely high z-index to ensure it's always on top
     
     alertModal.innerHTML = `
         <div class="modal-content" style="
@@ -1659,6 +1663,7 @@ function playDangerZoneAudio() {
     // Strategy 1: Try preloaded audio first (best chance for autoplay)
     if (preloadedAudio && audioUnlocked) {
         console.log('🔊 Strategy 1: Using preloaded audio (unlocked)');
+        preloadedAudio.muted = false; // Unmute for actual playback
         preloadedAudio.currentTime = 0; // Reset to start
         preloadedAudio.play()
             .then(() => {
@@ -1941,9 +1946,12 @@ function preloadDangerZoneAudio() {
     
     // Create and preload audio element
     preloadedAudio = new Audio();
-    preloadedAudio.preload = 'auto';
+    preloadedAudio.preload = 'metadata'; // Changed from 'auto' to prevent auto-download/play
     preloadedAudio.volume = 0.8;
     preloadedAudio.src = 'danger-zone.mp3';
+    
+    // Prevent accidental playback during preload
+    preloadedAudio.muted = true;
     
     preloadedAudio.addEventListener('canplaythrough', () => {
         console.log('✅ DANGER ZONE audio preloaded successfully');
@@ -1974,26 +1982,21 @@ function setupAudioUnlockListeners() {
         
         console.log('🔓 Attempting to unlock audio...');
         
-        // Try to play and immediately pause a silent audio
-        if (preloadedAudio) {
-            const originalVolume = preloadedAudio.volume;
-            preloadedAudio.volume = 0; // Silent
+        // Create a truly silent audio for unlocking (data URL with silent audio)
+        const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU5k9n1unEiBC13yO/eizEIHWq+8+OWT');
+        
+        silentAudio.play().then(() => {
+            silentAudio.pause();
+            audioUnlocked = true;
+            console.log('✅ Audio unlocked successfully!');
             
-            preloadedAudio.play().then(() => {
-                preloadedAudio.pause();
-                preloadedAudio.currentTime = 0;
-                preloadedAudio.volume = originalVolume;
-                audioUnlocked = true;
-                console.log('✅ Audio unlocked successfully!');
-                
-                // Remove listeners once unlocked
-                unlockEvents.forEach(event => {
-                    document.removeEventListener(event, unlockAudio, true);
-                });
-            }).catch(e => {
-                console.log('🔓 Audio unlock attempt failed:', e);
+            // Remove listeners once unlocked
+            unlockEvents.forEach(event => {
+                document.removeEventListener(event, unlockAudio, true);
             });
-        }
+        }).catch(e => {
+            console.log('🔓 Audio unlock attempt failed:', e);
+        });
         
         // Also try with AudioContext
         if (audioContext && audioContext.state === 'suspended') {
@@ -3586,12 +3589,27 @@ async function uploadProof() {
         uploadBtn.disabled = true;
         uploadBtn.textContent = '⏳ UPLOADING...';
         
+        // Add progress indicator
+        let progressInterval;
+        let dots = 0;
+        progressInterval = setInterval(() => {
+            dots = (dots + 1) % 4;
+            uploadBtn.textContent = '⏳ UPLOADING' + '.'.repeat(dots);
+        }, 500);
+        
         // Create unique filename
         const timestamp = Date.now();
         const filename = `drink_proof_${currentPlayer}_${timestamp}.jpg`;
         
-        // Upload to Firebase Storage (we'll implement this next)
+        console.log('🚀 Starting proof upload process...');
+        console.log('📊 Image size:', capturedPhotoBlob.size, 'bytes');
+        
+        // Upload to Firebase Storage with timeout protection
         const imageUrl = await uploadImageToFirebase(capturedPhotoBlob, filename);
+        
+        // Clear progress indicator
+        clearInterval(progressInterval);
+        console.log('✅ Upload completed successfully!');
         
         // Create proof data
         const proofData = {
@@ -3635,33 +3653,72 @@ async function uploadProof() {
         
     } catch (error) {
         console.error('❌ Upload proof error:', error);
-        alert('❌ Upload Failed!\n\nThere was an error uploading your proof. Please try again.\n\nError: ' + error.message);
+        
+        // Clear progress indicator if it exists
+        if (typeof progressInterval !== 'undefined') {
+            clearInterval(progressInterval);
+        }
+        
+        // Show user-friendly error message based on error type
+        let errorMessage = '❌ Upload Failed!\n\n';
+        if (error.message.includes('timeout')) {
+            errorMessage += 'The upload took too long. This might be due to:\n• Slow internet connection\n• Large image size\n• Network issues\n\nPlease try again or check your connection.';
+        } else if (error.message.includes('Firebase')) {
+            errorMessage += 'There was a problem with the storage service.\n\nYour proof has been saved locally as a backup. Please try again in a moment.';
+        } else {
+            errorMessage += 'There was an error uploading your proof.\n\nError: ' + error.message + '\n\nPlease try again.';
+        }
+        
+        alert(errorMessage);
         
         // Reset button
         const uploadBtn = document.querySelector('#uploadControls button');
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = originalText;
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = originalText || '🚀 UPLOAD PROOF 🚀';
+        }
     }
 }
 
 async function uploadImageToFirebase(blob, filename) {
     console.log('📤 Uploading image to Firebase Storage:', filename);
+    console.log('📊 Blob size:', blob.size, 'bytes');
+    
+    // Create timeout promise to prevent infinite hanging
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Upload timeout after 30 seconds')), 30000);
+    });
     
     try {
         // Check if Firebase Storage is available
         if (window.firebaseStorage && window.firebaseStorageRef && window.firebaseUploadBytes && window.firebaseGetDownloadURL) {
-            // Real Firebase Storage implementation
+            console.log('✅ Firebase Storage available, attempting real upload');
+            
+            // Compress image if it's too large (mobile optimization)
+            let uploadBlob = blob;
+            if (blob.size > 2 * 1024 * 1024) { // If larger than 2MB
+                console.log('📦 Compressing large image for mobile upload...');
+                uploadBlob = await compressImage(blob, 0.7); // Compress to 70% quality
+                console.log('📦 Compressed size:', uploadBlob.size, 'bytes');
+            }
+            
             const storageRef = window.firebaseStorageRef(window.firebaseStorage, `drink_proofs/${filename}`);
             
-            // Upload the file
-            const snapshot = await window.firebaseUploadBytes(storageRef, blob);
-            console.log('📤 Image uploaded to Firebase Storage');
+            // Race between upload and timeout
+            const uploadPromise = (async () => {
+                console.log('📤 Starting Firebase Storage upload...');
+                const snapshot = await window.firebaseUploadBytes(storageRef, uploadBlob);
+                console.log('✅ Image uploaded to Firebase Storage successfully');
+                
+                console.log('🔗 Getting download URL...');
+                const downloadURL = await window.firebaseGetDownloadURL(snapshot.ref);
+                console.log('✅ Download URL obtained:', downloadURL);
+                
+                return downloadURL;
+            })();
             
-            // Get download URL
-            const downloadURL = await window.firebaseGetDownloadURL(snapshot.ref);
-            console.log('🔗 Download URL obtained:', downloadURL);
+            return await Promise.race([uploadPromise, timeoutPromise]);
             
-            return downloadURL;
         } else {
             // Fallback: Use data URL for demo purposes
             console.log('⚠️ Firebase Storage not available, using data URL fallback');
@@ -3669,24 +3726,80 @@ async function uploadImageToFirebase(blob, filename) {
             // Simulate upload delay
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // Create a data URL
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(blob);
-            });
+            // Create a data URL with timeout protection
+            return await Promise.race([
+                new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        console.log('✅ Data URL created successfully');
+                        resolve(reader.result);
+                    };
+                    reader.onerror = () => {
+                        console.error('❌ FileReader error');
+                        resolve('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k='); // 1x1 transparent JPEG
+                    };
+                    reader.readAsDataURL(blob);
+                }),
+                timeoutPromise
+            ]);
         }
     } catch (error) {
         console.error('❌ Firebase Storage upload error:', error);
         
         // Fallback to data URL on error
         console.log('⚠️ Falling back to data URL due to upload error');
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-        });
+        return await Promise.race([
+            new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    console.log('✅ Fallback data URL created');
+                    resolve(reader.result);
+                };
+                reader.onerror = () => {
+                    console.error('❌ Fallback FileReader error');
+                    resolve('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=');
+                };
+                reader.readAsDataURL(blob);
+            }),
+            timeoutPromise
+        ]);
     }
+}
+
+// Image compression function for mobile optimization
+async function compressImage(blob, quality = 0.7) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+            // Calculate new dimensions (max 1920x1080 for mobile)
+            let { width, height } = img;
+            const maxWidth = 1920;
+            const maxHeight = 1080;
+            
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width *= ratio;
+                height *= ratio;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(resolve, 'image/jpeg', quality);
+        };
+        
+        img.onerror = () => {
+            console.log('⚠️ Image compression failed, using original');
+            resolve(blob);
+        };
+        
+        img.src = URL.createObjectURL(blob);
+    });
 }
 
 async function saveProofToFirebase(proofData) {
@@ -3960,6 +4073,87 @@ window.switchCamera = switchCamera;
 window.takePicture = takePicture;
 window.retakePicture = retakePicture;
 window.uploadProof = uploadProof;
+
+// Insulting Pig Name System
+const pigInsults = [
+    'PIG FUCKER', 'BACON BREATH', 'SWINE SLUT', 'HOG WHORE', 'PORK CHOP',
+    'CLOVEN HOOVED BEAST', 'MUD WALLOWER', 'SLOP SUCKER', 'SNORTING SWINE',
+    'SQUEALING PIGLET', 'TRUFFLE SNIFFER', 'BARNYARD BITCH', 'OINKING OAFS',
+    'CURLY TAILED CUNT', 'PIGPEN PEASANT', 'SWILL SWALLOWER', 'HOOF HEARTED',
+    'BACON BITS', 'PORK BELLY', 'HAM HOCK', 'SAUSAGE SUCKER', 'CHOP CHASER',
+    'SNOUT SNORTER', 'TROUGH DIVER', 'SLOP SLURPER', 'MUD MUNCHER',
+    'PIGGY BACK RIDER', 'BOAR BORE', 'SOW SUCKER', 'PIGLET POKER',
+    'BACON BANDIT', 'PORK PIRATE', 'HAM HANDLER', 'SWINE SWIPER',
+    'OINKER OGLER', 'SNORTER SNEAK', 'SQUEALER SLEAZE', 'PIGGY PERV',
+    'HOOF HUGGER', 'TAIL TWISTER', 'SNOUT SNIFFER', 'TROUGH TRASHER'
+];
+
+let playerInsults = {}; // Store current insults for each player
+let lastInsultUpdate = 0; // Track when insults were last updated
+const INSULT_ROTATION_HOURS = 3; // Change insults every 3 hours
+
+function getPlayerInsult(playerName) {
+    const now = Date.now();
+    const hoursElapsed = (now - lastInsultUpdate) / (1000 * 60 * 60);
+    
+    // Update insults every 3 hours or if we don't have insults yet
+    if (hoursElapsed >= INSULT_ROTATION_HOURS || Object.keys(playerInsults).length === 0) {
+        updatePlayerInsults();
+        lastInsultUpdate = now;
+    }
+    
+    return playerInsults[playerName] || 'MYSTERY MEAT';
+}
+
+function updatePlayerInsults() {
+    console.log('🐷 Updating insulting pig names...');
+    
+    const playerNames = Object.keys(players);
+    const availableInsults = [...pigInsults]; // Copy array
+    const newInsults = {};
+    
+    // Assign unique insults to each player
+    playerNames.forEach(playerName => {
+        if (availableInsults.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableInsults.length);
+            const insult = availableInsults.splice(randomIndex, 1)[0]; // Remove from available
+            newInsults[playerName] = insult;
+        } else {
+            // Fallback if we run out of insults (shouldn't happen with 40+ insults)
+            newInsults[playerName] = pigInsults[Math.floor(Math.random() * pigInsults.length)];
+        }
+    });
+    
+    playerInsults = newInsults;
+    
+    // Save to localStorage for persistence
+    localStorage.setItem('pigInsults', JSON.stringify(playerInsults));
+    localStorage.setItem('lastInsultUpdate', lastInsultUpdate.toString());
+    
+    console.log('🐷 New pig insults assigned:', playerInsults);
+    
+    // Update UI if needed
+    updatePlayerUI();
+}
+
+// Load insults from localStorage on startup
+function loadPlayerInsults() {
+    try {
+        const savedInsults = localStorage.getItem('pigInsults');
+        const savedUpdateTime = localStorage.getItem('lastInsultUpdate');
+        
+        if (savedInsults && savedUpdateTime) {
+            playerInsults = JSON.parse(savedInsults);
+            lastInsultUpdate = parseInt(savedUpdateTime);
+            console.log('🐷 Loaded saved pig insults:', playerInsults);
+        }
+    } catch (error) {
+        console.log('⚠️ Could not load saved insults:', error);
+    }
+}
+
+// Initialize insults system
+loadPlayerInsults();
 
 // Add some random pig sounds
 const pigSounds = ['🐷 OINK!', '🐷 SNORT!', '🐷 SQUEAL!'];
