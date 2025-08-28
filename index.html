@@ -337,11 +337,9 @@
                 </div>
                 
                 <script>
-                    // Show mobile-specific help text
+                    // Mobile detection (no longer needed since SECURE LOGIN is primary)
                     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                    if (isMobile) {
-                        document.getElementById('smsHelpText').innerHTML = '<strong>📱 ON MOBILE:</strong> SMS often fails due to browser restrictions. <strong>Use SECURE LOGIN button!</strong>';
-                    }
+                    console.log(`📱 Mobile device detected: ${isMobile}`);
                 </script>
             </div>
 

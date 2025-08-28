@@ -265,6 +265,8 @@ function initializeFirebase() {
                 const bypassLoginInProgress = localStorage.getItem('bypassLoginInProgress');
                 const playerName = user.displayName || bypassLoginInProgress;
                 
+                console.log(`🔍 Anonymous user detected - displayName: ${user.displayName}, bypassLoginInProgress: ${bypassLoginInProgress}, playerName: ${playerName}`);
+                
                 if (playerName) {
                     console.log(`🔐 Anonymous bypass login detected: ${playerName}`);
                     
@@ -1594,6 +1596,9 @@ function bypassSMSForTesting() {
 
     console.log(`🔐 PRIMARY: Secure login for ${selectedPlayer} using Firebase Anonymous Auth`);
     
+    // Set the bypass login flag BEFORE Firebase auth to prevent race condition
+    localStorage.setItem('bypassLoginInProgress', selectedPlayer);
+    
     // Clear any existing auth state first
     if (window.firebaseAuth.currentUser) {
         console.log('🧹 Clearing existing Firebase Auth state...');
@@ -1624,13 +1629,14 @@ function performBypassLogin(selectedPlayer) {
             console.log(`✅ User profile updated for ${selectedPlayer}`);
             closePlayerLoginModal();
             
-            // Store bypass login flag to distinguish from SMS login in onAuthStateChanged
-            localStorage.setItem('bypassLoginInProgress', selectedPlayer);
-            
             // The onAuthStateChanged listener will handle the rest of the login process
+            // (bypassLoginInProgress was already set before the Firebase call)
         })
         .catch((error) => {
             console.error('Firebase Anonymous Auth bypass login error:', error);
+            
+            // Clear the bypass login flag on error
+            localStorage.removeItem('bypassLoginInProgress');
             
             if (error.code === 'auth/operation-not-allowed') {
                 alert('🚫 Anonymous authentication is not enabled in Firebase Console.\n\n🔧 SOLUTION:\n1. Go to Firebase Console\n2. Authentication → Sign-in method\n3. Enable "Anonymous"\n4. Save changes\n\nContact the Ham Handler if you need help.');
