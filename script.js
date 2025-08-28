@@ -400,6 +400,46 @@ setTimeout(() => {
     // reCAPTCHA will be initialized only when needed for SMS sending
 }, 1000);
 
+// Add page visibility change listener to refresh data when returning to page
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && document.getElementById('leaderboard')) {
+        console.log('🏆 Page became visible, refreshing leaderboard...');
+        // Small delay to ensure Firebase is ready
+        setTimeout(() => {
+            if (players && Object.keys(players).length > 0) {
+                updateLeaderboard();
+            } else {
+                console.log('🏆 Players data not available, re-initializing Firebase...');
+                initializeFirebase();
+            }
+        }, 500);
+    }
+});
+
+// Add DOMContentLoaded listener to ensure leaderboard updates when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🏆 DOM loaded, checking for leaderboard...');
+    if (document.getElementById('leaderboard')) {
+        console.log('🏆 Leaderboard found, will update when Firebase is ready');
+        // Try to update leaderboard after a short delay
+        setTimeout(() => {
+            if (players && Object.keys(players).length > 0) {
+                updateLeaderboard();
+            }
+        }, 2000);
+    }
+});
+
+// Manual refresh function for debugging
+function refreshLeaderboard() {
+    console.log('🏆 Manual leaderboard refresh requested');
+    console.log('🏆 Current players:', players);
+    updateLeaderboard();
+}
+
+// Make refresh function available globally for debugging
+window.refreshLeaderboard = refreshLeaderboard;
+
 // PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -685,6 +725,26 @@ createBubbles();
 function updateLeaderboard() {
     const leaderboard = document.getElementById('leaderboard');
     const loadingIndicator = document.getElementById('loadingIndicator');
+    
+    console.log('🏆 updateLeaderboard called, players:', players);
+    console.log('🏆 leaderboard element:', leaderboard);
+    
+    // Safety check - if leaderboard element doesn't exist, we're not on the main page
+    if (!leaderboard) {
+        console.log('🏆 No leaderboard element found - not on main page');
+        return;
+    }
+    
+    // Safety check - if players object is empty, keep loading indicator visible
+    if (!players || Object.keys(players).length === 0) {
+        console.log('🏆 Players data not ready yet, keeping loading indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'block';
+            loadingIndicator.textContent = 'Loading Pig Points...';
+        }
+        leaderboard.style.display = 'none';
+        return;
+    }
     
     // Hide loading indicator and show leaderboard
     if (loadingIndicator) {
