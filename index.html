@@ -418,10 +418,15 @@
             
             <!-- Camera Controls -->
             <div id="cameraControls" style="text-align: center; margin: 20px 0;">
-                <button id="startCameraBtn" class="transfer-btn" onclick="startCamera()" style="background: linear-gradient(45deg, #2196F3, #1976D2);">
-                    📹 START CAMERA
-                </button>
-                <button id="takePictureBtn" class="transfer-btn" onclick="takePicture()" style="background: linear-gradient(45deg, #4CAF50, #45a049); display: none;">
+                <div id="cameraToggle" style="margin-bottom: 15px;">
+                    <button id="backCameraBtn" class="camera-toggle-btn active" onclick="switchCamera('environment')" style="background: linear-gradient(45deg, #2196F3, #1976D2); color: white; border: none; padding: 8px 16px; border-radius: 20px; margin: 0 5px; cursor: pointer; font-size: 0.9em;">
+                        📱 BACK CAMERA
+                    </button>
+                    <button id="frontCameraBtn" class="camera-toggle-btn" onclick="switchCamera('user')" style="background: linear-gradient(45deg, #666, #888); color: white; border: none; padding: 8px 16px; border-radius: 20px; margin: 0 5px; cursor: pointer; font-size: 0.9em;">
+                        🤳 FRONT CAMERA
+                    </button>
+                </div>
+                <button id="takePictureBtn" class="transfer-btn" onclick="takePicture()" style="background: linear-gradient(45deg, #4CAF50, #45a049);">
                     📸 TAKE PICTURE
                 </button>
                 <button id="retakePictureBtn" class="transfer-btn" onclick="retakePicture()" style="background: linear-gradient(45deg, #FF9800, #F57C00); display: none;">
@@ -446,13 +451,39 @@
                     🚀 UPLOAD PROOF 🚀
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Proof Viewer Modal -->
+    <div class="modal" id="proofViewerModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeProofViewerModal()">&times;</span>
+            <h2 id="proofViewerTitle">📸 DRINK PROOF 📸</h2>
             
-            <!-- Alternative File Upload -->
-            <div style="text-align: center; margin: 20px 0; padding-top: 15px; border-top: 2px solid #ddd;">
-                <p style="color: #666; margin-bottom: 10px;">Or upload from your device:</p>
-                <input type="file" id="fileUpload" accept="image/*" capture="environment" style="display: none;" onchange="handleFileUpload(event)">
-                <button class="player-login-btn" onclick="document.getElementById('fileUpload').click()">
-                    📁 CHOOSE FROM DEVICE
+            <div id="proofViewerContent" style="text-align: center;">
+                <div id="proofImageContainer" style="margin: 20px 0;">
+                    <img id="proofImage" style="max-width: 100%; max-height: 400px; border-radius: 10px; border: 2px solid #4CAF50;">
+                </div>
+                
+                <div id="proofDetails" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <div id="proofPlayerInfo" style="font-weight: bold; color: #8B4513; margin-bottom: 10px;"></div>
+                    <div id="proofDrinkInfo" style="color: #4CAF50; margin-bottom: 10px;"></div>
+                    <div id="proofMessage" style="font-style: italic; color: #666;"></div>
+                    <div id="proofTimestamp" style="font-size: 0.9em; color: #999; margin-top: 10px;"></div>
+                </div>
+                
+                <!-- Alex's Request Proof Section (only visible to Alex) -->
+                <div id="alexProofActions" style="display: none; margin-top: 20px; padding: 15px; background: linear-gradient(45deg, #E3F2FD, #BBDEFB); border-radius: 8px; border-left: 4px solid #2196F3;">
+                    <h4 style="color: #1976D2; margin: 0 0 10px 0;">🔔 Alex Actions</h4>
+                    <button class="transfer-btn" onclick="requestProofFromPlayer()" style="background: linear-gradient(45deg, #FF9800, #F57C00);">
+                        📢 REQUEST PROOF
+                    </button>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="login-btn" onclick="closeProofViewerModal()" style="background: linear-gradient(45deg, #666, #999);">
+                    ✅ CLOSE
                 </button>
             </div>
         </div>

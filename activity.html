@@ -472,13 +472,29 @@
                     
                     const timeString = new Date(activity.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     
-                    activityItem.innerHTML = `
-                        <div class="activity-time">${timeString}</div>
-                        <div class="activity-text">
-                            <span class="activity-emoji">${activity.emoji}</span>
-                            ${activity.message}
-                        </div>
-                    `;
+                    // Special handling for drink proof activities
+                    if (activity.type === 'drink_proof') {
+                        activityItem.classList.add('clickable-proof');
+                        activityItem.style.cursor = 'pointer';
+                        activityItem.onclick = () => showProofModal(activity.id);
+                        
+                        activityItem.innerHTML = `
+                            <div class="activity-time">${timeString}</div>
+                            <div class="activity-text">
+                                <span class="activity-emoji">${activity.emoji}</span>
+                                ${activity.message}
+                                <span class="view-proof-hint" style="color: #2196F3; font-size: 0.9em; margin-left: 8px;">📱 Click to view</span>
+                            </div>
+                        `;
+                    } else {
+                        activityItem.innerHTML = `
+                            <div class="activity-time">${timeString}</div>
+                            <div class="activity-text">
+                                <span class="activity-emoji">${activity.emoji}</span>
+                                ${activity.message}
+                            </div>
+                        `;
+                    }
                     
                     activityFeed.appendChild(activityItem);
                 });
@@ -831,6 +847,41 @@
             <span class="status-points" id="statusPlayerPoints"></span>
         </div>
         <button class="status-logout" onclick="quickLogout()">Logout</button>
+    </div>
+
+    <!-- Proof Viewer Modal -->
+    <div class="modal" id="proofViewerModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeProofViewerModal()">&times;</span>
+            <h2 id="proofViewerTitle">📸 DRINK PROOF 📸</h2>
+            
+            <div id="proofViewerContent" style="text-align: center;">
+                <div id="proofImageContainer" style="margin: 20px 0;">
+                    <img id="proofImage" style="max-width: 100%; max-height: 400px; border-radius: 10px; border: 2px solid #4CAF50;">
+                </div>
+                
+                <div id="proofDetails" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <div id="proofPlayerInfo" style="font-weight: bold; color: #8B4513; margin-bottom: 10px;"></div>
+                    <div id="proofDrinkInfo" style="color: #4CAF50; margin-bottom: 10px;"></div>
+                    <div id="proofMessage" style="font-style: italic; color: #666;"></div>
+                    <div id="proofTimestamp" style="font-size: 0.9em; color: #999; margin-top: 10px;"></div>
+                </div>
+                
+                <!-- Alex's Request Proof Section (only visible to Alex) -->
+                <div id="alexProofActions" style="display: none; margin-top: 20px; padding: 15px; background: linear-gradient(45deg, #E3F2FD, #BBDEFB); border-radius: 8px; border-left: 4px solid #2196F3;">
+                    <h4 style="color: #1976D2; margin: 0 0 10px 0;">🔔 Alex Actions</h4>
+                    <button class="transfer-btn" onclick="requestProofFromPlayer()" style="background: linear-gradient(45deg, #FF9800, #F57C00);">
+                        📢 REQUEST PROOF
+                    </button>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="login-btn" onclick="closeProofViewerModal()" style="background: linear-gradient(45deg, #666, #999);">
+                    ✅ CLOSE
+                </button>
+            </div>
+        </div>
     </div>
 </body>
 </html>

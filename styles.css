@@ -304,6 +304,27 @@ body {
     margin-right: 8px;
 }
 
+/* Clickable proof entries */
+.clickable-proof {
+    transition: all 0.2s ease;
+    border-left-color: #2196F3 !important;
+}
+
+.clickable-proof:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: rgba(33, 150, 243, 0.05);
+}
+
+.view-proof-hint {
+    animation: pulse-hint 2s infinite;
+}
+
+@keyframes pulse-hint {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -492,6 +513,30 @@ body {
 #cameraControls button {
     margin: 5px;
     min-width: 120px;
+}
+
+.camera-toggle-btn {
+    transition: all 0.3s ease;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.camera-toggle-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+
+.camera-toggle-btn.active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+#cameraToggle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
 }
 
 #uploadControls textarea {

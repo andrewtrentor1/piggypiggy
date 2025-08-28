@@ -167,6 +167,15 @@ self.addEventListener('push', event => {
     notificationData.tag = 'drink-proof';
     notificationData.vibrate = [100, 50, 100, 50, 100];
     notificationData.data = { type: 'drink_proof', url: '/activity.html' };
+  } else if (notificationData.type === 'proof_request') {
+    notificationData.title = '📢 PROOF REQUESTED';
+    notificationData.body = `Alex is requesting additional proof for your drinks!`;
+    notificationData.icon = '/icon-192x192.png';
+    notificationData.badge = '/icon-72x72.png';
+    notificationData.tag = 'proof-request';
+    notificationData.requireInteraction = true;
+    notificationData.vibrate = [200, 100, 200, 100, 200, 100, 200];
+    notificationData.data = { type: 'proof_request', url: '/' };
   }
   
   event.waitUntil(

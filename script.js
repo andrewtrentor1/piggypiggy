@@ -395,6 +395,7 @@ setTimeout(() => {
     // Initialize Alex's drink system after Firebase is ready
     setTimeout(() => {
         initializeAlexDrinkSystem();
+        initializeProofRequestSystem();
     }, 1500);
     // reCAPTCHA will be initialized only when needed for SMS sending
 }, 1000);
@@ -990,19 +991,35 @@ function loadActivityFeed() {
         
         const timeString = new Date(activity.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
-        activityItem.innerHTML = `
-            <div class="activity-time">${timeString}</div>
-            <div class="activity-text">
-                <span class="activity-emoji">${activity.emoji}</span>
-                ${activity.message}
-            </div>
-        `;
+        // Special handling for drink proof activities
+        if (activity.type === 'drink_proof') {
+            activityItem.classList.add('clickable-proof');
+            activityItem.style.cursor = 'pointer';
+            activityItem.onclick = () => showProofModal(activity.id);
+            
+            activityItem.innerHTML = `
+                <div class="activity-time">${timeString}</div>
+                <div class="activity-text">
+                    <span class="activity-emoji">${activity.emoji}</span>
+                    ${activity.message}
+                    <span class="view-proof-hint" style="color: #2196F3; font-size: 0.9em; margin-left: 8px;">📱 Click to view</span>
+                </div>
+            `;
+        } else {
+            activityItem.innerHTML = `
+                <div class="activity-time">${timeString}</div>
+                <div class="activity-text">
+                    <span class="activity-emoji">${activity.emoji}</span>
+                    ${activity.message}
+                </div>
+            `;
+        }
         
         activityFeed.appendChild(activityItem);
     });
 }
 
-function addActivity(type, emoji, message) {
+function addActivity(type, emoji, message, extraData = null) {
     const activity = {
         id: Date.now() + '_' + Math.floor(Math.random() * 10000), // Firebase-safe unique ID
         type: type,
@@ -1010,6 +1027,11 @@ function addActivity(type, emoji, message) {
         message: message,
         timestamp: new Date().toISOString()
     };
+    
+    // Add extra data if provided (for proof activities)
+    if (extraData) {
+        activity.extraData = extraData;
+    }
     
     // Save to Firebase (individual activity)
     saveActivity(activity);
@@ -3381,6 +3403,7 @@ function saveScoreEdit() {
 // Upload Proof System for Drink Assignments
 let currentStream = null;
 let capturedPhotoBlob = null;
+let currentFacingMode = 'environment'; // Default to back camera
 
 function showUploadProofModal() {
     if (!isPlayerLoggedIn || !currentPlayer) {
@@ -3393,6 +3416,11 @@ function showUploadProofModal() {
     
     // Show modal
     document.getElementById('uploadProofModal').style.display = 'flex';
+    
+    // Auto-start camera with back camera by default
+    setTimeout(() => {
+        startCamera('environment');
+    }, 300); // Small delay to ensure modal is fully displayed
 }
 
 function closeUploadProofModal() {
@@ -3415,21 +3443,32 @@ function resetUploadProofModal() {
     document.getElementById('capturedPhoto').style.display = 'none';
     document.getElementById('uploadControls').style.display = 'none';
     
-    document.getElementById('startCameraBtn').style.display = 'inline-block';
-    document.getElementById('takePictureBtn').style.display = 'none';
+    document.getElementById('takePictureBtn').style.display = 'inline-block';
     document.getElementById('retakePictureBtn').style.display = 'none';
+    
+    // Reset camera toggle buttons
+    document.getElementById('backCameraBtn').classList.add('active');
+    document.getElementById('frontCameraBtn').classList.remove('active');
+    currentFacingMode = 'environment';
     
     // Clear form data
     document.getElementById('proofMessage').value = '';
     capturedPhotoBlob = null;
 }
 
-async function startCamera() {
+async function startCamera(facingMode = 'environment') {
     try {
+        // Stop existing stream if running
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+        
+        currentFacingMode = facingMode;
+        
         // Request camera access
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
-                facingMode: 'environment', // Use back camera if available
+                facingMode: facingMode,
                 width: { ideal: 1280 },
                 height: { ideal: 720 }
             } 
@@ -3441,14 +3480,32 @@ async function startCamera() {
         video.style.display = 'block';
         
         // Update UI
-        document.getElementById('startCameraBtn').style.display = 'none';
         document.getElementById('takePictureBtn').style.display = 'inline-block';
         
-        console.log('📹 Camera started successfully');
+        console.log(`📹 Camera started successfully with ${facingMode} camera`);
     } catch (error) {
         console.error('❌ Camera access error:', error);
-        alert('❌ Camera Access Error!\n\nCould not access your camera. Please:\n• Allow camera permissions\n• Try using the file upload option instead\n• Make sure you\'re using HTTPS');
+        alert('❌ Camera Access Error!\n\nCould not access your camera. Please:\n• Allow camera permissions\n• Make sure you\'re using HTTPS\n• Try switching to the other camera');
     }
+}
+
+async function switchCamera(facingMode) {
+    // Update button states
+    document.getElementById('backCameraBtn').classList.remove('active');
+    document.getElementById('frontCameraBtn').classList.remove('active');
+    
+    if (facingMode === 'environment') {
+        document.getElementById('backCameraBtn').classList.add('active');
+        document.getElementById('backCameraBtn').style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
+        document.getElementById('frontCameraBtn').style.background = 'linear-gradient(45deg, #666, #888)';
+    } else {
+        document.getElementById('frontCameraBtn').classList.add('active');
+        document.getElementById('frontCameraBtn').style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
+        document.getElementById('backCameraBtn').style.background = 'linear-gradient(45deg, #666, #888)';
+    }
+    
+    // Switch camera
+    await startCamera(facingMode);
 }
 
 function takePicture() {
@@ -3494,50 +3551,19 @@ function retakePicture() {
     document.getElementById('capturedPhoto').style.display = 'none';
     document.getElementById('uploadControls').style.display = 'none';
     document.getElementById('retakePictureBtn').style.display = 'none';
+    document.getElementById('takePictureBtn').style.display = 'inline-block';
     
     capturedPhotoBlob = null;
     
-    // Restart camera
-    startCamera();
+    // Restart camera with current facing mode
+    startCamera(currentFacingMode);
 }
 
-function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        alert('❌ Please select an image file!');
-        return;
-    }
-    
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        alert('❌ Image too large! Please choose an image smaller than 5MB.');
-        return;
-    }
-    
-    capturedPhotoBlob = file;
-    
-    // Show preview
-    const photoPreview = document.getElementById('photoPreview');
-    photoPreview.src = URL.createObjectURL(file);
-    
-    // Update UI
-    document.getElementById('cameraPreview').style.display = 'none';
-    document.getElementById('capturedPhoto').style.display = 'block';
-    document.getElementById('uploadControls').style.display = 'block';
-    
-    document.getElementById('startCameraBtn').style.display = 'none';
-    document.getElementById('takePictureBtn').style.display = 'none';
-    document.getElementById('retakePictureBtn').style.display = 'inline-block';
-    
-    console.log('📁 File selected successfully:', file.name);
-}
+
 
 async function uploadProof() {
     if (!capturedPhotoBlob) {
-        alert('❌ Please take a photo or select an image first!');
+        alert('❌ Please take a photo first!');
         return;
     }
     
@@ -3589,7 +3615,13 @@ async function uploadProof() {
         if (proofMessage) {
             activityMessage += ` - "${proofMessage}"`;
         }
-        addActivity('drink_proof', '📸', activityMessage);
+        addActivity('drink_proof', '📸', activityMessage, {
+            proofId: proofData.id,
+            imageUrl: proofData.imageUrl,
+            playerName: proofData.playerName,
+            message: proofData.message,
+            drinksAssigned: proofData.drinksAssigned
+        });
         
         // Notify Alex
         await notifyAlexOfProof(proofData);
@@ -3698,13 +3730,193 @@ async function notifyAlexOfProof(proofData) {
     console.log('🔔 Alex notified of proof upload');
 }
 
+// Proof Viewer System
+async function showProofModal(activityId) {
+    try {
+        // Find the activity in our local activities array
+        const activity = activities.find(a => a.id === activityId);
+        if (!activity || activity.type !== 'drink_proof') {
+            alert('❌ Proof not found!');
+            return;
+        }
+        
+        // Get proof data from activity or fetch from Firebase
+        let proofData = activity.extraData;
+        if (!proofData) {
+            // Fallback: try to fetch from Firebase drinkProofs
+            const proofRef = window.firebaseRef(window.firebaseDB, `drinkProofs/${activity.id}`);
+            const snapshot = await window.firebaseGet(proofRef);
+            if (snapshot.exists()) {
+                proofData = snapshot.val();
+            } else {
+                alert('❌ Proof data not found!');
+                return;
+            }
+        }
+        
+        // Populate modal with proof data
+        document.getElementById('proofImage').src = proofData.imageUrl;
+        document.getElementById('proofPlayerInfo').textContent = `Player: ${proofData.playerName}`;
+        document.getElementById('proofDrinkInfo').textContent = `Drinks: ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''}`;
+        document.getElementById('proofMessage').textContent = proofData.message ? `"${proofData.message}"` : 'No message provided';
+        
+        const timestamp = new Date(activity.timestamp);
+        document.getElementById('proofTimestamp').textContent = `Uploaded: ${timestamp.toLocaleString()}`;
+        
+        // Show Alex actions if current user is Alex
+        const alexActions = document.getElementById('alexProofActions');
+        if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+            alexActions.style.display = 'block';
+            // Store current proof data for request functionality
+            window.currentViewingProof = proofData;
+        } else {
+            alexActions.style.display = 'none';
+        }
+        
+        // Show modal
+        document.getElementById('proofViewerModal').style.display = 'flex';
+        
+    } catch (error) {
+        console.error('❌ Error showing proof modal:', error);
+        alert('❌ Error loading proof: ' + error.message);
+    }
+}
+
+function closeProofViewerModal() {
+    document.getElementById('proofViewerModal').style.display = 'none';
+    window.currentViewingProof = null;
+}
+
+async function requestProofFromPlayer() {
+    if (!window.currentViewingProof) {
+        alert('❌ No proof data available!');
+        return;
+    }
+    
+    const proofData = window.currentViewingProof;
+    const playerName = proofData.playerName;
+    
+    try {
+        // Create proof request
+        const requestData = {
+            id: `proof_request_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+            requestedBy: 'Alex',
+            targetPlayer: playerName,
+            originalProofId: proofData.id,
+            message: `Alex is requesting additional proof for your ${proofData.drinksAssigned} drink${proofData.drinksAssigned > 1 ? 's' : ''} assignment.`,
+            timestamp: new Date().toISOString(),
+            status: 'pending'
+        };
+        
+        // Save request to Firebase
+        const requestRef = window.firebaseRef(window.firebaseDB, `proofRequests/${requestData.id}`);
+        await window.firebaseSet(requestRef, requestData);
+        
+        // Send push notification to player
+        await sendPushNotification({
+            type: 'proof_request',
+            title: '📢 PROOF REQUESTED',
+            body: `Alex is requesting additional proof for your drinks!`,
+            targetPlayer: playerName,
+            requestId: requestData.id
+        });
+        
+        // Add to activity log
+        addActivity('proof_request', '📢', `Alex requested additional proof from ${playerName}`);
+        
+        // Close modal and show success
+        closeProofViewerModal();
+        alert(`📢 PROOF REQUEST SENT! 📢\n\n${playerName} has been notified that you want additional proof for their drink assignment.`);
+        
+    } catch (error) {
+        console.error('❌ Error requesting proof:', error);
+        alert('❌ Error sending proof request: ' + error.message);
+    }
+}
+
+// Proof Request System
+function initializeProofRequestSystem() {
+    console.log('📢 Initializing proof request system...');
+    
+    if (!window.firebaseDB) {
+        console.log('⚠️ Firebase not available for proof request system');
+        return;
+    }
+    
+    // Listen for proof requests from Firebase
+    const proofRequestsRef = window.firebaseRef(window.firebaseDB, 'proofRequests');
+    window.firebaseOnValue(proofRequestsRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const requests = snapshot.val();
+            console.log('📢 Proof requests received:', requests);
+            
+            // Check for new requests for current player
+            Object.values(requests).forEach(request => {
+                if (request.targetPlayer === currentPlayer && request.status === 'pending') {
+                    // Check if this is a new request (within last 10 seconds)
+                    const requestTime = new Date(request.timestamp);
+                    const now = new Date();
+                    const timeDiff = now - requestTime;
+                    
+                    if (timeDiff < 10000) { // Within 10 seconds
+                        console.log('📢 Showing proof request alert for current player!');
+                        showProofRequestAlert(request);
+                    }
+                }
+            });
+        }
+    }, (error) => {
+        console.error('❌ Firebase proof requests listener error:', error);
+    });
+}
+
+function showProofRequestAlert(requestData) {
+    // Prevent duplicate alerts for the same request
+    if (window.lastProofRequestAlert === requestData.id) {
+        console.log('📢 Duplicate proof request alert prevented');
+        return;
+    }
+    window.lastProofRequestAlert = requestData.id;
+    
+    const alertMessage = `📢 PROOF REQUEST FROM ALEX! 📢\n\n${requestData.message}\n\nWould you like to upload additional proof now?`;
+    
+    if (confirm(alertMessage)) {
+        // Mark request as acknowledged
+        markProofRequestAsHandled(requestData.id);
+        
+        // Open upload proof modal
+        showUploadProofModal();
+    } else {
+        // Mark request as acknowledged but declined
+        markProofRequestAsHandled(requestData.id, 'declined');
+    }
+}
+
+async function markProofRequestAsHandled(requestId, status = 'acknowledged') {
+    try {
+        const requestRef = window.firebaseRef(window.firebaseDB, `proofRequests/${requestId}`);
+        await window.firebaseUpdate(requestRef, {
+            status: status,
+            handledAt: new Date().toISOString()
+        });
+        console.log(`📢 Proof request ${requestId} marked as ${status}`);
+    } catch (error) {
+        console.error('❌ Error updating proof request status:', error);
+    }
+}
+
+// Make proof viewer functions globally accessible
+window.showProofModal = showProofModal;
+window.closeProofViewerModal = closeProofViewerModal;
+window.requestProofFromPlayer = requestProofFromPlayer;
+
 // Make upload proof functions globally accessible
 window.showUploadProofModal = showUploadProofModal;
 window.closeUploadProofModal = closeUploadProofModal;
 window.startCamera = startCamera;
+window.switchCamera = switchCamera;
 window.takePicture = takePicture;
 window.retakePicture = retakePicture;
-window.handleFileUpload = handleFileUpload;
 window.uploadProof = uploadProof;
 
 // Add some random pig sounds
