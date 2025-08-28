@@ -237,7 +237,14 @@
             <button class="filter-btn active" onclick="filterActivities('all')">🔍 All</button>
             <button class="filter-btn" onclick="filterActivities('hogwash')">🎲 HOGWASH</button>
             <button class="filter-btn" onclick="filterActivities('transfer')">💸 Transfers</button>
+            <button class="filter-btn" onclick="filterActivities('moments')">📸 Moments</button>
             <button class="filter-btn" onclick="filterActivities('admin')">🔄 Admin</button>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="transfer-btn" onclick="showUploadMomentModal()" style="background: linear-gradient(45deg, #FF6B6B, #FF8E8E); font-size: 1.1em; padding: 15px 30px;">
+                📸 UPLOAD MOMENT
+            </button>
         </div>
 
         <div id="activityLoadingIndicator" class="loading-indicator">
@@ -472,17 +479,33 @@
             // Filter activities based on current filter
             let filteredActivities = activities;
             if (currentFilter !== 'all') {
-                filteredActivities = activities.filter(activity => activity.type === currentFilter);
+                if (currentFilter === 'moments') {
+                    // Moments filter includes both moment and drink_proof activities
+                    filteredActivities = activities.filter(activity => 
+                        activity.type === 'moment' || activity.type === 'drink_proof'
+                    );
+                } else {
+                    filteredActivities = activities.filter(activity => activity.type === currentFilter);
+                }
             }
             
             activityFeed.innerHTML = '';
             
             if (filteredActivities.length === 0) {
+                let emptyMessage = '';
+                if (currentFilter === 'moments') {
+                    emptyMessage = 'No moments or proofs shared yet! Click "📸 UPLOAD MOMENT" to share your first moment.';
+                } else if (currentFilter === 'all') {
+                    emptyMessage = 'Start gambling, transferring points, or playing golf to see activities here.';
+                } else {
+                    emptyMessage = `Start ${currentFilter === 'hogwash' ? 'gambling' : currentFilter === 'transfer' ? 'transferring points' : 'doing admin actions'} to see activities here.`;
+                }
+                
                 activityFeed.innerHTML = `
                     <div class="empty-state">
                         <div class="emoji">🐷</div>
                         <h3>No ${currentFilter === 'all' ? '' : currentFilter} activities yet!</h3>
-                        <p>Start gambling, transferring points, or playing golf to see activities here.</p>
+                        <p>${emptyMessage}</p>
                     </div>
                 `;
                 return;
@@ -511,14 +534,38 @@
                         activityItem.style.cursor = 'pointer';
                         activityItem.onclick = () => showProofModal(activity.id);
                     
-                    activityItem.innerHTML = `
-                        <div class="activity-time">${timeString}</div>
-                        <div class="activity-text">
-                            <span class="activity-emoji">${activity.emoji}</span>
-                            ${activity.message}
+                        activityItem.innerHTML = `
+                            <div class="activity-time">${timeString}</div>
+                            <div class="activity-text">
+                                <span class="activity-emoji">${activity.emoji}</span>
+                                ${activity.message}
                                 <span class="view-proof-hint" style="color: #2196F3; font-size: 0.9em; margin-left: 8px;">📱 Click to view</span>
-                        </div>
-                    `;
+                            </div>
+                        `;
+                    } else if (activity.type === 'moment') {
+                        // Special handling for moment activities
+                        activityItem.classList.add('moment-activity');
+                        activityItem.style.background = 'linear-gradient(45deg, rgba(255, 107, 107, 0.1), rgba(255, 142, 142, 0.1))';
+                        activityItem.style.border = '2px solid rgba(255, 107, 107, 0.3)';
+                        
+                        let momentContent = `
+                            <div class="activity-time">${timeString}</div>
+                            <div class="activity-text">
+                                <span class="activity-emoji">${activity.emoji}</span>
+                                <strong>${activity.playerId}</strong> shared a moment: ${activity.message}
+                        `;
+                        
+                        // Add image if present
+                        if (activity.imageUrl) {
+                            momentContent += `
+                                <div style="margin-top: 10px;">
+                                    <img src="${activity.imageUrl}" alt="Moment photo" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
+                                </div>
+                            `;
+                        }
+                        
+                        momentContent += `</div>`;
+                        activityItem.innerHTML = momentContent;
                     } else {
                         activityItem.innerHTML = `
                             <div class="activity-time">${timeString}</div>
@@ -1275,6 +1322,227 @@
             }
         }
         
+        // Upload Moment System
+        let momentStream = null;
+        let momentPhotoBlob = null;
+        let momentFacingMode = 'environment';
+
+        function showUploadMomentModal() {
+            if (!isPlayerLoggedIn || !currentPlayer) {
+                alert('🚫 You must be logged in to upload a moment!');
+                return;
+            }
+            
+            resetUploadMomentModal();
+            document.getElementById('uploadMomentModal').style.display = 'flex';
+        }
+
+        function closeUploadMomentModal() {
+            if (momentStream) {
+                momentStream.getTracks().forEach(track => track.stop());
+                momentStream = null;
+            }
+            resetUploadMomentModal();
+            document.getElementById('uploadMomentModal').style.display = 'none';
+        }
+
+        function resetUploadMomentModal() {
+            document.getElementById('momentCameraPreview').style.display = 'none';
+            document.getElementById('momentCapturedPhoto').style.display = 'none';
+            document.getElementById('momentCameraToggle').style.display = 'none';
+            document.getElementById('momentPhotoButtons').style.display = 'none';
+            document.getElementById('takeMomentPictureBtn').style.display = 'inline-block';
+            document.getElementById('retakeMomentPictureBtn').style.display = 'none';
+            document.getElementById('momentMessage').value = '';
+            momentPhotoBlob = null;
+        }
+
+        function startMomentCamera() {
+            document.getElementById('momentCameraToggle').style.display = 'block';
+            document.getElementById('momentPhotoButtons').style.display = 'block';
+            startMomentCameraWithMode('environment');
+        }
+
+        function skipMomentPhoto() {
+            // Just focus on the message input
+            document.getElementById('momentMessage').focus();
+        }
+
+        async function startMomentCameraWithMode(facingMode) {
+            try {
+                if (momentStream) {
+                    momentStream.getTracks().forEach(track => track.stop());
+                }
+
+                const constraints = {
+                    video: { facingMode: facingMode }
+                };
+
+                momentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('momentCameraPreview');
+                video.srcObject = momentStream;
+                video.style.display = 'block';
+                momentFacingMode = facingMode;
+
+                updateMomentCameraToggleButtons();
+                document.getElementById('takeMomentPictureBtn').style.display = 'inline-block';
+
+                console.log(`📹 Moment camera started successfully with ${facingMode} camera`);
+            } catch (error) {
+                console.error('❌ Moment camera error:', error);
+                alert('❌ Camera Access Error!\n\nCould not access your camera. Please:\n• Allow camera permissions\n• Make sure you are using HTTPS\n• Try switching to the other camera');
+            }
+        }
+
+        function updateMomentCameraToggleButtons() {
+            const backBtn = document.getElementById('momentBackCameraBtn');
+            const frontBtn = document.getElementById('momentFrontCameraBtn');
+            
+            if (momentFacingMode === 'environment') {
+                backBtn.classList.add('active');
+                frontBtn.classList.remove('active');
+                backBtn.style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
+                frontBtn.style.background = 'linear-gradient(45deg, #666, #888)';
+            } else {
+                frontBtn.classList.add('active');
+                backBtn.classList.remove('active');
+                frontBtn.style.background = 'linear-gradient(45deg, #2196F3, #1976D2)';
+                backBtn.style.background = 'linear-gradient(45deg, #666, #888)';
+            }
+        }
+
+        function switchMomentCamera(facingMode) {
+            if (facingMode !== momentFacingMode) {
+                startMomentCameraWithMode(facingMode);
+            }
+        }
+
+        function takeMomentPicture() {
+            const video = document.getElementById('momentCameraPreview');
+            const canvas = document.getElementById('momentPhotoCanvas');
+            const context = canvas.getContext('2d');
+            
+            let sourceWidth = video.videoWidth;
+            let sourceHeight = video.videoHeight;
+            const maxWidth = 800;
+            const maxHeight = 600;
+            
+            const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight, 1);
+            const targetWidth = Math.floor(sourceWidth * scale);
+            const targetHeight = Math.floor(sourceHeight * scale);
+            
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            
+            context.drawImage(video, 0, 0, targetWidth, targetHeight);
+            
+            canvas.toBlob((blob) => {
+                momentPhotoBlob = blob;
+                
+                console.log(`📸 Moment photo captured: ${targetWidth}x${targetHeight}, ${(blob.size / 1024).toFixed(1)}KB`);
+                
+                const photoPreview = document.getElementById('momentPhotoPreview');
+                photoPreview.src = URL.createObjectURL(blob);
+                
+                document.getElementById('momentCameraPreview').style.display = 'none';
+                document.getElementById('momentCapturedPhoto').style.display = 'block';
+                
+                document.getElementById('takeMomentPictureBtn').style.display = 'none';
+                document.getElementById('retakeMomentPictureBtn').style.display = 'inline-block';
+                
+                if (momentStream) {
+                    momentStream.getTracks().forEach(track => track.stop());
+                    momentStream = null;
+                }
+                
+                console.log('📸 Moment photo captured successfully');
+            }, 'image/jpeg', 0.7);
+        }
+
+        function retakeMomentPicture() {
+            document.getElementById('momentCapturedPhoto').style.display = 'none';
+            document.getElementById('retakeMomentPictureBtn').style.display = 'none';
+            document.getElementById('takeMomentPictureBtn').style.display = 'inline-block';
+            momentPhotoBlob = null;
+            startMomentCameraWithMode(momentFacingMode);
+        }
+
+        async function uploadMoment() {
+            const momentMessage = document.getElementById('momentMessage').value.trim();
+            
+            if (!momentMessage) {
+                alert('❌ Please add a message to share your moment!');
+                document.getElementById('momentMessage').focus();
+                return;
+            }
+            
+            try {
+                const uploadBtn = document.querySelector('#uploadMomentModal .transfer-btn:last-child');
+                const originalText = uploadBtn.textContent;
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = '⏳ SHARING...';
+                
+                const timestamp = Date.now();
+                let imageUrl = null;
+                
+                // Upload photo if one was taken
+                if (momentPhotoBlob) {
+                    console.log('🚀 Starting moment photo upload...');
+                    console.log('📊 Image size:', momentPhotoBlob.size, 'bytes');
+                    
+                    const filename = `moment_${currentPlayer}_${timestamp}.jpg`;
+                    imageUrl = await uploadImageToFirebase(momentPhotoBlob, filename);
+                    console.log('✅ Moment photo uploaded successfully!');
+                }
+                
+                // Create moment data
+                const momentData = {
+                    id: `moment_${timestamp}`,
+                    type: 'moment',
+                    playerId: currentPlayer,
+                    message: momentMessage,
+                    imageUrl: imageUrl,
+                    timestamp: new Date().toISOString(),
+                    emoji: '📸'
+                };
+                
+                // Save to Firebase
+                await saveMomentToFirebase(momentData);
+                
+                // Add to activity feed
+                const activityMessage = `${currentPlayer} shared a moment: ${momentMessage}`;
+                addActivity('moment', '📸', activityMessage, momentData);
+                
+                uploadBtn.textContent = '✅ SHARED!';
+                uploadBtn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+                
+                setTimeout(() => {
+                    alert('✅ MOMENT SHARED SUCCESSFULLY! 🎉\n\nYour moment has been added to the activity feed!');
+                    closeUploadMomentModal();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Upload moment error:', error);
+                alert('❌ Upload failed! Please try again.');
+                
+                const uploadBtn = document.querySelector('#uploadMomentModal .transfer-btn:last-child');
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '🚀 SHARE MOMENT';
+                uploadBtn.style.background = 'linear-gradient(45deg, #FF6B6B, #FF8E8E)';
+            }
+        }
+
+        async function saveMomentToFirebase(momentData) {
+            if (!window.firebaseDB) {
+                throw new Error('Firebase not available');
+            }
+            
+            const momentRef = window.firebaseRef(window.firebaseDB, `moments/${momentData.id}`);
+            await window.firebaseSet(momentRef, momentData);
+            
+            console.log('💾 Moment saved to Firebase:', momentData.id);
+        }
+
         // Upload Proof System
         let currentStream = null;
         let capturedPhotoBlob = null;
@@ -1570,6 +1838,14 @@
         window.closeProofViewerModal = closeProofViewerModal;
         window.requestProofFromPlayer = requestProofFromPlayer;
         window.testShowModal = testShowModal;
+        window.showUploadMomentModal = showUploadMomentModal;
+        window.closeUploadMomentModal = closeUploadMomentModal;
+        window.startMomentCamera = startMomentCamera;
+        window.skipMomentPhoto = skipMomentPhoto;
+        window.switchMomentCamera = switchMomentCamera;
+        window.takeMomentPicture = takeMomentPicture;
+        window.retakeMomentPicture = retakeMomentPicture;
+        window.uploadMoment = uploadMoment;
         window.showUploadProofModal = showUploadProofModal;
         window.closeUploadProofModal = closeUploadProofModal;
         window.switchCamera = switchCamera;
@@ -1632,6 +1908,68 @@
             <div style="text-align: center; margin-top: 20px;">
                 <button class="login-btn" onclick="closeProofViewerModal()" style="background: linear-gradient(45deg, #666, #999);">
                     ✅ CLOSE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Moment Modal -->
+    <div class="modal" id="uploadMomentModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUploadMomentModal()">&times;</span>
+            <h2>📸 UPLOAD MOMENT 📸</h2>
+            <p style="text-align: center; margin-bottom: 20px; color: #666;">
+                Share a moment with the group! Add a photo and/or message.
+            </p>
+            
+            <!-- Camera Preview -->
+            <div id="momentCameraSection" style="text-align: center; margin: 20px 0;">
+                <video id="momentCameraPreview" autoplay playsinline style="width: 100%; max-width: 300px; border-radius: 10px; display: none;"></video>
+                <canvas id="momentPhotoCanvas" style="display: none;"></canvas>
+                <div id="momentCapturedPhoto" style="display: none; margin: 10px 0;">
+                    <img id="momentPhotoPreview" style="width: 100%; max-width: 300px; border-radius: 10px; border: 2px solid #FF6B6B;">
+                </div>
+            </div>
+            
+            <!-- Camera Controls -->
+            <div id="momentCameraControls" style="text-align: center; margin: 20px 0;">
+                <div style="margin-bottom: 15px;">
+                    <button class="transfer-btn" onclick="startMomentCamera()" style="background: linear-gradient(45deg, #4CAF50, #45a049); margin-right: 10px;">
+                        📷 ADD PHOTO
+                    </button>
+                    <button class="transfer-btn" onclick="skipMomentPhoto()" style="background: linear-gradient(45deg, #666, #888);">
+                        📝 TEXT ONLY
+                    </button>
+                </div>
+                
+                <div id="momentCameraToggle" style="margin-bottom: 15px; display: none;">
+                    <button id="momentBackCameraBtn" class="camera-toggle-btn active" onclick="switchMomentCamera('environment')" style="background: linear-gradient(45deg, #2196F3, #1976D2); color: white; border: none; padding: 8px 16px; border-radius: 20px; margin: 0 5px; cursor: pointer; font-size: 0.9em;">
+                        📷 BACK CAMERA
+                    </button>
+                    <button id="momentFrontCameraBtn" class="camera-toggle-btn" onclick="switchMomentCamera('user')" style="background: linear-gradient(45deg, #666, #888); color: white; border: none; padding: 8px 16px; border-radius: 20px; margin: 0 5px; cursor: pointer; font-size: 0.9em;">
+                        🤳 FRONT CAMERA
+                    </button>
+                </div>
+                
+                <div id="momentPhotoButtons" style="display: none;">
+                    <button id="takeMomentPictureBtn" class="transfer-btn" onclick="takeMomentPicture()" style="background: linear-gradient(45deg, #4CAF50, #45a049); margin-right: 10px;">
+                        📸 TAKE PICTURE
+                    </button>
+                    <button id="retakeMomentPictureBtn" class="transfer-btn" onclick="retakeMomentPicture()" style="background: linear-gradient(45deg, #FF9800, #F57C00); display: none;">
+                        🔄 RETAKE PICTURE
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Message Input -->
+            <div style="margin: 20px 0;">
+                <textarea id="momentMessage" placeholder="Share what's happening... (required)" style="width: 100%; padding: 15px; border: 2px solid #FF6B6B; border-radius: 10px; margin-bottom: 15px; resize: vertical; min-height: 80px; font-size: 1rem;" required></textarea>
+            </div>
+            
+            <!-- Upload Controls -->
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="transfer-btn" onclick="uploadMoment()" style="background: linear-gradient(45deg, #FF6B6B, #FF8E8E); width: 100%; font-size: 1.1em; padding: 15px;">
+                    🚀 SHARE MOMENT
                 </button>
             </div>
         </div>
