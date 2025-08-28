@@ -491,68 +491,61 @@ window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     
-    // Show install prompt after user has been on the site for a bit
-    setTimeout(() => {
-        if (!installPromptShown) {
-            showInstallPrompt();
-        }
-    }, 10000); // Show after 10 seconds
+    // Show the install button instead of intrusive banner
+    showInstallButton();
 });
 
 window.addEventListener('appinstalled', () => {
     console.log('🎉 PWA: App installed successfully');
     deferredPrompt = null;
-    alert('🎉 MBE PIG POINTS installed successfully!\n\nYou can now access the app from your home screen and receive push notifications!');
+    hideInstallButton();
+    alert('🎉 PIGGY PIGGY installed successfully!\n\nYou can now access the app from your home screen and receive push notifications!');
 });
 
-function showInstallPrompt() {
-    if (!deferredPrompt || installPromptShown) return;
+function showInstallButton() {
+    if (!deferredPrompt || document.getElementById('installButton')) return;
     
-    installPromptShown = true;
-    
-    const installBanner = document.createElement('div');
-    installBanner.id = 'installBanner';
-    installBanner.style.cssText = `
+    const installButton = document.createElement('div');
+    installButton.id = 'installButton';
+    installButton.style.cssText = `
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
+        bottom: 20px;
+        right: 20px;
         background: linear-gradient(45deg, #4CAF50, #45a049);
         color: white;
-        padding: 15px;
-        text-align: center;
-        z-index: 10000;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        transform: translateY(-100%);
-        transition: transform 0.3s ease;
+        padding: 12px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        font-weight: bold;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        user-select: none;
     `;
     
-    installBanner.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between; max-width: 600px; margin: 0 auto;">
-            <div style="display: flex; align-items: center;">
-                <span style="font-size: 1.5em; margin-right: 10px;">📱</span>
-                <div>
-                    <div style="font-weight: bold;">Install MBE PIG POINTS</div>
-                    <div style="font-size: 0.9em; opacity: 0.9;">Get the full app experience with notifications!</div>
-                </div>
-            </div>
-            <div>
-                <button onclick="installPWA()" style="background: #FFD700; color: #2E7D32; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin-right: 10px; cursor: pointer;">
-                    Install
-                </button>
-                <button onclick="dismissInstallPrompt()" style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
-                    Later
-                </button>
-            </div>
-        </div>
+    installButton.innerHTML = `
+        <span>📱</span>
+        <span>Install App</span>
     `;
     
-    document.body.appendChild(installBanner);
+    // Add hover effect
+    installButton.addEventListener('mouseenter', () => {
+        installButton.style.transform = 'translateY(-2px)';
+        installButton.style.boxShadow = '0 6px 20px rgba(76, 175, 80, 0.6)';
+    });
     
-    // Animate in
-    setTimeout(() => {
-        installBanner.style.transform = 'translateY(0)';
-    }, 100);
+    installButton.addEventListener('mouseleave', () => {
+        installButton.style.transform = 'translateY(0)';
+        installButton.style.boxShadow = '0 4px 15px rgba(76, 175, 80, 0.4)';
+    });
+    
+    installButton.addEventListener('click', installPWA);
+    
+    document.body.appendChild(installButton);
 }
 
 function installPWA() {
@@ -566,18 +559,24 @@ function installPWA() {
             console.log('❌ PWA: User dismissed install prompt');
         }
         deferredPrompt = null;
-        dismissInstallPrompt();
+        hideInstallButton();
     });
 }
 
-function dismissInstallPrompt() {
-    const banner = document.getElementById('installBanner');
-    if (banner) {
-        banner.style.transform = 'translateY(-100%)';
+function hideInstallButton() {
+    const button = document.getElementById('installButton');
+    if (button) {
+        button.style.transform = 'translateY(100px)';
+        button.style.opacity = '0';
         setTimeout(() => {
-            banner.remove();
+            button.remove();
         }, 300);
     }
+}
+
+function dismissInstallPrompt() {
+    // Legacy function - now just hides the install button
+    hideInstallButton();
 }
 
 function showUpdateAvailablePrompt() {
@@ -1219,41 +1218,13 @@ function initializeRecaptcha() {
                 recaptchaVerifier = null;
             }
             
-            // Detect if we're on mobile
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            // Create new reCAPTCHA verifier with mobile-optimized settings
-            const recaptchaConfig = {
-                'size': isMobile ? 'normal' : 'invisible', // Use visible reCAPTCHA on mobile
+            // Simple reCAPTCHA configuration - bare minimum
+            recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', {
+                'size': 'invisible',
                 'callback': (response) => {
                     console.log('✅ reCAPTCHA solved successfully');
-                },
-                'expired-callback': () => {
-                    console.warn('⚠️ reCAPTCHA expired');
-                    isRecaptchaReady = false;
-                    // Auto-retry on mobile
-                    if (isMobile) {
-                        setTimeout(() => {
-                            console.log('🔄 Auto-retrying reCAPTCHA on mobile...');
-                            initializeRecaptcha();
-                        }, 1000);
-                    }
-                },
-                'error-callback': (error) => {
-                    console.error('❌ reCAPTCHA error during use:', error);
-                    // More aggressive retry on mobile
-                    if (isMobile) {
-                        isRecaptchaReady = false;
-                        setTimeout(() => {
-                            console.log('🔄 Retrying reCAPTCHA after error on mobile...');
-                            initializeRecaptcha();
-                        }, 2000);
-                    }
                 }
-            };
-            
-            console.log(`📱 Initializing reCAPTCHA for ${isMobile ? 'mobile' : 'desktop'} with ${recaptchaConfig.size} size`);
-            recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'send-code-button', recaptchaConfig);
+            });
             
             // Render the reCAPTCHA
             recaptchaVerifier.render().then(() => {
@@ -1338,22 +1309,13 @@ function sendVerificationCode() {
     sendButton.disabled = true;
     sendButton.textContent = '📱 SENDING...';
 
-    // Detect mobile for shorter timeout
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const timeoutDuration = isMobile ? 10000 : 15000; // Shorter timeout on mobile
-    
-    // Add timeout to prevent hanging
+    // Simple timeout - 20 seconds
     const timeoutId = setTimeout(() => {
         console.error('⏰ SMS sending timeout - operation took too long');
         sendButton.disabled = false;
         sendButton.textContent = originalText;
-        
-        const timeoutMessage = isMobile ? 
-            '🚫 SMS sending timed out on mobile.\n\nMobile browsers often have reCAPTCHA issues.\n\n✅ SOLUTION: Use the green SECURE LOGIN button below!' :
-            '🚫 SMS sending timed out. This is likely due to domain authorization issues.\n\nPlease use the SECURE LOGIN button for now.';
-            
-        alert(timeoutMessage);
-    }, timeoutDuration);
+        alert('🚫 SMS sending timed out.\n\n✅ SOLUTION: Use the green SECURE LOGIN button below!');
+    }, 20000);
 
     // Send SMS verification code
     console.log('🚀 Starting signInWithPhoneNumber...');
@@ -1376,36 +1338,13 @@ function sendVerificationCode() {
             console.error('Error code:', error.code);
             console.error('Error message:', error.message);
             
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             let errorMessage = `🚫 SMS Error: ${error.message}\n\n`;
-            
-            if (error.code === 'auth/unauthorized-domain') {
-                errorMessage += `DOMAIN NOT AUTHORIZED!\n\nThe domain needs to be added to Firebase Console.\n\nFIX:\n1. Go to Firebase Console\n2. Authentication → Settings\n3. Authorized domains → Add your domain\n\nFor now, use SECURE LOGIN button.`;
-            } else if (error.code === 'auth/internal-error') {
-                errorMessage += isMobile ? 
-                    `Internal Firebase error on mobile.\n\nMobile browsers often have issues with SMS.\n\n✅ SOLUTION: Use the green SECURE LOGIN button!` :
-                    `Internal Firebase error. Possible causes:\n• Domain authorization issue\n• reCAPTCHA configuration\n• Firebase service problems\n\nTry SECURE LOGIN button.`;
-            } else if (error.code === 'auth/too-many-requests') {
-                errorMessage += `Rate limit exceeded. Wait a few minutes or use SECURE LOGIN button.`;
-            } else if (error.code === 'auth/captcha-check-failed') {
-                errorMessage += isMobile ?
-                    `reCAPTCHA failed on mobile device.\n\nMobile browsers are strict about reCAPTCHA.\n\n✅ SOLUTION: Use the green SECURE LOGIN button!` :
-                    `reCAPTCHA verification failed. Try refreshing the page or use SECURE LOGIN button.`;
-            } else if (error.code === 'auth/invalid-phone-number') {
-                errorMessage += `Invalid phone number format.\nContact admin to verify phone number.`;
-            } else {
-                errorMessage += isMobile ?
-                    `SMS failed on mobile device.\n\nMobile browsers often block SMS verification.\n\n✅ SOLUTION: Use the green SECURE LOGIN button below!` :
-                    `Error Code: ${error.code}\n\nMost likely a domain authorization issue.\nUse SECURE LOGIN button for now.`;
-            }
+            errorMessage += `✅ SOLUTION: Use the green SECURE LOGIN button below!`;
             
             alert(errorMessage);
             
             // Reset reCAPTCHA for next attempt
             isRecaptchaReady = false;
-            setTimeout(() => {
-                initializeRecaptcha();
-            }, 1000);
         })
         .finally(() => {
             // Re-enable the button
