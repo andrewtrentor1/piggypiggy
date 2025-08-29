@@ -67,12 +67,22 @@
             
             <!-- Bookkeeper Controls (hidden by default) -->
             <div class="card" id="bookkeeperCard" style="display: none;">
-                <h2 class="card-title">🐷 BOOKKEEPER CONTROLS 🐷</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 class="card-title" style="margin: 0;">🐷 HAM HANDLER CONTROLS 🐷</h2>
+                    <button onclick="toggleBookkeeperControls()" style="background: linear-gradient(45deg, #4CAF50, #45a049); color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 0.9em; cursor: pointer; font-weight: bold;">
+                        <span id="toggleBookkeeperText">📱 MINIMIZE</span>
+                    </button>
+                </div>
                 
-                <!-- God Points and Reset buttons -->
+                <div id="bookkeeperControlsContent">
+                    <!-- God Points and Reset buttons -->
                 <div class="login-section" style="margin-bottom: 20px;">
                     <button class="god-btn" onclick="pigPointsFromGod()">✨ PIG POINTS FROM GOD ✨</button>
+                    <div style="margin: 8px 0 15px 0; padding: 8px; background: rgba(255, 215, 0, 0.1); border-radius: 6px; font-size: 0.85em; color: #666;">
+                        <strong>✨ Pig Points from God:</strong> Randomly selects a player and gives them 5-25 bonus points from the divine pig gods
+                    </div>
                     <button class="transfer-btn" onclick="resetAllPoints()" style="background: linear-gradient(45deg, #ff6b6b, #ffa500);">🔄 RESET ALL POINTS</button>
+                    <button class="transfer-btn" onclick="resetHogwashCooldowns()" style="background: linear-gradient(45deg, #9C27B0, #673AB7);">🕐 RESET HOGWASH COOLDOWNS</button>
                     <button class="login-btn" onclick="toggleBookkeeper()" style="background: linear-gradient(45deg, #666, #999);">👋 LOGOUT</button>
                 </div>
                 
@@ -80,22 +90,12 @@
                 <div class="login-section" style="margin-bottom: 20px; padding: 15px; border: 3px dashed #ff0000; background: rgba(255,0,0,0.1);">
                     <h4 style="color: #ff0000; margin: 0 0 10px 0;">🚨 DANGER ZONE TESTING 🚨</h4>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="transfer-btn" onclick="testDangerZoneAlert()" style="background: linear-gradient(45deg, #ff0000, #ff4500); color: white; font-weight: bold; flex: 1;">
+                        <button class="transfer-btn" onclick="testDangerZoneAlert()" style="background: linear-gradient(45deg, #ff0000, #ff4500); color: white; font-weight: bold; width: 100%;">
                             💀 FORCE NEXT HOGWASH 💀
                         </button>
-                        <button class="transfer-btn" onclick="directDangerZoneTest()" style="background: linear-gradient(45deg, #ff4500, #ff6600); color: white; font-weight: bold; flex: 1;">
-                            🚨 INSTANT TEST 🚨
-                        </button>
                     </div>
-                    <div style="margin-top: 10px;">
-                        <button class="transfer-btn" onclick="testAudioOnly()" style="background: linear-gradient(45deg, #0066ff, #0099ff); color: white; font-weight: bold; width: 100%;">
-                            🔊 TEST AUDIO ONLY 🔊
-                        </button>
-                    </div>
-                    <p style="font-size: 0.8em; color: #666; margin: 5px 0 0 0;">
-                        <strong>Force Next:</strong> Makes next HOGWASH be DANGER ZONE<br>
-                        <strong>Instant Test:</strong> Triggers DANGER ZONE alert immediately<br>
-                        <strong>Test Audio:</strong> Tests audio playback only (check console for debug info)
+                    <p style="font-size: 0.8em; color: #666; margin: 10px 0 0 0;">
+                        <strong>Force Next:</strong> Makes the next HOGWASH result in a DANGER ZONE
                     </p>
                 </div>
                 
@@ -176,6 +176,7 @@
                         </div>
                     </div>
                 </div>
+                </div> <!-- Close bookkeeperControlsContent -->
             </div>
         </div>
     </div>

@@ -1166,6 +1166,80 @@ function updatePowerupsDisplay() {
     powerupsList.innerHTML = html;
 }
 
+function resetHogwashCooldowns() {
+    if (!isBookkeeperLoggedIn) {
+        alert('🚫 You must be logged in as Ham Handler!');
+        return;
+    }
+    
+    // Confirm the action
+    const confirmed = confirm('🕐 Are you sure you want to reset HOGWASH cooldowns for ALL players?\n\n🐷 This will allow everyone to use HOGWASH immediately! 🐷');
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    // Clear all cooldowns
+    hogwashCooldowns = {};
+    
+    // Save the cleared cooldowns
+    saveHogwashCooldowns();
+    
+    // Log activity
+    addActivity('admin', '🕐', 'Ham Handler reset HOGWASH cooldowns for all players');
+    
+    // Update any UI that might show cooldown status
+    if (currentPlayer) {
+        updatePlayerUI();
+    }
+    
+    alert('🕐 HOGWASH cooldowns have been reset for all players!\n\n🐷 Everyone can now use HOGWASH again! 🐷');
+}
+
+// Toggle bookkeeper controls visibility for mobile
+let bookkeeperControlsExpanded = true; // Start expanded by default
+
+function toggleBookkeeperControls() {
+    const content = document.getElementById('bookkeeperControlsContent');
+    const toggleText = document.getElementById('toggleBookkeeperText');
+    
+    if (!content || !toggleText) return;
+    
+    bookkeeperControlsExpanded = !bookkeeperControlsExpanded;
+    
+    if (bookkeeperControlsExpanded) {
+        content.style.display = 'block';
+        toggleText.textContent = '📱 MINIMIZE';
+    } else {
+        content.style.display = 'none';
+        toggleText.textContent = '📱 EXPAND';
+    }
+    
+    // Save state to localStorage for persistence
+    localStorage.setItem('bookkeeperControlsExpanded', bookkeeperControlsExpanded.toString());
+}
+
+function restoreBookkeeperControlsState() {
+    // Restore the saved state from localStorage
+    const savedState = localStorage.getItem('bookkeeperControlsExpanded');
+    if (savedState !== null) {
+        bookkeeperControlsExpanded = savedState === 'true';
+    }
+    
+    const content = document.getElementById('bookkeeperControlsContent');
+    const toggleText = document.getElementById('toggleBookkeeperText');
+    
+    if (!content || !toggleText) return;
+    
+    if (bookkeeperControlsExpanded) {
+        content.style.display = 'block';
+        toggleText.textContent = '📱 MINIMIZE';
+    } else {
+        content.style.display = 'none';
+        toggleText.textContent = '📱 EXPAND';
+    }
+}
+
 function pigPointsFromGod() {
     const messages = [
         "The Pig Gods smile upon you! +10 points!",
@@ -1231,6 +1305,7 @@ function checkLoginState() {
         document.getElementById('loginSection').style.display = 'none';
         updatePlayerUI();
         updatePowerupsDisplay();
+        restoreBookkeeperControlsState();
     } else if (isBookkeeperLoggedIn) {
         // Regular Ham Handler (old PIG/PIG login)
         document.getElementById('bookkeeperCard').style.display = 'block';
@@ -1238,6 +1313,7 @@ function checkLoginState() {
         document.getElementById('loginSection').style.display = 'none';
         updateStatusBar();
         updatePowerupsDisplay();
+        restoreBookkeeperControlsState();
     } else if (isPlayerLoggedIn && currentPlayer) {
         // Regular player (Andrew, etc.)
         document.getElementById('bookkeeperCard').style.display = 'none';
