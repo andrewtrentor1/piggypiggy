@@ -901,7 +901,7 @@ function updateLeaderboard() {
                 ${!allSamePoints && player[1].points === maxPoints ? '<span class="crown">👑</span>' : ''}
                 ${!allSamePoints && player[1].points === minPoints ? '<span>🐷 THE PIG 🐷</span>' : ''}
                 <span>${player[0]}</span>
-                <span class="poop-bag" onclick="showPowerUpModal('${player[0]}')" title="View ${player[0]}'s Power-Ups (${totalPowerUps} total)" style="cursor: pointer; font-size: 1em;">💩🎒</span>
+                <span class="poop-bag" onclick="showPowerUpModal('${player[0]}')" title="View ${player[0]}'s Power-Ups (${totalPowerUps} total)" style="cursor: pointer; font-size: 1em;">🎒</span>
                 <span class="pig-insult">${playerInsult}</span>
             </div>
             <div class="points">
@@ -3574,6 +3574,14 @@ function showPowerUpModal(playerName) {
         powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(255, 149, 0, 0.1); border-radius: 8px; border-left: 4px solid #ff9500;">
             <span style="font-size: 1.5em;">🍺</span> <strong>Drink Giver:</strong> ${powerUps.giveDrinks} drinks to assign
             <div style="font-size: 0.9em; color: #666; margin-top: 5px;">Assign drinks to other players</div>
+        </div>`;
+    }
+    
+    // Special item for Ian - the poop (inside joke, no function)
+    if (playerName.toLowerCase() === 'ian') {
+        powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(139, 69, 19, 0.1); border-radius: 8px; border-left: 4px solid #8B4513;">
+            <span style="font-size: 1.5em;">💩</span> <strong>POOP:</strong> 1
+            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">A mysterious item with no known purpose...</div>
         </div>`;
     }
     
