@@ -1087,9 +1087,7 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
     }
 }
 
-.slot-machine-spinning .slot-machine-container {
-    animation: pigPanic 0.5s ease-in-out infinite;
-}
+/* Removed the chaotic slot machine shaking - too much! 😅 */
 
 /* ==============================================
    UTILITY CLASSES
