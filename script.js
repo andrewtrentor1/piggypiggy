@@ -4026,7 +4026,8 @@ function spinHogwashSlot() {
     
     // Find the target outcome in our slot outcomes
     const targetIndex = slotOutcomes.findIndex(o => o.type === finalOutcome.type);
-    console.log('🎰 Target outcome index:', targetIndex);
+    console.log('🎰 Target outcome index:', targetIndex, 'for type:', finalOutcome.type);
+    console.log('🎰 Slot outcomes order:', slotOutcomes.map((o, i) => `${i}: ${o.type}`));
     
     // Start the slot machine animation
     animateSlotMachine(finalOutcome, targetIndex);
@@ -4118,11 +4119,13 @@ function fineTunePosition(finalOutcome, callback) {
     let closestOption = null;
     let closestDistance = Infinity;
     
-    options.forEach(option => {
+    options.forEach((option, index) => {
         if (option.dataset.type === finalOutcome.type) {
             const optionRect = option.getBoundingClientRect();
             const optionCenter = optionRect.top + optionRect.height / 2;
             const distance = Math.abs(optionCenter - windowCenter);
+            
+            console.log(`🎰 Found ${finalOutcome.type} option at index ${index}, distance from center: ${distance.toFixed(1)}px`);
             
             if (distance < closestDistance) {
                 closestDistance = distance;
