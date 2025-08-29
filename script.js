@@ -1233,6 +1233,7 @@ function loadActivityFeed() {
 }
 
 function addActivity(type, emoji, message, extraData = null) {
+    console.log('📝 addActivity called with:', { type, emoji, message, extraData });
     const activity = {
         id: Date.now() + '_' + Math.floor(Math.random() * 10000), // Firebase-safe unique ID
         type: type,
@@ -3841,14 +3842,23 @@ function closeHogwashSlot() {
     modal.style.display = 'none';
     modal.classList.remove('slot-machine-ready', 'slot-machine-spinning');
     
-    document.getElementById('closeSlotBtn').style.display = 'none';
+    // Hide close button (use correct ID)
+    const closeBtn = document.getElementById('closeBoxBtn');
+    if (closeBtn) {
+        closeBtn.style.display = 'none';
+    }
     
-    const spinBtn = document.getElementById('spinSlotBtn');
-    spinBtn.style.display = 'inline-block';
-    spinBtn.classList.remove('slot-spin-btn-ready');
+    // Show open button (use correct ID)
+    const openBtn = document.getElementById('openBoxBtn');
+    if (openBtn) {
+        openBtn.style.display = 'inline-block';
+    }
     
     // Stop any playing HOGWASH music
     stopHogwashMusic();
+    
+    // Reset mystery box state
+    resetSlotMachine();
     
     isSlotSpinning = false;
 }
@@ -4927,6 +4937,9 @@ function executeHogwashOutcome(selectedOutcome) {
             break;
     }
     
+    console.log('🎁 Final resultText created:', resultText);
+    console.log('🎁 Final outcome object:', outcome);
+    
     // Close wheel and show result
     closeHogwashWheel();
     
@@ -4949,7 +4962,8 @@ function executeHogwashOutcome(selectedOutcome) {
     }
 
     // Log activity
-    addActivity('hogwash', '🎲', resultText);
+    console.log('🎁 About to log activity with resultText:', resultText);
+    addActivity('hogwash', '🎁', resultText);
 }
 
 // HOGWASH Audio Functions
