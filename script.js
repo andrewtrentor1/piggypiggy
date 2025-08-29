@@ -3999,36 +3999,40 @@ function createPreviewSlotReel() {
 function createSlotReelWithWinner(winnerOutcome) {
     if (!slotReel) return;
     
-    // Generate a fresh reel with the winner guaranteed to be in the center!
+    console.log('🎰 Creating slot reel with winner:', winnerOutcome.type);
+    
+    // Generate a MUCH longer reel to support multiple spins without running out of content
     const reelHTML = [];
     const uniformHeight = 70;
     
-    // Create enough options above and below to make it look like a long reel
-    const optionsAbove = 8; // Options before the winner
-    const optionsBelow = 8; // Options after the winner
-    const totalOptions = optionsAbove + 1 + optionsBelow; // +1 for the winner
+    // Create a very long reel with many repetitions to support spinning
+    const totalSections = 20; // 20 complete sets of all options
+    const optionsPerSection = slotOutcomes.length; // 7 different outcomes
+    const totalOptions = totalSections * optionsPerSection;
     
-    // Add random options above the winner
-    for (let i = 0; i < optionsAbove; i++) {
-        const randomOutcome = slotOutcomes[Math.floor(Math.random() * slotOutcomes.length)];
-        reelHTML.push(createSlotOption(randomOutcome, uniformHeight));
-    }
+    // Place the winner in the middle of the reel
+    const winnerIndex = Math.floor(totalOptions / 2);
     
-    // Add the WINNER in the center position
-    reelHTML.push(createSlotOption(winnerOutcome, uniformHeight, true));
-    console.log('🐷 WINNER placed at center position:', optionsAbove);
+    console.log('🎰 Creating reel with', totalOptions, 'total options, winner at index', winnerIndex);
     
-    // Add random options below the winner
-    for (let i = 0; i < optionsBelow; i++) {
-        const randomOutcome = slotOutcomes[Math.floor(Math.random() * slotOutcomes.length)];
-        reelHTML.push(createSlotOption(randomOutcome, uniformHeight));
+    // Fill the entire reel with repeating patterns
+    for (let i = 0; i < totalOptions; i++) {
+        if (i === winnerIndex) {
+            // Place the winner at the designated position
+            reelHTML.push(createSlotOption(winnerOutcome, uniformHeight, true));
+            console.log('🎰 Winner placed at index', i);
+        } else {
+            // Fill with random options from the available outcomes
+            const randomOutcome = slotOutcomes[Math.floor(Math.random() * slotOutcomes.length)];
+            reelHTML.push(createSlotOption(randomOutcome, uniformHeight));
+        }
     }
     
     slotReel.innerHTML = reelHTML.join('');
     currentSlotPosition = 0;
     
-    console.log('🎰 Generated fresh reel with', totalOptions, 'options, winner at center position');
-    return optionsAbove; // Return the winner's index for positioning
+    console.log('🎰 Generated long reel with', totalOptions, 'options, winner at index', winnerIndex);
+    return winnerIndex; // Return the winner's index for positioning
 }
 
 function createSlotOption(outcome, height, isWinner = false) {
@@ -4171,22 +4175,19 @@ function animateSlotMachineFixed(finalOutcome, winnerIndex) {
     const windowHeight = 200;
     const windowCenter = windowHeight / 2;
     
-    // Calculate the current position of the reel
-    const currentTransform = slotReel.style.transform;
-    const currentMatch = currentTransform.match(/translateY\((-?\d+(?:\.\d+)?)px\)/);
-    const startPosition = currentMatch ? parseFloat(currentMatch[1]) : 0;
+    // Start from the top of the reel for a clean animation
+    const startPosition = 0;
+    slotReel.style.transform = `translateY(${startPosition}px)`;
     
-    // Calculate where we want the winner to be (centered in window)
-    const winnerPosition = (winnerIndex * uniformHeight) + (uniformHeight / 2);
-    const targetOffset = winnerPosition - windowCenter;
+    // Calculate where we want the winner to end up (centered in the window)
+    const winnerTopPosition = winnerIndex * uniformHeight;
+    const finalPosition = -(winnerTopPosition - windowCenter + (uniformHeight / 2));
     
-    // Add some visual spins but keep them reasonable
-    const extraSpins = 2 + Math.random(); // 2-3 extra full rotations
-    const totalOptions = slotReel.children.length;
-    const reelHeight = totalOptions * uniformHeight;
-    const finalPosition = startPosition + (extraSpins * reelHeight) + targetOffset;
+    // Add some extra scrolling for visual effect
+    const extraScrollDistance = 500 + Math.random() * 300; // Extra 500-800px of scrolling
+    const totalScrollDistance = Math.abs(finalPosition) + extraScrollDistance;
     
-    console.log('🎰 Animation: start=' + startPosition + ', target=' + targetOffset + ', final=' + finalPosition);
+    console.log('🎰 Animation: start=' + startPosition + ', final=' + finalPosition + ', total scroll=' + totalScrollDistance);
     
     let lastBeepTime = 0;
     
@@ -4197,8 +4198,19 @@ function animateSlotMachineFixed(finalOutcome, winnerIndex) {
         // Smooth easing - fast start, slow end
         const easeOut = 1 - Math.pow(1 - progress, 3);
         
-        // Calculate current position
-        const currentPos = startPosition + (finalPosition - startPosition) * easeOut;
+        // Calculate current position - scroll down first, then back up to final position
+        let currentPos;
+        if (progress < 0.8) {
+            // First 80% - scroll down through the reel
+            const scrollProgress = progress / 0.8;
+            currentPos = startPosition - (totalScrollDistance * scrollProgress);
+        } else {
+            // Last 20% - ease into final position
+            const easeProgress = (progress - 0.8) / 0.2;
+            const easeIn = 1 - Math.pow(1 - easeProgress, 2);
+            const overshootPos = startPosition - totalScrollDistance;
+            currentPos = overshootPos + (overshootPos - finalPosition) * easeIn;
+        }
         
         // Apply the transform
         slotReel.style.transform = `translateY(${currentPos}px)`;
