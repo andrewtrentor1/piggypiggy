@@ -3531,6 +3531,12 @@ function startCooldownTimer(playerName) {
 
 function closeHogwashResult() {
     document.getElementById('hogwashResultModal').style.display = 'none';
+    
+    // Reset the slot machine for the next spin
+    if (slotReel) {
+        console.log('🎰 Resetting slot machine after result modal close');
+        resetSlotMachine();
+    }
 }
 
 // Power-Up Modal Functions
@@ -3820,11 +3826,11 @@ function showHogwashSlot(playerName) {
         spinBtn.classList.add('slot-spin-btn-ready');
     }
     
-    // Initialize the slot machine and create a preview reel
+    // Initialize the slot machine and reset to clean state
     try {
         initializeHogwashSlot();
-        createPreviewSlotReel(); // Show all options initially
-        console.log('🎰 Slot machine initialized successfully with preview reel');
+        resetSlotMachine(); // Ensure clean state for new session
+        console.log('🎰 Slot machine initialized and reset successfully');
     } catch (error) {
         console.error('❌ Error initializing slot machine:', error);
     }
@@ -4125,6 +4131,46 @@ function darkenColor(color, amount) {
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+function resetSlotMachine() {
+    console.log('🎰 Resetting slot machine state');
+    
+    if (!slotReel) {
+        console.warn('⚠️ slotReel not found during reset');
+        return;
+    }
+    
+    // Reset position to top
+    slotReel.style.transform = 'translateY(0px)';
+    
+    // Reset slot position tracking
+    currentSlotPosition = 0;
+    
+    // Clear any existing content and show preview reel
+    createPreviewSlotReel();
+    
+    // Reset modal classes
+    const modal = document.getElementById('hogwashWheelModal');
+    if (modal) {
+        modal.classList.remove('slot-machine-spinning');
+        modal.classList.add('slot-machine-ready');
+    }
+    
+    // Show spin button
+    const spinBtn = document.getElementById('spinSlotBtn');
+    if (spinBtn) {
+        spinBtn.style.display = 'inline-block';
+        spinBtn.classList.add('slot-spin-btn-ready');
+    }
+    
+    // Hide close button
+    const closeBtn = document.getElementById('closeSlotBtn');
+    if (closeBtn) {
+        closeBtn.style.display = 'none';
+    }
+    
+    console.log('🎰 Slot machine reset complete');
+}
+
 function spinHogwashSlot() {
     console.log('🎰 spinHogwashSlot called!');
     
@@ -4137,6 +4183,9 @@ function spinHogwashSlot() {
         console.error('❌ slotReel element not found!');
         return;
     }
+    
+    // Reset slot machine state before starting new spin
+    resetSlotMachine();
     
     isSlotSpinning = true;
     console.log('🎰 Starting slot machine spin!');
