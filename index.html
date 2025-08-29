@@ -134,6 +134,48 @@
                         <button class="transfer-btn" onclick="transferPoints()">🔄 TRANSFER POINTS</button>
                     </div>
                 </div>
+
+                <!-- Powerup Management Section -->
+                <div class="bookkeeper-panel" style="display: block; margin-top: 20px;">
+                    <h3>⚡ POWERUP MANAGEMENT ⚡</h3>
+                    <div class="transfer-form">
+                        <div class="form-group">
+                            <label>Player:</label>
+                            <select id="powerupPlayer">
+                                <option value="Evan">Evan</option>
+                                <option value="Ian">Ian</option>
+                                <option value="Andrew">Andrew</option>
+                                <option value="Zack">Zack</option>
+                                <option value="Brian">Brian</option>
+                                <option value="Alex">Alex</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Powerup Type:</label>
+                            <select id="powerupType">
+                                <option value="mulligans">⛳ Mulligan</option>
+                                <option value="reverseMulligans">🔄 Reverse Mulligan</option>
+                                <option value="giveDrinks">🍺 Give Drinks</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount:</label>
+                            <input type="number" id="powerupAmount" min="1" max="10" value="1">
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="transfer-btn" onclick="addPowerUpToPlayer()" style="background: linear-gradient(45deg, #4CAF50, #45a049);">➕ ADD POWERUP</button>
+                            <button class="transfer-btn" onclick="removePowerUpFromPlayer()" style="background: linear-gradient(45deg, #f44336, #da190b);">➖ REMOVE POWERUP</button>
+                        </div>
+                        
+                        <!-- Current Powerups Display -->
+                        <div id="currentPowerupsDisplay" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.05); border-radius: 8px;">
+                            <h4 style="margin: 0 0 10px 0; text-align: center;">📦 CURRENT POWERUPS 📦</h4>
+                            <div id="powerupsList">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

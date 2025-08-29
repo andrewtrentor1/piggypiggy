@@ -1036,6 +1036,136 @@ function transferPoints() {
     alert(`🔄 Transferred ${points} pig points from ${fromPlayer} to ${toPlayer}!\n🐷 OINK OINK! 🐷`);
 }
 
+// Powerup Management Functions
+function addPowerUpToPlayer() {
+    if (!isBookkeeperLoggedIn) {
+        alert('🚫 You must be logged in as Ham Handler!');
+        return;
+    }
+    
+    const playerName = document.getElementById('powerupPlayer').value;
+    const powerupType = document.getElementById('powerupType').value;
+    const amount = parseInt(document.getElementById('powerupAmount').value);
+    
+    if (!playerName || !powerupType || !amount || amount < 1) {
+        alert('🚫 Please select a player, powerup type, and valid amount!');
+        return;
+    }
+    
+    // Add powerup to player
+    if (!players[playerName].powerUps[powerupType]) {
+        players[playerName].powerUps[powerupType] = 0;
+    }
+    players[playerName].powerUps[powerupType] += amount;
+    
+    // Save to localStorage/Firebase
+    savePlayers();
+    
+    // Update displays
+    updateLeaderboard();
+    updatePowerupsDisplay();
+    if (currentPlayer) {
+        updatePlayerUI();
+    }
+    
+    // Get powerup display name
+    const powerupNames = {
+        'mulligans': '⛳ Mulligan',
+        'reverseMulligans': '🔄 Reverse Mulligan',
+        'giveDrinks': '🍺 Give Drinks'
+    };
+    
+    // Log activity
+    addActivity('admin', '⚡', `Ham Handler added ${amount} ${powerupNames[powerupType]} to ${playerName}`);
+    
+    alert(`⚡ Successfully added ${amount} ${powerupNames[powerupType]} to ${playerName}! ⚡`);
+}
+
+function removePowerUpFromPlayer() {
+    if (!isBookkeeperLoggedIn) {
+        alert('🚫 You must be logged in as Ham Handler!');
+        return;
+    }
+    
+    const playerName = document.getElementById('powerupPlayer').value;
+    const powerupType = document.getElementById('powerupType').value;
+    const amount = parseInt(document.getElementById('powerupAmount').value);
+    
+    if (!playerName || !powerupType || !amount || amount < 1) {
+        alert('🚫 Please select a player, powerup type, and valid amount!');
+        return;
+    }
+    
+    // Check if player has enough powerups to remove
+    const currentAmount = players[playerName].powerUps[powerupType] || 0;
+    if (currentAmount < amount) {
+        alert(`🚫 ${playerName} only has ${currentAmount} of this powerup! Cannot remove ${amount}.`);
+        return;
+    }
+    
+    // Remove powerup from player
+    players[playerName].powerUps[powerupType] -= amount;
+    
+    // Save to localStorage/Firebase
+    savePlayers();
+    
+    // Update displays
+    updateLeaderboard();
+    updatePowerupsDisplay();
+    if (currentPlayer) {
+        updatePlayerUI();
+    }
+    
+    // Get powerup display name
+    const powerupNames = {
+        'mulligans': '⛳ Mulligan',
+        'reverseMulligans': '🔄 Reverse Mulligan',
+        'giveDrinks': '🍺 Give Drinks'
+    };
+    
+    // Log activity
+    addActivity('admin', '⚡', `Ham Handler removed ${amount} ${powerupNames[powerupType]} from ${playerName}`);
+    
+    alert(`⚡ Successfully removed ${amount} ${powerupNames[powerupType]} from ${playerName}! ⚡`);
+}
+
+function updatePowerupsDisplay() {
+    const powerupsList = document.getElementById('powerupsList');
+    if (!powerupsList) return;
+    
+    let html = '';
+    
+    // Get all players and their powerups
+    Object.keys(players).forEach(playerName => {
+        if (playerName === 'GOD') return; // Skip GOD
+        
+        const powerUps = players[playerName].powerUps;
+        const playerPowerups = [];
+        
+        if (powerUps.mulligans > 0) {
+            playerPowerups.push(`⛳ ${powerUps.mulligans} Mulligan${powerUps.mulligans > 1 ? 's' : ''}`);
+        }
+        if (powerUps.reverseMulligans > 0) {
+            playerPowerups.push(`🔄 ${powerUps.reverseMulligans} Reverse Mulligan${powerUps.reverseMulligans > 1 ? 's' : ''}`);
+        }
+        if (powerUps.giveDrinks > 0) {
+            playerPowerups.push(`🍺 ${powerUps.giveDrinks} Give Drink${powerUps.giveDrinks > 1 ? 's' : ''}`);
+        }
+        
+        if (playerPowerups.length > 0) {
+            html += `<div style="margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 6px;">
+                <strong>${playerName}:</strong> ${playerPowerups.join(', ')}
+            </div>`;
+        }
+    });
+    
+    if (html === '') {
+        html = '<div style="text-align: center; color: #666; font-style: italic;">No powerups currently held by any players</div>';
+    }
+    
+    powerupsList.innerHTML = html;
+}
+
 function pigPointsFromGod() {
     const messages = [
         "The Pig Gods smile upon you! +10 points!",
@@ -1100,12 +1230,14 @@ function checkLoginState() {
         document.getElementById('playerCard').style.display = 'block';
         document.getElementById('loginSection').style.display = 'none';
         updatePlayerUI();
+        updatePowerupsDisplay();
     } else if (isBookkeeperLoggedIn) {
         // Regular Ham Handler (old PIG/PIG login)
         document.getElementById('bookkeeperCard').style.display = 'block';
         document.getElementById('playerCard').style.display = 'none';
         document.getElementById('loginSection').style.display = 'none';
         updateStatusBar();
+        updatePowerupsDisplay();
     } else if (isPlayerLoggedIn && currentPlayer) {
         // Regular player (Andrew, etc.)
         document.getElementById('bookkeeperCard').style.display = 'none';
@@ -5896,3 +6028,14 @@ setInterval(() => {
         console.log(sound);
     }
 }, 5000);
+
+// Add event listener for powerup player selection change
+document.addEventListener('DOMContentLoaded', function() {
+    const powerupPlayerSelect = document.getElementById('powerupPlayer');
+    if (powerupPlayerSelect) {
+        powerupPlayerSelect.addEventListener('change', function() {
+            // Update the powerups display when player selection changes
+            updatePowerupsDisplay();
+        });
+    }
+});
