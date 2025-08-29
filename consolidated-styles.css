@@ -370,6 +370,21 @@ body {
     }
 }
 
+@keyframes crownGlow {
+    0% { 
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+        border-color: #FFD700;
+    }
+    50% { 
+        box-shadow: 0 6px 25px rgba(255, 215, 0, 0.9);
+        border-color: #FFA500;
+    }
+    100% { 
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+        border-color: #FFD700;
+    }
+}
+
 /* ==============================================
    MODALS & OVERLAYS
    ============================================== */
@@ -460,6 +475,13 @@ body {
 .player.pig {
     background: linear-gradient(90deg, #8B008B, #4B0082, #663399);
     box-shadow: 0 3px 10px rgba(139, 0, 139, 0.4);
+}
+
+.player.leader {
+    background: linear-gradient(90deg, #FFD700, #FFA500, #FF8C00);
+    border: 2px solid #FFD700;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+    animation: crownGlow 2s infinite ease-in-out;
 }
 
 .player.god-player {

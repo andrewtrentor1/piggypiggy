@@ -893,6 +893,11 @@ function updateLeaderboard() {
             li.classList.add('pig');
         }
         
+        // Add leader styling if there's actually a highest score (not a tie)
+        if (!allSamePoints && player[1].points === maxPoints) {
+            li.classList.add('leader');
+        }
+        
         const playerInsult = getPlayerInsult(player[0]);
         const powerUps = player[1].powerUps;
         const totalPowerUps = powerUps.mulligans + powerUps.reverseMulligans + powerUps.giveDrinks;
