@@ -1025,6 +1025,72 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
     animation: slotWinnerGlow 1s ease-in-out infinite;
 }
 
+/* Pig-Themed Animations for Maximum Silliness! 🐷 */
+@keyframes pigSweat {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        filter: hue-rotate(0deg);
+    }
+    25% { 
+        transform: scale(1.1) rotate(-2deg);
+        filter: hue-rotate(10deg);
+    }
+    50% { 
+        transform: scale(0.95) rotate(2deg);
+        filter: hue-rotate(-10deg);
+    }
+    75% { 
+        transform: scale(1.05) rotate(-1deg);
+        filter: hue-rotate(5deg);
+    }
+}
+
+@keyframes pigTremble {
+    0%, 100% { 
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    25% { 
+        transform: translateX(-2px) scale(1.05);
+        opacity: 0.9;
+    }
+    50% { 
+        transform: translateX(2px) scale(0.95);
+        opacity: 1;
+    }
+    75% { 
+        transform: translateX(-1px) scale(1.02);
+        opacity: 0.95;
+    }
+}
+
+@keyframes pigPanic {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        color: #FFD700;
+    }
+    20% { 
+        transform: scale(1.2) rotate(-5deg);
+        color: #FF6B6B;
+    }
+    40% { 
+        transform: scale(0.8) rotate(5deg);
+        color: #4ECDC4;
+    }
+    60% { 
+        transform: scale(1.1) rotate(-3deg);
+        color: #45B7D1;
+    }
+    80% { 
+        transform: scale(0.9) rotate(3deg);
+        color: #96CEB4;
+    }
+}
+
+.slot-machine-spinning .slot-machine-container {
+    animation: pigPanic 0.5s ease-in-out infinite;
+}
+
 /* ==============================================
    UTILITY CLASSES
    ============================================== */

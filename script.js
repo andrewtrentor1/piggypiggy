@@ -4035,23 +4035,23 @@ function spinHogwashSlot() {
 
 function animateSlotMachine(finalOutcome, targetIndex) {
     const startTime = Date.now();
-    const duration = 8000 + Math.random() * 4000; // 8-12 seconds for dramatic effect
-    console.log('🎰 Animation duration will be', (duration/1000).toFixed(1), 'seconds');
+    const duration = 12000 + Math.random() * 6000; // 12-18 seconds for MAXIMUM drama! 🐷
+    console.log('🐷 SQUEAL! Animation will be', (duration/1000).toFixed(1), 'seconds of pure pig-themed excitement!');
     
     // Use uniform height for accurate positioning
     const uniformHeight = 70; // Must match the height in createSlotReel
     const totalOptions = slotOutcomes.length;
     const setHeight = totalOptions * uniformHeight;
     
-    // SIMPLE: Land with the target option centered between the yellow lines
+    // EXCITING: More spins for maximum pig-themed drama! 🐷
     // The slot window is 200px tall, so the center (between yellow lines) is at 100px from the top
     // We need to position the reel so the target option's center aligns with the window center
-    const visualSpins = 3; // Just for show
+    const visualSpins = 8 + Math.random() * 4; // 8-12 spins for maximum excitement! 🎰
     const slotWindowCenter = 100; // Center of the 200px slot window (between yellow lines)
     const targetOptionCenter = targetIndex * uniformHeight + (uniformHeight / 2); // Center of target option
     const targetPosition = targetOptionCenter - slotWindowCenter; // Adjust so target centers in window
     const totalDistance = (visualSpins * setHeight) + targetPosition;
-    console.log('🎰 Will center', finalOutcome.type, 'between yellow lines after', visualSpins, 'spins, distance:', totalDistance.toFixed(0), 'px');
+    console.log('🐷 OINK! Will do', visualSpins.toFixed(1), 'dramatic spins to center', finalOutcome.type, 'between yellow lines!');
     
     let lastBeepTime = 0;
     const beepInterval = 150; // Beep every 150ms initially
@@ -4060,8 +4060,10 @@ function animateSlotMachine(finalOutcome, targetIndex) {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
-        // Smooth deceleration - starts fast, consistently slows down (no weird speed-ups)
-        const easeOut = 1 - Math.pow(1 - progress, 2.5); // Smooth quadratic deceleration
+        // DRAMATIC pig-themed deceleration - starts SUPER fast, then slows to build suspense! 🐷
+        const easeOut = progress < 0.7 ? 
+            Math.pow(progress / 0.7, 0.8) * 0.85 :  // Fast initial spin (85% in first 70% of time)
+            0.85 + (1 - Math.pow(1 - (progress - 0.7) / 0.3, 4)) * 0.15; // Dramatic slowdown for suspense
         
         // Calculate current position
         const currentDistance = totalDistance * easeOut;
