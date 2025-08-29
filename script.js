@@ -4043,14 +4043,12 @@ function animateSlotMachine(finalOutcome, targetIndex) {
     const totalOptions = slotOutcomes.length;
     const setHeight = totalOptions * uniformHeight;
     
-    // Simplified approach: just get close to the target, then fine-tune
-    // Land somewhere in the middle range of the reel where our target outcome exists
-    const approximateTargetPosition = (targetIndex * uniformHeight);
-    
-    // Use fewer spins to avoid overshooting
-    const reducedSpins = 8 + Math.random() * 4; // 8-12 full cycles instead of 15-25
-    const totalDistance = (reducedSpins * setHeight) + approximateTargetPosition;
-    console.log('🎰 Will scroll approximately', totalDistance.toFixed(0), 'pixels, then fine-tune to center', finalOutcome.type);
+    // SIMPLE: Just land exactly on the outcome we calculated
+    // Do a few visual spins, then land precisely on the target
+    const visualSpins = 3; // Just for show
+    const targetPosition = targetIndex * uniformHeight + (uniformHeight / 2); // Center of target option
+    const totalDistance = (visualSpins * setHeight) + targetPosition;
+    console.log('🎰 Will land exactly on', finalOutcome.type, 'after', visualSpins, 'visual spins, total distance:', totalDistance.toFixed(0), 'pixels');
     
     let lastBeepTime = 0;
     const beepInterval = 150; // Beep every 150ms initially
@@ -4085,21 +4083,19 @@ function animateSlotMachine(finalOutcome, targetIndex) {
         if (progress < 1) {
             requestAnimationFrame(animateSlot);
         } else {
-            // Animation complete - fine-tune final position and highlight winner
+            // Animation complete - should be perfectly positioned already!
             console.log('🎰 Slot animation completed after', ((Date.now() - startTime)/1000).toFixed(1), 'seconds');
             
-            // Fine-tune the final position to ensure perfect centering
-            fineTunePosition(finalOutcome, () => {
-                highlightWinner(finalOutcome);
-                
-                setTimeout(() => {
-                    stopHogwashMusic();
-                    console.log('🎰 About to execute final outcome:', finalOutcome.type);
-                    executeHogwashOutcome(finalOutcome);
-                    document.getElementById('closeSlotBtn').style.display = 'inline-block';
-                    isSlotSpinning = false;
-                }, 1500); // Give time to see the winner highlight
-            });
+            // Highlight the winner (should be perfectly centered)
+            highlightWinner(finalOutcome);
+            
+            setTimeout(() => {
+                stopHogwashMusic();
+                console.log('🎰 About to execute final outcome:', finalOutcome.type);
+                executeHogwashOutcome(finalOutcome);
+                document.getElementById('closeSlotBtn').style.display = 'inline-block';
+                isSlotSpinning = false;
+            }, 1500); // Give time to see the winner highlight
         }
     }
     
