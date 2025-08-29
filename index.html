@@ -42,17 +42,27 @@
         </header>
         
         <div class="main-content">
-            <div class="card">
+            <!-- Just the title (no card padding) -->
+            <div class="leaderboard-header" style="text-align: center; margin-bottom: 20px;">
                 <h2 class="card-title">🏆 LEADERBOARD 🏆</h2>
-                <div id="loadingIndicator" style="text-align: center; padding: 40px; color: #8B4513;">
-                    <div style="font-size: 3rem; margin-bottom: 10px;">🐷</div>
-                    <div style="font-size: 1.2rem; font-weight: bold;">Loading pig points...</div>
-                </div>
-                <ul class="leaderboard" id="leaderboard" style="display: none;">
-                    <!-- Leaderboard will be populated by JavaScript -->
-                </ul>
+            </div>
+            
+            <!-- Loading indicator -->
+            <div id="loadingIndicator" style="text-align: center; padding: 40px; color: #8B4513;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">🐷</div>
+                <div style="font-size: 1.2rem; font-weight: bold;">Loading pig points...</div>
+            </div>
+            
+            <!-- Leaderboard with its own styling (no outer card) -->
+            <ul class="leaderboard" id="leaderboard" style="display: none;">
+                <!-- Leaderboard will be populated by JavaScript -->
+            </ul>
+            
+            <!-- Separate card for actions -->
+            <div class="card">
+                <h2 class="card-title">🎲 GAME ACTIONS 🎲</h2>
                 
-                <!-- HOGWASH Gambling Button (always visible) -->
+                <!-- HOGWASH Gambling Button -->
                 <div style="text-align: center; margin: 20px 0;">
                     <button class="hogwash-btn" onclick="showHogwashModal()">🐷🎲 HOGWASH 🎲🐷</button>
                     <p style="font-size: 0.9em; color: #FF1493; margin-top: 8px; font-weight: bold;">🐷 Risk it all with the pig gods! 🐷</p>
@@ -60,7 +70,6 @@
 
                 <!-- Login buttons for non-logged users -->
                 <div class="login-section" id="loginSection" style="text-align: center; margin-top: 20px;">
-                    <button class="login-btn" onclick="toggleBookkeeper()">🐷 HAM HANDLER ACCESS</button>
                     <button class="player-login-btn" onclick="showPlayerLoginModal()">🐷 IDENTIFY YOURSELF PIG BOY 🐷</button>
                 </div>
             </div>
@@ -191,30 +200,7 @@
         </div>
     </div>
     
-    <!-- Ham Handler Login Modal -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content" style="background: linear-gradient(135deg, #8B4513, #daa520); color: white; border: 3px solid #FFD700;">
-            <span class="close" onclick="closeLoginModal()" style="color: white; font-size: 2rem; font-weight: bold;">&times;</span>
-            <h2 style="color: #FFD700; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 30px;">🐷 HAM HANDLER ACCESS 🐷</h2>
-            <div class="login-form">
-                <div class="form-group">
-                    <label style="color: #FFD700; font-weight: bold; font-size: 1.1rem;">👑 Ham Handler Username:</label>
-                    <input type="text" id="loginUsername" placeholder="Enter your pig handler name..." style="padding: 12px; border: 2px solid #FFD700; border-radius: 8px; font-size: 1rem; margin-top: 8px;">
-                </div>
-                <div class="form-group">
-                    <label style="color: #FFD700; font-weight: bold; font-size: 1.1rem;">🔐 Secret Pig Password:</label>
-                    <input type="password" id="loginPassword" placeholder="Enter the sacred pig password..." style="padding: 12px; border: 2px solid #FFD700; border-radius: 8px; font-size: 1rem; margin-top: 8px;">
-                </div>
-                <button class="login-btn" onclick="attemptLogin()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #8B4513; font-weight: bold; font-size: 1.2rem; padding: 15px 30px; margin-top: 20px; border: none; border-radius: 10px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);">
-                    👑 BECOME HAM HANDLER 👑
-                </button>
-                <div style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; font-size: 0.9rem;">
-                    <p style="margin: 0; color: #FFD700;">🐷 <strong>Ham Handler Powers:</strong></p>
-                    <p style="margin: 5px 0 0 0; font-size: 0.8rem;">• Control all pig points • Reset the game • Test danger zones • Transfer points between players</p>
-                </div>
-            </div>
-        </div>
-    </div>
+
     
     <!-- Shame Modal -->
     <div class="modal" id="shameModal" onclick="closeShameModal()">
