@@ -3923,28 +3923,30 @@ function drawHogwashWheel() {
 function createSlotReel() {
     if (!slotReel) return;
     
-    // Create many repeating options with weighted heights for visual probability
+    // Create many repeating options with UNIFORM heights for accurate positioning
     const reelHTML = [];
-    const baseHeight = 50; // Base height for weight 1 outcomes
+    const uniformHeight = 70; // Same height for all options to ensure accurate positioning
     
     // Create enough options to fill a long scrolling reel (50+ sets)
     for (let set = 0; set < 50; set++) {
         slotOutcomes.forEach((outcome, index) => {
-            // Calculate height based on weight (higher weight = taller)
-            const height = baseHeight + (outcome.weight * 15); // 15px extra per weight point
+            // Visual probability indication through border and glow instead of height
+            const borderWidth = Math.max(2, outcome.weight); // Thicker border for higher weight
+            const glowIntensity = outcome.weight * 0.1; // More glow for higher weight
             
             reelHTML.push(`
                 <div class="slot-option" data-type="${outcome.type}" style="
-                    height: ${height}px;
+                    height: ${uniformHeight}px;
                     background: linear-gradient(135deg, ${outcome.color}, ${darkenColor(outcome.color, 0.3)});
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: ${Math.min(1.1 + (outcome.weight * 0.1), 1.5)}em;
-                    font-weight: bold;
+                    font-size: ${Math.min(1.1 + (outcome.weight * 0.05), 1.3)}em;
+                    font-weight: ${outcome.weight > 2 ? 'bold' : 'normal'};
                     color: white;
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                    border-bottom: 1px solid #333;
+                    border-bottom: ${borderWidth}px solid #FFD700;
+                    box-shadow: inset 0 0 ${10 + (outcome.weight * 5)}px rgba(255, 215, 0, ${glowIntensity});
                 ">
                     ${outcome.label}
                 </div>
@@ -3955,7 +3957,7 @@ function createSlotReel() {
     slotReel.innerHTML = reelHTML.join('');
     currentSlotPosition = 0;
     
-    console.log('🎰 Created slot reel with', reelHTML.length, 'options');
+    console.log('🎰 Created slot reel with', reelHTML.length, 'uniform-height options');
 }
 
 function initializeSlotBeep() {
@@ -4035,26 +4037,22 @@ function animateSlotMachine(finalOutcome, targetIndex) {
     const duration = 8000 + Math.random() * 4000; // 8-12 seconds for dramatic effect
     console.log('🎰 Animation duration will be', (duration/1000).toFixed(1), 'seconds');
     
-    // Calculate total height of one complete set of outcomes
-    const baseHeight = 50;
-    let setHeight = 0;
-    slotOutcomes.forEach(outcome => {
-        setHeight += baseHeight + (outcome.weight * 15);
-    });
+    // Use uniform height for accurate positioning
+    const uniformHeight = 70; // Must match the height in createSlotReel
+    const totalOptions = slotOutcomes.length;
+    const setHeight = totalOptions * uniformHeight;
     
     // Calculate how many complete sets to scroll through, then land on target
     const spins = 15 + Math.random() * 10; // 15-25 full cycles through all options
     
-    // Find the target outcome's position within one set
-    let targetPosition = 0;
-    for (let i = 0; i < targetIndex; i++) {
-        targetPosition += baseHeight + (slotOutcomes[i].weight * 15);
-    }
-    // Add half the target's height to center it in the window
-    targetPosition += (baseHeight + (finalOutcome.weight * 15)) / 2;
+    // Calculate exact position to center the target in the slot window
+    // The slot window is 200px tall, so center is at 100px from the top
+    // We want the target option's center to align with the window center
+    const windowCenterOffset = 100; // Center of the 200px slot window
+    const targetPosition = (targetIndex * uniformHeight) + (uniformHeight / 2) - windowCenterOffset;
     
     const totalDistance = (spins * setHeight) + targetPosition;
-    console.log('🎰 Will scroll', totalDistance.toFixed(0), 'pixels to land on', finalOutcome.type);
+    console.log('🎰 Will scroll', totalDistance.toFixed(0), 'pixels to center', finalOutcome.type, 'in window');
     
     let lastBeepTime = 0;
     const beepInterval = 150; // Beep every 150ms initially
@@ -4063,8 +4061,8 @@ function animateSlotMachine(finalOutcome, targetIndex) {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
-        // Improved easing - fast initially, then slow down dramatically at the end
-        const easeOut = progress < 0.8 ? progress : 0.8 + (1 - Math.pow(1 - (progress - 0.8) / 0.2, 3)) * 0.2;
+        // Smooth deceleration - starts fast, consistently slows down (no weird speed-ups)
+        const easeOut = 1 - Math.pow(1 - progress, 2.5); // Smooth quadratic deceleration
         
         // Calculate current position
         const currentDistance = totalDistance * easeOut;
@@ -4089,42 +4087,118 @@ function animateSlotMachine(finalOutcome, targetIndex) {
         if (progress < 1) {
             requestAnimationFrame(animateSlot);
         } else {
-            // Animation complete - highlight winner and show result
+            // Animation complete - fine-tune final position and highlight winner
             console.log('🎰 Slot animation completed after', ((Date.now() - startTime)/1000).toFixed(1), 'seconds');
-            highlightWinner(finalOutcome);
             
-            setTimeout(() => {
-                stopHogwashMusic();
-                console.log('🎰 About to execute final outcome:', finalOutcome.type);
-                executeHogwashOutcome(finalOutcome);
-                document.getElementById('closeSlotBtn').style.display = 'inline-block';
-                isSlotSpinning = false;
-            }, 1500); // Give time to see the winner highlight
+            // Fine-tune the final position to ensure perfect centering
+            fineTunePosition(finalOutcome, () => {
+                highlightWinner(finalOutcome);
+                
+                setTimeout(() => {
+                    stopHogwashMusic();
+                    console.log('🎰 About to execute final outcome:', finalOutcome.type);
+                    executeHogwashOutcome(finalOutcome);
+                    document.getElementById('closeSlotBtn').style.display = 'inline-block';
+                    isSlotSpinning = false;
+                }, 1500); // Give time to see the winner highlight
+            });
         }
     }
     
     animateSlot();
 }
 
-function highlightWinner(outcome) {
-    // Find the winning option in the current view and highlight it
+function fineTunePosition(finalOutcome, callback) {
+    // Find the closest matching option and center it perfectly
     const options = slotReel.querySelectorAll('.slot-option');
+    const slotWindow = document.querySelector('.slot-window');
+    const windowRect = slotWindow.getBoundingClientRect();
+    const windowCenter = windowRect.top + windowRect.height / 2;
+    
+    let closestOption = null;
+    let closestDistance = Infinity;
+    
     options.forEach(option => {
-        option.classList.remove('winner');
-        if (option.dataset.type === outcome.type) {
-            // Find the option that's currently in the center
+        if (option.dataset.type === finalOutcome.type) {
             const optionRect = option.getBoundingClientRect();
-            const slotWindow = document.querySelector('.slot-window');
-            const windowRect = slotWindow.getBoundingClientRect();
-            const windowCenter = windowRect.top + windowRect.height / 2;
+            const optionCenter = optionRect.top + optionRect.height / 2;
+            const distance = Math.abs(optionCenter - windowCenter);
             
-            // Check if this option is in the center area
-            if (Math.abs(optionRect.top + optionRect.height / 2 - windowCenter) < 50) {
-                option.classList.add('winner');
-                console.log('🎰 Winner highlighted:', outcome.type);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestOption = option;
             }
         }
     });
+    
+    if (closestOption && closestDistance > 5) { // Only adjust if not already centered
+        const optionRect = closestOption.getBoundingClientRect();
+        const optionCenter = optionRect.top + optionRect.height / 2;
+        const adjustment = windowCenter - optionCenter;
+        
+        console.log('🎰 Fine-tuning position by', adjustment.toFixed(1), 'pixels to center', finalOutcome.type);
+        
+        // Smooth adjustment animation
+        const startPos = currentSlotPosition;
+        const targetPos = currentSlotPosition + adjustment;
+        const adjustStart = Date.now();
+        const adjustDuration = 300; // 300ms smooth adjustment
+        
+        function adjustPosition() {
+            const elapsed = Date.now() - adjustStart;
+            const progress = Math.min(elapsed / adjustDuration, 1);
+            const easeOut = 1 - Math.pow(1 - progress, 2); // Smooth easing
+            
+            currentSlotPosition = startPos + (adjustment * easeOut);
+            slotReel.style.transform = `translateY(-${currentSlotPosition}px)`;
+            
+            if (progress < 1) {
+                requestAnimationFrame(adjustPosition);
+            } else {
+                console.log('🎰 Final position adjustment complete');
+                callback();
+            }
+        }
+        
+        adjustPosition();
+    } else {
+        console.log('🎰 Position already centered, no adjustment needed');
+        callback();
+    }
+}
+
+function highlightWinner(outcome) {
+    // Find the winning option in the current view and highlight it
+    const options = slotReel.querySelectorAll('.slot-option');
+    let closestOption = null;
+    let closestDistance = Infinity;
+    
+    const slotWindow = document.querySelector('.slot-window');
+    const windowRect = slotWindow.getBoundingClientRect();
+    const windowCenter = windowRect.top + windowRect.height / 2;
+    
+    options.forEach(option => {
+        option.classList.remove('winner');
+        if (option.dataset.type === outcome.type) {
+            // Find the option that's currently closest to center
+            const optionRect = option.getBoundingClientRect();
+            const optionCenter = optionRect.top + optionRect.height / 2;
+            const distance = Math.abs(optionCenter - windowCenter);
+            
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestOption = option;
+            }
+        }
+    });
+    
+    // Highlight the closest matching option
+    if (closestOption && closestDistance < 100) { // Within reasonable range
+        closestOption.classList.add('winner');
+        console.log('🎰 Winner highlighted:', outcome.type, 'distance from center:', closestDistance.toFixed(1), 'px');
+    } else {
+        console.log('🎰 No winner option found close enough to center for:', outcome.type);
+    }
 }
 
 // Legacy function for compatibility
