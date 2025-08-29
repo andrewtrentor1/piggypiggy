@@ -2,13 +2,34 @@
 
 // Player data with Firebase persistence
 let players = {
-    'Evan': 100,
-    'Ian': 100,
-    'Andrew': 100,
-    'Zack': 100,
-    'Brian': 100,
-    'Alex': 100,
-    'GOD': 1000
+    'Evan': { 
+        points: 100, 
+        powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+    },
+    'Ian': { 
+        points: 100, 
+        powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+    },
+    'Andrew': { 
+        points: 100, 
+        powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+    },
+    'Zack': { 
+        points: 100, 
+        powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+    },
+    'Brian': { 
+        points: 100, 
+        powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+    },
+    'Alex': { 
+        points: 100, 
+        powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+    },
+    'GOD': { 
+        points: 1000, 
+        powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+    }
 };
 
 let isBookkeeperLoggedIn = localStorage.getItem('bookkeeperLoggedIn') === 'true';
@@ -187,20 +208,43 @@ function initializeFirebase() {
     window.firebaseOnValue(playersRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            // Merge Firebase data with default structure to ensure GOD exists
-            players = {
-                'Evan': data.Evan || 100,
-                'Ian': data.Ian || 100,
-                'Andrew': data.Andrew || 100,
-                'Zack': data.Zack || 100,
-                'Brian': data.Brian || 100,
-                'Alex': data.Alex || 100,
-                'GOD': data.GOD || 1000
-            };
+            // Handle migration from old structure (number) to new structure (object)
+            const playerNames = ['Evan', 'Ian', 'Andrew', 'Zack', 'Brian', 'Alex', 'GOD'];
+            let needsMigration = false;
             
-            // If GOD wasn't in the Firebase data, save the updated structure
-            if (!data.GOD) {
-                console.log('🙏 Adding GOD to Firebase data');
+            playerNames.forEach(name => {
+                if (data[name]) {
+                    if (typeof data[name] === 'number') {
+                        // Old structure - migrate to new
+                        players[name] = {
+                            points: data[name],
+                            powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+                        };
+                        needsMigration = true;
+                    } else if (typeof data[name] === 'object') {
+                        // New structure - ensure all fields exist
+                        players[name] = {
+                            points: data[name].points || (name === 'GOD' ? 1000 : 100),
+                            powerUps: {
+                                mulligans: data[name].powerUps?.mulligans || 0,
+                                reverseMulligans: data[name].powerUps?.reverseMulligans || 0,
+                                giveDrinks: data[name].powerUps?.giveDrinks || 0
+                            }
+                        };
+                    }
+                } else {
+                    // Player doesn't exist - create default
+                    players[name] = {
+                        points: name === 'GOD' ? 1000 : 100,
+                        powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
+                    };
+                    needsMigration = true;
+                }
+            });
+            
+            // If we migrated or added missing players, save the updated structure
+            if (needsMigration || !data.GOD) {
+                console.log('🔄 Migrating player data structure to include power-ups');
                 savePlayers();
             }
             
@@ -823,10 +867,10 @@ function updateLeaderboard() {
     const godPlayer = Object.entries(players).find(player => player[0] === 'GOD');
     
     // Sort regular players by points (highest first)
-    const sortedPlayers = regularPlayers.sort((a, b) => b[1] - a[1]);
+    const sortedPlayers = regularPlayers.sort((a, b) => b[1].points - a[1].points);
     
     // Calculate max/min for regular players only (exclude GOD from pig/crown logic)
-    const regularPoints = regularPlayers.map(p => p[1]);
+    const regularPoints = regularPlayers.map(p => p[1].points);
     const maxPoints = Math.max(...regularPoints);
     const minPoints = Math.min(...regularPoints);
     
@@ -841,22 +885,25 @@ function updateLeaderboard() {
         li.className = 'player';
         
         // Only show pig styling if there's actually a lowest score (not a tie)
-        if (!allSamePoints && player[1] === minPoints) {
+        if (!allSamePoints && player[1].points === minPoints) {
             li.classList.add('pig');
         }
         
         const playerInsult = getPlayerInsult(player[0]);
+        const powerUps = player[1].powerUps;
+        const totalPowerUps = powerUps.mulligans + powerUps.reverseMulligans + powerUps.giveDrinks;
         
         li.innerHTML = `
             <div class="player-name">
-                ${!allSamePoints && player[1] === maxPoints ? '<span class="crown">👑</span>' : ''}
-                ${!allSamePoints && player[1] === minPoints ? '<span>🐷 THE PIG 🐷</span>' : ''}
+                ${!allSamePoints && player[1].points === maxPoints ? '<span class="crown">👑</span>' : ''}
+                ${!allSamePoints && player[1].points === minPoints ? '<span>🐷 THE PIG 🐷</span>' : ''}
                 <span>${player[0]}</span>
+                <span class="poop-bag" onclick="showPowerUpModal('${player[0]}')" title="View ${player[0]}'s Power-Ups (${totalPowerUps} total)" style="cursor: pointer; font-size: 1em;">💩🎒</span>
                 <span class="pig-insult">${playerInsult}</span>
             </div>
             <div class="points">
-                ${player[1]} 🐷
-                ${isBookkeeperLoggedIn ? `<button class="edit-score-btn" onclick="openScoreEditModal('${player[0]}', ${player[1]})" title="Edit ${player[0]}'s score">✏️</button>` : ''}
+                ${player[1].points} 🐷
+                ${isBookkeeperLoggedIn ? `<button class="edit-score-btn" onclick="openScoreEditModal('${player[0]}', ${player[1].points})" title="Edit ${player[0]}'s score">✏️</button>` : ''}
             </div>
         `;
         
@@ -877,8 +924,8 @@ function updateLeaderboard() {
                 <span class="divine-icon">✨</span>
             </div>
             <div class="points" style="color: #8B4513; font-weight: bold;">
-                ${godPlayer[1]} 🙏
-                ${isBookkeeperLoggedIn ? `<button class="edit-score-btn" onclick="openScoreEditModal('GOD', ${godPlayer[1]})" title="Edit GOD's score">✏️</button>` : ''}
+                ${godPlayer[1].points} 🙏
+                ${isBookkeeperLoggedIn ? `<button class="edit-score-btn" onclick="openScoreEditModal('GOD', ${godPlayer[1].points})" title="Edit GOD's score">✏️</button>` : ''}
             </div>
         `;
         
@@ -969,13 +1016,13 @@ function transferPoints() {
         return;
     }
     
-    if (players[fromPlayer] < points) {
+    if (players[fromPlayer].points < points) {
         alert('🚫 Not enough pig points to transfer!');
         return;
     }
     
-    players[fromPlayer] -= points;
-    players[toPlayer] += points;
+    players[fromPlayer].points -= points;
+    players[toPlayer].points += points;
     
     savePlayers(); // Save to localStorage
     updateLeaderboard();
@@ -1002,7 +1049,7 @@ function pigPointsFromGod() {
     const randomPoints = Math.floor(Math.random() * 20) + 5;
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
     
-    players[randomPlayer] += randomPoints;
+    players[randomPlayer].points += randomPoints;
     
     savePlayers(); // Save to localStorage
     
@@ -1680,7 +1727,7 @@ function updatePlayerUI() {
     
     const playerInsult = getPlayerInsult(currentPlayer);
     document.getElementById('playerWelcome').textContent = `Greetings ${playerInsult} ${currentPlayer}!`;
-    document.getElementById('playerPoints').textContent = 'Your Points: ' + (players[currentPlayer] || 0) + ' 🐷';
+    document.getElementById('playerPoints').textContent = 'Your Points: ' + (players[currentPlayer]?.points || 0) + ' 🐷';
     
     // Remove current player from transfer dropdown
     const transferSelect = document.getElementById('playerTransferTo');
@@ -3239,14 +3286,14 @@ function playerTransferPoints() {
         return;
     }
     
-    if (players[currentPlayer] < amount) {
-        alert(`🚫 You only have ${players[currentPlayer]} points! You cannot send ${amount} points.`);
+    if (players[currentPlayer].points < amount) {
+        alert(`🚫 You only have ${players[currentPlayer].points} points! You cannot send ${amount} points.`);
         return;
     }
     
     // Transfer points
-    players[currentPlayer] -= amount;
-    players[toPlayer] += amount;
+    players[currentPlayer].points -= amount;
+    players[toPlayer].points += amount;
     
     // Save to Firebase
     savePlayers();
@@ -3450,6 +3497,167 @@ function closeHogwashResult() {
     document.getElementById('hogwashResultModal').style.display = 'none';
 }
 
+// Power-Up Modal Functions
+function showPowerUpModal(playerName) {
+    const modal = document.getElementById('powerUpModal');
+    const playerData = players[playerName];
+    
+    if (!playerData) {
+        console.error('Player not found:', playerName);
+        return;
+    }
+    
+    const powerUps = playerData.powerUps;
+    document.getElementById('powerUpPlayerName').textContent = playerName;
+    
+    // Build power-up display
+    let powerUpHTML = '';
+    
+    if (powerUps.mulligans > 0) {
+        powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; border-left: 4px solid #4CAF50;">
+            <span style="font-size: 1.5em;">⛳</span> <strong>Mulligans:</strong> ${powerUps.mulligans}
+            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">Use on golf course for a do-over shot</div>
+        </div>`;
+    }
+    
+    if (powerUps.reverseMulligans > 0) {
+        powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(156, 39, 176, 0.1); border-radius: 8px; border-left: 4px solid #9C27B0;">
+            <span style="font-size: 1.5em;">🔄</span> <strong>Reverse Mulligans:</strong> ${powerUps.reverseMulligans}
+            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">Force someone else to re-do their shot</div>
+        </div>`;
+    }
+    
+    if (powerUps.giveDrinks > 0) {
+        powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(255, 149, 0, 0.1); border-radius: 8px; border-left: 4px solid #ff9500;">
+            <span style="font-size: 1.5em;">🍺</span> <strong>Drink Giver:</strong> ${powerUps.giveDrinks} drinks to assign
+            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">Assign drinks to other players</div>
+        </div>`;
+    }
+    
+    if (powerUpHTML === '') {
+        powerUpHTML = `<div style="color: #666; font-style: italic; padding: 20px;">
+            <span style="font-size: 2em;">🐷</span><br>
+            This pig's bag is empty!<br>
+            <small>Try using HOGWASH to earn some power-ups!</small>
+        </div>`;
+    }
+    
+    document.getElementById('powerUpContent').innerHTML = powerUpHTML;
+    
+    // Show action buttons if this is the current player and they have usable powers
+    let actionsHTML = '';
+    if (isPlayerLoggedIn && currentPlayer === playerName && powerUps.giveDrinks > 0) {
+        actionsHTML = `<button class="hogwash-btn" onclick="showDrinkAssignmentModal()" style="margin: 5px;">
+            🍺 ASSIGN DRINKS 🍺
+        </button>`;
+    }
+    
+    document.getElementById('powerUpActions').innerHTML = actionsHTML;
+    
+    modal.style.display = 'flex';
+}
+
+function closePowerUpModal() {
+    document.getElementById('powerUpModal').style.display = 'none';
+}
+
+// Drink Assignment Functions
+function showDrinkAssignmentModal() {
+    if (!isPlayerLoggedIn || !currentPlayer) {
+        alert('🚫 You must be logged in to assign drinks!');
+        return;
+    }
+    
+    const playerData = players[currentPlayer];
+    if (!playerData || playerData.powerUps.giveDrinks <= 0) {
+        alert('🚫 You have no drinks to assign!');
+        return;
+    }
+    
+    const modal = document.getElementById('drinkAssignmentModal');
+    const availableDrinks = playerData.powerUps.giveDrinks;
+    
+    document.getElementById('availableDrinks').textContent = availableDrinks;
+    document.getElementById('maxDrinks').textContent = availableDrinks;
+    
+    const drinkAmountInput = document.getElementById('drinkAmount');
+    drinkAmountInput.max = availableDrinks;
+    drinkAmountInput.value = Math.min(1, availableDrinks);
+    
+    // Remove current player from target options
+    const targetSelect = document.getElementById('drinkTargetPlayer');
+    Array.from(targetSelect.options).forEach(option => {
+        if (option.value === currentPlayer) {
+            option.style.display = 'none';
+        } else {
+            option.style.display = 'block';
+        }
+    });
+    
+    targetSelect.value = '';
+    
+    modal.style.display = 'flex';
+}
+
+function closeDrinkAssignmentModal() {
+    document.getElementById('drinkAssignmentModal').style.display = 'none';
+}
+
+function assignDrinks() {
+    const targetPlayer = document.getElementById('drinkTargetPlayer').value;
+    const drinkAmount = parseInt(document.getElementById('drinkAmount').value);
+    
+    if (!targetPlayer) {
+        alert('🚫 Select a player to assign drinks to!');
+        return;
+    }
+    
+    if (!drinkAmount || drinkAmount < 1) {
+        alert('🚫 Enter a valid number of drinks!');
+        return;
+    }
+    
+    const playerData = players[currentPlayer];
+    if (drinkAmount > playerData.powerUps.giveDrinks) {
+        alert(`🚫 You only have ${playerData.powerUps.giveDrinks} drinks to assign!`);
+        return;
+    }
+    
+    if (targetPlayer === currentPlayer) {
+        alert('🚫 You cannot assign drinks to yourself, you pig!');
+        return;
+    }
+    
+    // Deduct drinks from current player's power-ups
+    players[currentPlayer].powerUps.giveDrinks -= drinkAmount;
+    savePlayers();
+    
+    // Close modals
+    closeDrinkAssignmentModal();
+    closePowerUpModal();
+    
+    // Show result
+    const drinkText = drinkAmount === 1 ? '1 DRINK' : `${drinkAmount} DRINKS`;
+    alert(`🍺 SUCCESS! 🍺\n\n${currentPlayer} assigned ${drinkText} to ${targetPlayer}!\n\n${targetPlayer} must drink up! 🐷`);
+    
+    // Log activity
+    addActivity('drink_assignment', '🍺', `${currentPlayer} assigned ${drinkText} to ${targetPlayer}`);
+    
+    // Update leaderboard to reflect power-up changes
+    updateLeaderboard();
+    if (isPlayerLoggedIn) {
+        updatePlayerUI();
+    }
+    
+    // Send push notification
+    sendPushNotification({
+        type: 'drink_assignment',
+        title: '🍺 DRINKS ASSIGNED!',
+        body: `${currentPlayer} assigned ${drinkText} to ${targetPlayer}!`,
+        playerName: targetPlayer
+    });
+}
+
 function rollHogwash() {
     const playerName = document.getElementById('hogwashPlayer').value;
     if (!playerName) {
@@ -3476,18 +3684,25 @@ function rollHogwash() {
     // Close the selection modal
     closeHogwashModal();
 
-    // Define possible outcomes
+    // Define possible outcomes with new probabilities
     const outcomes = [
+        // 20% chance - Take a drink (4 outcomes out of 20)
         {
             type: 'drink',
             title: '🍺 TAKE A DRINK YOU PIG! 🍺',
             action: () => {
-                const drinks = Math.floor(Math.random() * 9) + 1; // 1-9
-                const drinkType = drinks === 9 ? 'FULL DRINK' : `${drinks} DRINK${drinks > 1 ? 'S' : ''}`;
-                return `${playerName} must take ${drinkType}!`;
+                const isFinishDrink = Math.random() < 0.15; // 15% chance for finish drink
+                if (isFinishDrink) {
+                    return `${playerName} must FINISH their drink! 🍺💀`;
+                } else {
+                    const drinks = Math.floor(Math.random() * 5) + 1; // 1-5 drinks
+                    return `${playerName} must take ${drinks} DRINK${drinks > 1 ? 'S' : ''}! 🍺`;
+                }
             },
-            color: '#ff6b6b'
+            color: '#ff6b6b',
+            weight: 4 // 20% (4/20)
         },
+        // 10% chance - DANGER ZONE (2 outcomes out of 20)
         {
             type: 'danger',
             title: '⚠️ DANGER ZONE ⚠️',
@@ -3505,31 +3720,73 @@ function rollHogwash() {
                 
                 return `${playerName} triggered the DANGER ZONE! 💀 ALL PLAYERS BEWARE!`;
             },
-            color: '#ff4757'
+            color: '#ff4757',
+            weight: 2 // 10% (2/20)
         },
+        // 20% chance - WIN POINTS (4 outcomes out of 20)
         {
             type: 'win',
             title: '🎉 WIN POINTS FROM GOD! 🎉',
             action: () => {
-                const points = Math.floor(Math.random() * 10) + 1; // 1-10
-                players[playerName] += points;
-                players['GOD'] -= points;
+                const points = Math.floor(Math.random() * 4) + 1; // 1-4 points
+                players[playerName].points += points;
+                players['GOD'].points -= points;
                 savePlayers();
                 return `${playerName} wins ${points} points from GOD! 🙏`;
             },
-            color: '#2ed573'
+            color: '#2ed573',
+            weight: 4 // 20% (4/20)
         },
+        // 20% chance - LOSE POINTS (4 outcomes out of 20)
         {
             type: 'lose',
             title: '😈 LOSE POINTS TO GOD! 😈',
             action: () => {
-                const points = Math.floor(Math.random() * 10) + 1; // 1-10
-                players[playerName] -= points;
-                players['GOD'] += points;
+                const points = Math.floor(Math.random() * 5) + 1; // 1-5 points
+                players[playerName].points -= points;
+                players['GOD'].points += points;
                 savePlayers();
                 return `${playerName} loses ${points} points to GOD! 💸`;
             },
-            color: '#ff3838'
+            color: '#ff3838',
+            weight: 4 // 20% (4/20)
+        },
+        // 20% chance - GIVE DRINKS POWER (4 outcomes out of 20)
+        {
+            type: 'give_drinks',
+            title: '🍺 DRINK GIVER POWER! 🍺',
+            action: () => {
+                const drinks = Math.floor(Math.random() * 5) + 1; // 1-5 drinks to give
+                players[playerName].powerUps.giveDrinks += drinks;
+                savePlayers();
+                return `${playerName} gained the power to give ${drinks} DRINK${drinks > 1 ? 'S' : ''}! 🍺⚡`;
+            },
+            color: '#ff9500',
+            weight: 4 // 20% (4/20)
+        },
+        // 5% chance - MULLIGAN (1 outcome out of 20)
+        {
+            type: 'mulligan',
+            title: '⛳ MULLIGAN POWER! ⛳',
+            action: () => {
+                players[playerName].powerUps.mulligans += 1;
+                savePlayers();
+                return `${playerName} earned a MULLIGAN! Use it wisely on the golf course! ⛳✨`;
+            },
+            color: '#4CAF50',
+            weight: 1 // 5% (1/20)
+        },
+        // 5% chance - REVERSE MULLIGAN (1 outcome out of 20)
+        {
+            type: 'reverse_mulligan',
+            title: '🔄 REVERSE MULLIGAN POWER! 🔄',
+            action: () => {
+                players[playerName].powerUps.reverseMulligans += 1;
+                savePlayers();
+                return `${playerName} earned a REVERSE MULLIGAN! Force someone else to re-do their shot! 🔄💀`;
+            },
+            color: '#9C27B0',
+            weight: 1 // 5% (1/20)
         }
     ];
 
@@ -3549,8 +3806,22 @@ function rollHogwash() {
         
         console.log('🚨 DANGER ZONE forced for testing!');
     } else {
-        // Normal random outcome
-        outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+        // Weighted random selection based on weight property
+        const totalWeight = outcomes.reduce((sum, outcome) => sum + outcome.weight, 0);
+        let randomWeight = Math.random() * totalWeight;
+        
+        for (const possibleOutcome of outcomes) {
+            randomWeight -= possibleOutcome.weight;
+            if (randomWeight <= 0) {
+                outcome = possibleOutcome;
+                break;
+            }
+        }
+        
+        // Fallback (should never happen)
+        if (!outcome) {
+            outcome = outcomes[0];
+        }
     }
     
     const resultText = outcome.action();
@@ -3565,8 +3836,8 @@ function rollHogwash() {
     
     document.getElementById('hogwashResultModal').style.display = 'flex';
 
-    // Update leaderboard if points changed
-    if (outcome.type === 'win' || outcome.type === 'lose') {
+    // Update leaderboard if points or power-ups changed
+    if (outcome.type === 'win' || outcome.type === 'lose' || outcome.type === 'give_drinks' || outcome.type === 'mulligan' || outcome.type === 'reverse_mulligan') {
         updateLeaderboard();
         if (isPlayerLoggedIn) {
             updatePlayerUI();
@@ -3631,7 +3902,7 @@ function saveScoreEdit() {
     }
     
     // Update the player's score
-    players[currentEditPlayer] = newScore;
+    players[currentEditPlayer].points = newScore;
     
     // Save to Firebase
     savePlayers();

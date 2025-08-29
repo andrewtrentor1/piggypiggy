@@ -204,6 +204,37 @@
                 </select>
             </div>
             
+            <!-- HOGWASH Odds Display -->
+            <div style="background: rgba(0,0,0,0.05); border-radius: 8px; padding: 15px; margin: 15px 0; font-size: 0.9em;">
+                <h4 style="margin: 0 0 10px 0; text-align: center; color: #333;">🎯 ODDS OF WINNING 🎯</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em;">
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span>🍺</span> <span>Take Drinks: <strong>20%</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span>🎉</span> <span>Win Points: <strong>20%</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span>😈</span> <span>Lose Points: <strong>20%</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span>🍺⚡</span> <span>Drink Power: <strong>20%</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span>💀</span> <span>Danger Zone: <strong>10%</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span>⛳</span> <span>Mulligan: <strong>5%</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px; grid-column: span 2;">
+                        <span>🔄</span> <span>Reverse Mulligan: <strong>5%</strong></span>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 10px; font-size: 0.8em; color: #666; font-style: italic;">
+                    Each roll is independent - may the pig gods favor you! 🐷
+                </div>
+            </div>
+            
             <button class="hogwash-btn" onclick="rollHogwash()" style="width: 100%; margin-top: 20px;">
                 🐷 ROLL THE DICE 🐷
             </button>
@@ -216,6 +247,53 @@
             <h2 id="hogwashResultTitle">🎲 HOGWASH RESULT 🎲</h2>
             <div id="hogwashResultContent" style="text-align: center; font-size: 1.5em; margin: 30px 0;"></div>
             <button class="transfer-btn" onclick="closeHogwashResult()">🐷 ACCEPT FATE 🐷</button>
+        </div>
+    </div>
+
+    <!-- Power-Up Modal -->
+    <div class="modal" id="powerUpModal">
+        <div class="modal-content">
+            <span class="close" onclick="closePowerUpModal()">&times;</span>
+            <h2 id="powerUpTitle">💼 WHAT'S IN <span id="powerUpPlayerName"></span>'S POOP BAG 💼</h2>
+            <div id="powerUpContent" style="text-align: center; margin: 20px 0;">
+                <!-- Power-ups will be populated here -->
+            </div>
+            <div id="powerUpActions" style="text-align: center; margin-top: 20px;">
+                <!-- Action buttons will appear here if player has usable powers -->
+            </div>
+            <button class="transfer-btn" onclick="closePowerUpModal()" style="margin-top: 20px;">🐷 CLOSE BAG 🐷</button>
+        </div>
+    </div>
+
+    <!-- Drink Assignment Modal -->
+    <div class="modal" id="drinkAssignmentModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDrinkAssignmentModal()">&times;</span>
+            <h2 id="drinkAssignmentTitle">🍺 ASSIGN DRINKS 🍺</h2>
+            <p style="text-align: center; margin-bottom: 20px;">You have <span id="availableDrinks">0</span> drinks to assign!</p>
+            
+            <div class="form-group">
+                <label>Assign drinks to:</label>
+                <select id="drinkTargetPlayer" required>
+                    <option value="">Select a victim...</option>
+                    <option value="Evan">Evan</option>
+                    <option value="Ian">Ian</option>
+                    <option value="Andrew">Andrew</option>
+                    <option value="Zack">Zack</option>
+                    <option value="Brian">Brian</option>
+                    <option value="Alex">Alex</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Number of drinks:</label>
+                <input type="number" id="drinkAmount" min="1" max="1" value="1" placeholder="1">
+                <small style="color: #666; margin-top: 5px; display: block;">Maximum: <span id="maxDrinks">1</span> drinks</small>
+            </div>
+            
+            <button class="hogwash-btn" onclick="assignDrinks()" style="width: 100%; margin-top: 20px;">
+                🍺 ASSIGN DRINKS 🍺
+            </button>
         </div>
     </div>
 
