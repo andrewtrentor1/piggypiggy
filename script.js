@@ -3813,10 +3813,10 @@ function showHogwashSlot(playerName) {
         spinBtn.classList.add('slot-spin-btn-ready');
     }
     
-    // Initialize the slot machine
+    // Initialize the slot machine (but don't create the reel yet - we'll do that when we know the winner)
     try {
         initializeHogwashSlot();
-        console.log('🎰 Slot machine initialized successfully');
+        console.log('🎰 Slot machine initialized successfully (reel will be generated with winner)');
     } catch (error) {
         console.error('❌ Error initializing slot machine:', error);
     }
@@ -3858,9 +3858,7 @@ function initializeHogwashSlot() {
         { type: 'reverse_mulligan', label: '🔄 REVERSE MULLIGAN', color: '#9C27B0', weight: 1 }
     ];
     
-    // Create the slot reel HTML with multiple copies for smooth scrolling
-    createSlotReel();
-    
+    // Don't create the reel yet - we'll generate it with the winner when spinning starts
     // Initialize beep sound for slot machine
     initializeSlotBeep();
 }
@@ -3920,44 +3918,69 @@ function drawHogwashWheel() {
     wheelCtx.restore();
 }
 
-function createSlotReel() {
+function createSlotReelWithWinner(winnerOutcome) {
     if (!slotReel) return;
     
-    // Create many repeating options with UNIFORM heights for accurate positioning
+    // Generate a fresh reel with the winner guaranteed to be in the center!
     const reelHTML = [];
-    const uniformHeight = 70; // Same height for all options to ensure accurate positioning
+    const uniformHeight = 70;
     
-    // Create enough options to fill a long scrolling reel (50+ sets)
-    for (let set = 0; set < 50; set++) {
-        slotOutcomes.forEach((outcome, index) => {
-            // Visual probability indication through border and glow instead of height
-            const borderWidth = Math.max(2, outcome.weight); // Thicker border for higher weight
-            const glowIntensity = outcome.weight * 0.1; // More glow for higher weight
-            
-            reelHTML.push(`
-                <div class="slot-option" data-type="${outcome.type}" style="
-                    height: ${uniformHeight}px;
-                    background: linear-gradient(135deg, ${outcome.color}, ${darkenColor(outcome.color, 0.3)});
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: ${Math.min(1.1 + (outcome.weight * 0.05), 1.3)}em;
-                    font-weight: ${outcome.weight > 2 ? 'bold' : 'normal'};
-                    color: white;
-                    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                    border-bottom: ${borderWidth}px solid #FFD700;
-                    box-shadow: inset 0 0 ${10 + (outcome.weight * 5)}px rgba(255, 215, 0, ${glowIntensity});
-                ">
-                    ${outcome.label}
-                </div>
-            `);
-        });
+    // Create enough options above and below to make it look like a long reel
+    const optionsAbove = 8; // Options before the winner
+    const optionsBelow = 8; // Options after the winner
+    const totalOptions = optionsAbove + 1 + optionsBelow; // +1 for the winner
+    
+    // Add random options above the winner
+    for (let i = 0; i < optionsAbove; i++) {
+        const randomOutcome = slotOutcomes[Math.floor(Math.random() * slotOutcomes.length)];
+        reelHTML.push(createSlotOption(randomOutcome, uniformHeight));
+    }
+    
+    // Add the WINNER in the center position
+    reelHTML.push(createSlotOption(winnerOutcome, uniformHeight, true));
+    console.log('🐷 WINNER placed at center position:', optionsAbove);
+    
+    // Add random options below the winner
+    for (let i = 0; i < optionsBelow; i++) {
+        const randomOutcome = slotOutcomes[Math.floor(Math.random() * slotOutcomes.length)];
+        reelHTML.push(createSlotOption(randomOutcome, uniformHeight));
     }
     
     slotReel.innerHTML = reelHTML.join('');
     currentSlotPosition = 0;
     
-    console.log('🎰 Created slot reel with', reelHTML.length, 'uniform-height options');
+    console.log('🎰 Generated fresh reel with', totalOptions, 'options, winner at center position');
+    return optionsAbove; // Return the winner's index for positioning
+}
+
+function createSlotOption(outcome, height, isWinner = false) {
+    const borderWidth = Math.max(2, outcome.weight);
+    const glowIntensity = outcome.weight * 0.1;
+    const winnerClass = isWinner ? ' winner-option' : '';
+    
+    return `
+        <div class="slot-option${winnerClass}" data-type="${outcome.type}" style="
+            height: ${height}px;
+            background: linear-gradient(135deg, ${outcome.color}, ${darkenColor(outcome.color, 0.3)});
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: ${Math.min(1.1 + (outcome.weight * 0.05), 1.3)}em;
+            font-weight: ${outcome.weight > 2 ? 'bold' : 'normal'};
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            border-bottom: ${borderWidth}px solid #FFD700;
+            box-shadow: inset 0 0 ${10 + (outcome.weight * 5)}px rgba(255, 215, 0, ${glowIntensity});
+        ">
+            ${outcome.label}
+        </div>
+    `;
+}
+
+// Legacy function for compatibility
+function createSlotReel() {
+    // This shouldn't be called anymore, but just in case
+    console.log('🐷 WARNING: Using legacy createSlotReel - should use createSlotReelWithWinner instead');
 }
 
 function initializeSlotBeep() {
@@ -4024,13 +4047,85 @@ function spinHogwashSlot() {
     const finalOutcome = calculateHogwashOutcome();
     console.log('🎰 Calculated final outcome:', finalOutcome);
     
-    // Find the target outcome in our slot outcomes
-    const targetIndex = slotOutcomes.findIndex(o => o.type === finalOutcome.type);
-    console.log('🎰 Target outcome index:', targetIndex, 'for type:', finalOutcome.type);
-    console.log('🎰 Slot outcomes order:', slotOutcomes.map((o, i) => `${i}: ${o.type}`));
+    // Generate a fresh reel with the winner guaranteed to be in the center!
+    const winnerIndex = createSlotReelWithWinner(finalOutcome);
+    console.log('🎰 Fresh reel generated with winner at index:', winnerIndex);
     
-    // Start the slot machine animation
-    animateSlotMachine(finalOutcome, targetIndex);
+    // Start the simple animation - just scroll to center the winner
+    animateSlotMachineSimple(finalOutcome, winnerIndex);
+}
+
+function animateSlotMachineSimple(finalOutcome, winnerIndex) {
+    const startTime = Date.now();
+    const duration = 12000 + Math.random() * 6000; // 12-18 seconds for MAXIMUM drama! 🐷
+    console.log('🐷 SQUEAL! Animation will be', (duration/1000).toFixed(1), 'seconds of pure pig-themed excitement!');
+    
+    const uniformHeight = 70;
+    
+    // SIMPLE MATH: Winner is at winnerIndex, we want it centered in the 200px window
+    // Window center is at 100px from the top, so we scroll to: (winnerIndex * 70) + 35 - 100
+    const targetPosition = (winnerIndex * uniformHeight) + (uniformHeight / 2) - 100;
+    
+    // Add some visual spins for excitement (but keep it reasonable)
+    const visualSpins = 5 + Math.random() * 3; // 5-8 spins
+    const totalDistance = (visualSpins * 17 * uniformHeight) + targetPosition; // 17 total options in reel
+    
+    console.log('🐷 SIMPLE! Winner at index', winnerIndex, 'will be centered after', visualSpins.toFixed(1), 'spins');
+    console.log('🐷 Total scroll distance:', totalDistance.toFixed(0), 'px to center', finalOutcome.type);
+    
+    let lastBeepTime = 0;
+    const beepInterval = 150;
+    
+    function animateSlot() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // DRAMATIC pig-themed deceleration - starts SUPER fast, then slows to build suspense! 🐷
+        const easeOut = progress < 0.7 ? 
+            Math.pow(progress / 0.7, 0.8) * 0.85 :  // Fast initial spin (85% in first 70% of time)
+            0.85 + (1 - Math.pow(1 - (progress - 0.7) / 0.3, 4)) * 0.15; // Dramatic slowdown for suspense
+        
+        // Calculate current position
+        const currentDistance = totalDistance * easeOut;
+        currentSlotPosition = currentDistance;
+        
+        // Update slot reel position
+        slotReel.style.transform = `translateY(-${currentSlotPosition}px)`;
+        
+        // Play beep sound as options pass by (less frequent as it slows down)
+        const currentBeepInterval = beepInterval * (1 + progress * 3); // Slow down beeping
+        if (elapsed - lastBeepTime > currentBeepInterval && progress < 0.95) {
+            if (slotBeepAudio && slotBeepAudio.play) {
+                try {
+                    slotBeepAudio.play();
+                } catch (error) {
+                    // Ignore audio errors
+                }
+            }
+            lastBeepTime = elapsed;
+        }
+        
+        if (progress < 1) {
+            requestAnimationFrame(animateSlot);
+        } else {
+            // Animation complete - winner should be perfectly centered!
+            console.log('🐷 PERFECT! Animation completed after', ((Date.now() - startTime)/1000).toFixed(1), 'seconds');
+            console.log('🐷 Winner should be exactly centered between yellow lines!');
+            
+            // Highlight the winner (should be perfectly positioned)
+            highlightWinner(finalOutcome);
+            
+            setTimeout(() => {
+                stopHogwashMusic();
+                console.log('🎰 About to execute final outcome:', finalOutcome.type);
+                executeHogwashOutcome(finalOutcome);
+                document.getElementById('closeSlotBtn').style.display = 'inline-block';
+                isSlotSpinning = false;
+            }, 1500);
+        }
+    }
+    
+    animateSlot();
 }
 
 function animateSlotMachine(finalOutcome, targetIndex) {
