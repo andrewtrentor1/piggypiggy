@@ -4043,17 +4043,14 @@ function animateSlotMachine(finalOutcome, targetIndex) {
     const totalOptions = slotOutcomes.length;
     const setHeight = totalOptions * uniformHeight;
     
-    // Calculate how many complete sets to scroll through, then land on target
-    const spins = 15 + Math.random() * 10; // 15-25 full cycles through all options
+    // Simplified approach: just get close to the target, then fine-tune
+    // Land somewhere in the middle range of the reel where our target outcome exists
+    const approximateTargetPosition = (targetIndex * uniformHeight);
     
-    // Calculate exact position to center the target in the slot window
-    // The slot window is 200px tall, so center is at 100px from the top
-    // We want the target option's center to align with the window center
-    const windowCenterOffset = 100; // Center of the 200px slot window
-    const targetPosition = (targetIndex * uniformHeight) + (uniformHeight / 2) - windowCenterOffset;
-    
-    const totalDistance = (spins * setHeight) + targetPosition;
-    console.log('🎰 Will scroll', totalDistance.toFixed(0), 'pixels to center', finalOutcome.type, 'in window');
+    // Use fewer spins to avoid overshooting
+    const reducedSpins = 8 + Math.random() * 4; // 8-12 full cycles instead of 15-25
+    const totalDistance = (reducedSpins * setHeight) + approximateTargetPosition;
+    console.log('🎰 Will scroll approximately', totalDistance.toFixed(0), 'pixels, then fine-tune to center', finalOutcome.type);
     
     let lastBeepTime = 0;
     const beepInterval = 150; // Beep every 150ms initially
@@ -4134,7 +4131,7 @@ function fineTunePosition(finalOutcome, callback) {
         }
     });
     
-    if (closestOption && closestDistance > 5) { // Only adjust if not already centered
+    if (closestOption && closestDistance > 2) { // Adjust if not very precisely centered
         const optionRect = closestOption.getBoundingClientRect();
         const optionCenter = optionRect.top + optionRect.height / 2;
         const adjustment = windowCenter - optionCenter;
