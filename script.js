@@ -4032,6 +4032,19 @@ function createSlotReelWithWinner(winnerOutcome) {
 }
 
 function createSlotOption(outcome, height, isWinner = false) {
+    console.log('🎰 createSlotOption called with outcome:', outcome);
+    
+    if (!outcome || !outcome.color) {
+        console.error('❌ createSlotOption: Invalid outcome or missing color:', outcome);
+        // Provide default values
+        outcome = {
+            type: outcome?.type || 'unknown',
+            label: outcome?.label || '❓ UNKNOWN',
+            color: '#666666',
+            weight: outcome?.weight || 1
+        };
+    }
+    
     const borderWidth = Math.max(2, outcome.weight);
     const glowIntensity = outcome.weight * 0.1;
     const winnerClass = isWinner ? ' winner-option' : '';
@@ -4095,6 +4108,12 @@ function initializeSlotBeep() {
 }
 
 function darkenColor(color, amount) {
+    // Handle undefined or null colors
+    if (!color || typeof color !== 'string') {
+        console.warn('⚠️ darkenColor called with invalid color:', color);
+        return '#666666'; // Default gray color
+    }
+    
     const hex = color.replace('#', '');
     const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - Math.floor(255 * amount));
     const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - Math.floor(255 * amount));
@@ -4531,16 +4550,8 @@ function spinHogwashWheel() {
 }
 
 function calculateHogwashOutcome() {
-    // Same logic as before but return the outcome object - ORDER MUST MATCH WHEEL VISUAL!
-    const outcomes = [
-        { type: 'drink', weight: 4 },
-        { type: 'win', weight: 4 },
-        { type: 'lose', weight: 4 },
-        { type: 'give_drinks', weight: 4 },
-        { type: 'danger', weight: 2 },
-        { type: 'mulligan', weight: 1 },
-        { type: 'reverse_mulligan', weight: 1 }
-    ];
+    // Use the same outcomes as defined in slotOutcomes to ensure consistency
+    const outcomes = slotOutcomes;
     
     // Check if DANGER ZONE test mode is active
     if (forceDangerZoneNext) {
@@ -4550,7 +4561,8 @@ function calculateHogwashOutcome() {
             testButton.textContent = '💀 TEST DANGER ZONE ALERT 💀';
             testButton.style.animation = '';
         }
-        return { type: 'danger' };
+        // Return the full danger outcome object
+        return outcomes.find(o => o.type === 'danger') || outcomes[0];
     }
     
     // Weighted random selection
