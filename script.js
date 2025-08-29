@@ -3962,7 +3962,14 @@ function drawHogwashWheel() {
 }
 
 function createPreviewSlotReel() {
-    if (!slotReel) return;
+    console.log('🎰 createPreviewSlotReel called');
+    
+    if (!slotReel) {
+        console.error('❌ slotReel element not found in createPreviewSlotReel!');
+        return;
+    }
+    
+    console.log('🎰 slotReel element found:', slotReel);
     
     // Create a preview reel showing all available options
     const reelHTML = [];
@@ -4096,7 +4103,17 @@ function darkenColor(color, amount) {
 }
 
 function spinHogwashSlot() {
-    if (isSlotSpinning) return;
+    console.log('🎰 spinHogwashSlot called!');
+    
+    if (isSlotSpinning) {
+        console.log('🎰 Slot is already spinning, ignoring click');
+        return;
+    }
+    
+    if (!slotReel) {
+        console.error('❌ slotReel element not found!');
+        return;
+    }
     
     isSlotSpinning = true;
     console.log('🎰 Starting slot machine spin!');
