@@ -3772,97 +3772,97 @@ function rollHogwash() {
     // Set cooldown for this player
     setPlayerHogwashCooldown(playerName);
 
-    // Close the selection modal and show the wheel
-    console.log('🎰 About to close HOGWASH modal and show wheel for:', playerName);
+    // Close the selection modal and show the slot machine
+    console.log('🎰 About to close HOGWASH modal and show slot machine for:', playerName);
     closeHogwashModal();
-    console.log('🎰 HOGWASH modal closed, now showing wheel...');
-    showHogwashWheel(playerName);
-    console.log('🎰 showHogwashWheel function called');
+    console.log('🎰 HOGWASH modal closed, now showing slot machine...');
+    showHogwashSlot(playerName);
+    console.log('🎰 showHogwashSlot function called');
 }
 
-// HOGWASH Wheel Animation System
-let wheelCanvas, wheelCtx;
-let currentWheelRotation = 0;
-let isWheelSpinning = false;
-let wheelOutcomes = [];
+// HOGWASH Slot Machine System
+let slotReel;
+let isSlotSpinning = false;
+let slotOutcomes = [];
 let selectedPlayerName = '';
+let currentSlotPosition = 0;
+let slotBeepAudio;
 
-function showHogwashWheel(playerName) {
-    console.log('🎰 showHogwashWheel called for:', playerName);
+function showHogwashSlot(playerName) {
+    console.log('🎰 showHogwashSlot called for:', playerName);
     selectedPlayerName = playerName;
     
-    // Show the wheel modal
+    // Show the slot machine modal
     const modal = document.getElementById('hogwashWheelModal');
-    console.log('🎰 Wheel modal element:', modal);
+    console.log('🎰 Slot modal element:', modal);
     
     if (!modal) {
-        console.error('❌ Wheel modal not found! Make sure hogwashWheelModal exists in HTML');
+        console.error('❌ Slot modal not found! Make sure hogwashWheelModal exists in HTML');
         return;
     }
     
     modal.style.display = 'flex';
-    modal.classList.add('wheel-ready');
-    console.log('🎰 Wheel modal should now be visible');
+    modal.classList.add('slot-machine-ready');
+    console.log('🎰 Slot modal should now be visible');
     
-    document.getElementById('wheelPlayerName').textContent = `${playerName} is gambling!`;
+    document.getElementById('slotPlayerName').textContent = `${playerName} is gambling!`;
     
     // Add exciting animation to spin button
-    const spinBtn = document.getElementById('spinWheelBtn');
+    const spinBtn = document.getElementById('spinSlotBtn');
     if (spinBtn) {
-        spinBtn.classList.add('spin-button-ready');
+        spinBtn.classList.add('slot-spin-btn-ready');
     }
     
-    // Initialize the wheel
+    // Initialize the slot machine
     try {
-        initializeHogwashWheel();
-        drawHogwashWheel();
-        console.log('🎰 Wheel initialized and drawn successfully');
+        initializeHogwashSlot();
+        console.log('🎰 Slot machine initialized successfully');
     } catch (error) {
-        console.error('❌ Error initializing wheel:', error);
+        console.error('❌ Error initializing slot machine:', error);
     }
 }
 
-function closeHogwashWheel() {
+function closeHogwashSlot() {
     const modal = document.getElementById('hogwashWheelModal');
     modal.style.display = 'none';
-    modal.classList.remove('wheel-ready', 'wheel-spinning');
+    modal.classList.remove('slot-machine-ready', 'slot-machine-spinning');
     
-    document.getElementById('closeWheelBtn').style.display = 'none';
+    document.getElementById('closeSlotBtn').style.display = 'none';
     
-    const spinBtn = document.getElementById('spinWheelBtn');
+    const spinBtn = document.getElementById('spinSlotBtn');
     spinBtn.style.display = 'inline-block';
-    spinBtn.classList.remove('spin-button-ready');
+    spinBtn.classList.remove('slot-spin-btn-ready');
     
     // Stop any playing HOGWASH music
     stopHogwashMusic();
     
-    isWheelSpinning = false;
+    isSlotSpinning = false;
 }
 
-function initializeHogwashWheel() {
-    wheelCanvas = document.getElementById('hogwashWheel');
-    wheelCtx = wheelCanvas.getContext('2d');
+// Legacy function for compatibility
+function closeHogwashWheel() {
+    closeHogwashSlot();
+}
+
+function initializeHogwashSlot() {
+    slotReel = document.getElementById('slotReel');
     
-    // Define wheel segments with proper weights
-    wheelOutcomes = [
-        { type: 'drink', label: '🍺 DRINKS', color: '#ff6b6b', weight: 4, startAngle: 0 },
-        { type: 'win', label: '🎉 WIN POINTS', color: '#2ed573', weight: 4, startAngle: 0 },
-        { type: 'lose', label: '😈 LOSE POINTS', color: '#ff3838', weight: 4, startAngle: 0 },
-        { type: 'give_drinks', label: '🍺⚡ DRINK POWER', color: '#ff9500', weight: 4, startAngle: 0 },
-        { type: 'danger', label: '💀 DANGER ZONE', color: '#ff4757', weight: 2, startAngle: 0 },
-        { type: 'mulligan', label: '⛳ MULLIGAN', color: '#4CAF50', weight: 1, startAngle: 0 },
-        { type: 'reverse_mulligan', label: '🔄 REVERSE', color: '#9C27B0', weight: 1, startAngle: 0 }
+    // Define slot outcomes with proper weights and display info
+    slotOutcomes = [
+        { type: 'drink', label: '🍺 TAKE DRINKS', color: '#ff6b6b', weight: 4 },
+        { type: 'win', label: '🎉 WIN POINTS', color: '#2ed573', weight: 4 },
+        { type: 'lose', label: '😈 LOSE POINTS', color: '#ff3838', weight: 4 },
+        { type: 'give_drinks', label: '🍺⚡ DRINK POWER', color: '#ff9500', weight: 4 },
+        { type: 'danger', label: '💀 DANGER ZONE', color: '#ff4757', weight: 2 },
+        { type: 'mulligan', label: '⛳ MULLIGAN', color: '#4CAF50', weight: 1 },
+        { type: 'reverse_mulligan', label: '🔄 REVERSE MULLIGAN', color: '#9C27B0', weight: 1 }
     ];
     
-    // Calculate angles based on weights
-    const totalWeight = wheelOutcomes.reduce((sum, outcome) => sum + outcome.weight, 0);
-    let currentAngle = 0;
+    // Create the slot reel HTML with multiple copies for smooth scrolling
+    createSlotReel();
     
-    wheelOutcomes.forEach(outcome => {
-        outcome.startAngle = currentAngle;
-        outcome.endAngle = currentAngle + (outcome.weight / totalWeight) * 2 * Math.PI;
-        currentAngle = outcome.endAngle;
-    });
+    // Initialize beep sound for slot machine
+    initializeSlotBeep();
 }
 
 function drawHogwashWheel() {
@@ -3920,6 +3920,60 @@ function drawHogwashWheel() {
     wheelCtx.restore();
 }
 
+function createSlotReel() {
+    if (!slotReel) return;
+    
+    // Create multiple copies of outcomes for smooth scrolling effect
+    const reelHTML = [];
+    
+    // Add multiple sets of outcomes (3 full sets for smooth scrolling)
+    for (let set = 0; set < 3; set++) {
+        slotOutcomes.forEach((outcome, index) => {
+            reelHTML.push(`
+                <div class="slot-option" data-type="${outcome.type}" style="background: linear-gradient(135deg, ${outcome.color}, ${darkenColor(outcome.color, 0.3)});">
+                    ${outcome.label}
+                </div>
+            `);
+        });
+    }
+    
+    slotReel.innerHTML = reelHTML.join('');
+    currentSlotPosition = 0;
+}
+
+function initializeSlotBeep() {
+    // Create a simple beep sound using Web Audio API
+    try {
+        if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            slotBeepAudio = {
+                context: audioContext,
+                play: function() {
+                    if (this.context.state === 'suspended') {
+                        this.context.resume();
+                    }
+                    
+                    const oscillator = this.context.createOscillator();
+                    const gainNode = this.context.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.context.destination);
+                    
+                    oscillator.frequency.setValueAtTime(800, this.context.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, this.context.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.1);
+                    
+                    oscillator.start(this.context.currentTime);
+                    oscillator.stop(this.context.currentTime + 0.1);
+                }
+            };
+        }
+    } catch (error) {
+        console.log('🎰 Slot beep audio not available:', error);
+    }
+}
+
 function darkenColor(color, amount) {
     const hex = color.replace('#', '');
     const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - Math.floor(255 * amount));
@@ -3928,6 +3982,120 @@ function darkenColor(color, amount) {
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+function spinHogwashSlot() {
+    if (isSlotSpinning) return;
+    
+    isSlotSpinning = true;
+    console.log('🎰 Starting slot machine spin!');
+    
+    // Update modal classes for spinning animation
+    const modal = document.getElementById('hogwashWheelModal');
+    modal.classList.remove('slot-machine-ready');
+    modal.classList.add('slot-machine-spinning');
+    
+    // Hide spin button and remove animations
+    const spinBtn = document.getElementById('spinSlotBtn');
+    spinBtn.style.display = 'none';
+    spinBtn.classList.remove('slot-spin-btn-ready');
+    
+    // Play HOGWASH theme music if available
+    playHogwashMusic();
+    
+    // Calculate final outcome first
+    const finalOutcome = calculateHogwashOutcome();
+    console.log('🎰 Calculated final outcome:', finalOutcome);
+    
+    // Find the target outcome in our slot outcomes
+    const targetIndex = slotOutcomes.findIndex(o => o.type === finalOutcome.type);
+    console.log('🎰 Target outcome index:', targetIndex);
+    
+    // Start the slot machine animation
+    animateSlotMachine(finalOutcome, targetIndex);
+}
+
+function animateSlotMachine(finalOutcome, targetIndex) {
+    const startTime = Date.now();
+    const duration = 8000 + Math.random() * 4000; // 8-12 seconds for dramatic effect
+    console.log('🎰 Animation duration will be', (duration/1000).toFixed(1), 'seconds');
+    
+    // Calculate how many options to scroll through
+    const totalOptions = slotOutcomes.length;
+    const spins = 15 + Math.random() * 10; // 15-25 full cycles through all options
+    const finalPosition = (targetIndex + totalOptions) * 66; // 66px per option height
+    const totalDistance = (spins * totalOptions * 66) + finalPosition;
+    
+    let lastBeepTime = 0;
+    const beepInterval = 150; // Beep every 150ms initially
+    
+    function animateSlot() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Improved easing - fast initially, then slow down dramatically at the end
+        const easeOut = progress < 0.8 ? progress : 0.8 + (1 - Math.pow(1 - (progress - 0.8) / 0.2, 3)) * 0.2;
+        
+        // Calculate current position
+        const currentDistance = totalDistance * easeOut;
+        currentSlotPosition = currentDistance;
+        
+        // Update slot reel position
+        slotReel.style.transform = `translateY(-${currentSlotPosition}px)`;
+        
+        // Play beep sound as options pass by (less frequent as it slows down)
+        const currentBeepInterval = beepInterval * (1 + progress * 3); // Slow down beeping
+        if (elapsed - lastBeepTime > currentBeepInterval && progress < 0.95) {
+            if (slotBeepAudio && slotBeepAudio.play) {
+                try {
+                    slotBeepAudio.play();
+                } catch (error) {
+                    // Ignore audio errors
+                }
+            }
+            lastBeepTime = elapsed;
+        }
+        
+        if (progress < 1) {
+            requestAnimationFrame(animateSlot);
+        } else {
+            // Animation complete - highlight winner and show result
+            console.log('🎰 Slot animation completed after', ((Date.now() - startTime)/1000).toFixed(1), 'seconds');
+            highlightWinner(finalOutcome);
+            
+            setTimeout(() => {
+                stopHogwashMusic();
+                console.log('🎰 About to execute final outcome:', finalOutcome.type);
+                executeHogwashOutcome(finalOutcome);
+                document.getElementById('closeSlotBtn').style.display = 'inline-block';
+                isSlotSpinning = false;
+            }, 1500); // Give time to see the winner highlight
+        }
+    }
+    
+    animateSlot();
+}
+
+function highlightWinner(outcome) {
+    // Find the winning option in the current view and highlight it
+    const options = slotReel.querySelectorAll('.slot-option');
+    options.forEach(option => {
+        option.classList.remove('winner');
+        if (option.dataset.type === outcome.type) {
+            // Find the option that's currently in the center
+            const optionRect = option.getBoundingClientRect();
+            const slotWindow = document.querySelector('.slot-window');
+            const windowRect = slotWindow.getBoundingClientRect();
+            const windowCenter = windowRect.top + windowRect.height / 2;
+            
+            // Check if this option is in the center area
+            if (Math.abs(optionRect.top + optionRect.height / 2 - windowCenter) < 50) {
+                option.classList.add('winner');
+                console.log('🎰 Winner highlighted:', outcome.type);
+            }
+        }
+    });
+}
+
+// Legacy function for compatibility
 function spinHogwashWheel() {
     if (isWheelSpinning) return;
     
@@ -3998,13 +4166,13 @@ function spinHogwashWheel() {
 }
 
 function calculateHogwashOutcome() {
-    // Same logic as before but return the outcome object
+    // Same logic as before but return the outcome object - ORDER MUST MATCH WHEEL VISUAL!
     const outcomes = [
         { type: 'drink', weight: 4 },
-        { type: 'danger', weight: 2 },
         { type: 'win', weight: 4 },
         { type: 'lose', weight: 4 },
         { type: 'give_drinks', weight: 4 },
+        { type: 'danger', weight: 2 },
         { type: 'mulligan', weight: 1 },
         { type: 'reverse_mulligan', weight: 1 }
     ];

@@ -943,6 +943,89 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
     animation: spinButtonExcite 2s infinite !important;
 }
 
+/* HOGWASH Slot Machine Animations */
+@keyframes slotSpin {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-100px); }
+}
+
+@keyframes slotLightsFlash {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+@keyframes slotWinnerGlow {
+    0%, 100% { 
+        box-shadow: 0 0 10px #FFD700;
+        background: #FFD700;
+    }
+    50% { 
+        box-shadow: 0 0 20px #FFD700, 0 0 30px #FFD700;
+        background: #FFFF00;
+    }
+}
+
+@keyframes slotButtonExcite {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    25% { 
+        transform: scale(1.1) rotate(-2deg);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    }
+    75% { 
+        transform: scale(1.1) rotate(2deg);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    }
+}
+
+@keyframes slotReelSpin {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-70px); }
+}
+
+.slot-machine-spinning .slot-lights-left,
+.slot-machine-spinning .slot-lights-right {
+    animation: slotLightsFlash 0.3s ease-in-out infinite;
+}
+
+.slot-machine-spinning .winner-line {
+    animation: slotWinnerGlow 0.5s ease-in-out infinite;
+}
+
+.slot-spin-btn-ready {
+    animation: slotButtonExcite 2s ease-in-out infinite !important;
+}
+
+.slot-reel {
+    transition: transform 0.1s ease-out;
+}
+
+.slot-reel.spinning {
+    transition: none;
+}
+
+.slot-option {
+    height: 66px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    border-bottom: 1px solid #333;
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+}
+
+.slot-option.winner {
+    background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+    color: #8B4513 !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    animation: slotWinnerGlow 1s ease-in-out infinite;
+}
+
 /* ==============================================
    UTILITY CLASSES
    ============================================== */
