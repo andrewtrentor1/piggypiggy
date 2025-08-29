@@ -4044,14 +4044,21 @@ function animateSlotMachine(finalOutcome, targetIndex) {
     const setHeight = totalOptions * uniformHeight;
     
     // EXCITING: More spins for maximum pig-themed drama! 🐷
-    // The slot window is 200px tall, so the center (between yellow lines) is at 100px from the top
-    // We need to position the reel so the target option's center aligns with the window center
+    // The slot window is 200px tall, center should be at 100px from window top
+    // But we need to account for where the window is positioned within the modal
     const visualSpins = 8 + Math.random() * 4; // 8-12 spins for maximum excitement! 🎰
-    const slotWindowCenter = 100; // Center of the 200px slot window (between yellow lines)
-    const targetOptionCenter = targetIndex * uniformHeight + (uniformHeight / 2); // Center of target option
-    const targetPosition = targetOptionCenter - slotWindowCenter; // Adjust so target centers in window
+    
+    // Simple approach: position the target option so it appears in the center of the visible area
+    // Target option center position in the reel
+    const targetOptionCenter = targetIndex * uniformHeight + (uniformHeight / 2);
+    
+    // We want this to align with the center of the slot window (100px from window top)
+    // So we scroll to: targetOptionCenter - 100px
+    const targetPosition = targetOptionCenter - 100;
     const totalDistance = (visualSpins * setHeight) + targetPosition;
-    console.log('🐷 OINK! Will do', visualSpins.toFixed(1), 'dramatic spins to center', finalOutcome.type, 'between yellow lines!');
+    
+    console.log('🐷 OINK! Target option center at', targetOptionCenter, 'px, adjusting by -100px to center in window');
+    console.log('🐷 Will do', visualSpins.toFixed(1), 'spins, total distance:', totalDistance.toFixed(0), 'px to center', finalOutcome.type);
     
     let lastBeepTime = 0;
     const beepInterval = 150; // Beep every 150ms initially
@@ -4088,23 +4095,91 @@ function animateSlotMachine(finalOutcome, targetIndex) {
         if (progress < 1) {
             requestAnimationFrame(animateSlot);
         } else {
-            // Animation complete - should be perfectly positioned already!
+            // Animation complete - now ensure perfect centering!
             console.log('🎰 Slot animation completed after', ((Date.now() - startTime)/1000).toFixed(1), 'seconds');
             
-            // Highlight the winner (should be perfectly centered)
-            highlightWinner(finalOutcome);
-            
-            setTimeout(() => {
-                stopHogwashMusic();
-                console.log('🎰 About to execute final outcome:', finalOutcome.type);
-                executeHogwashOutcome(finalOutcome);
-                document.getElementById('closeSlotBtn').style.display = 'inline-block';
-                isSlotSpinning = false;
-            }, 1500); // Give time to see the winner highlight
+            // Force perfect centering of the winning option
+            perfectCenterWinner(finalOutcome, () => {
+                // Highlight the winner (now perfectly centered)
+                highlightWinner(finalOutcome);
+                
+                setTimeout(() => {
+                    stopHogwashMusic();
+                    console.log('🎰 About to execute final outcome:', finalOutcome.type);
+                    executeHogwashOutcome(finalOutcome);
+                    document.getElementById('closeSlotBtn').style.display = 'inline-block';
+                    isSlotSpinning = false;
+                }, 1500); // Give time to see the winner highlight
+            });
         }
     }
     
     animateSlot();
+}
+
+function perfectCenterWinner(finalOutcome, callback) {
+    // Find the closest matching option and center it PERFECTLY between the yellow lines
+    const options = slotReel.querySelectorAll('.slot-option');
+    const slotWindow = document.querySelector('.slot-window');
+    const windowRect = slotWindow.getBoundingClientRect();
+    const windowCenter = windowRect.top + windowRect.height / 2; // Exact center between yellow lines
+    
+    let closestOption = null;
+    let closestDistance = Infinity;
+    
+    // Find the closest matching option to the center
+    options.forEach((option, index) => {
+        if (option.dataset.type === finalOutcome.type) {
+            const optionRect = option.getBoundingClientRect();
+            const optionCenter = optionRect.top + optionRect.height / 2;
+            const distance = Math.abs(optionCenter - windowCenter);
+            
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestOption = option;
+            }
+        }
+    });
+    
+    if (closestOption) {
+        const optionRect = closestOption.getBoundingClientRect();
+        const optionCenter = optionRect.top + optionRect.height / 2;
+        const adjustment = windowCenter - optionCenter;
+        
+        console.log('🐷 PERFECT CENTERING: Adjusting by', adjustment.toFixed(1), 'px to center', finalOutcome.type, 'exactly between yellow lines');
+        
+        if (Math.abs(adjustment) > 1) { // Only adjust if not already perfectly centered
+            // Smooth final adjustment
+            const startPos = currentSlotPosition;
+            const targetPos = currentSlotPosition + adjustment;
+            const adjustStart = Date.now();
+            const adjustDuration = 500; // 500ms smooth final adjustment
+            
+            function finalAdjust() {
+                const elapsed = Date.now() - adjustStart;
+                const progress = Math.min(elapsed / adjustDuration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 2); // Smooth easing
+                
+                currentSlotPosition = startPos + (adjustment * easeOut);
+                slotReel.style.transform = `translateY(-${currentSlotPosition}px)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(finalAdjust);
+                } else {
+                    console.log('🐷 PERFECT! Winner is now exactly centered between yellow lines!');
+                    callback();
+                }
+            }
+            
+            finalAdjust();
+        } else {
+            console.log('🐷 Already perfectly centered!');
+            callback();
+        }
+    } else {
+        console.log('🐷 No matching option found, proceeding anyway');
+        callback();
+    }
 }
 
 function fineTunePosition(finalOutcome, callback) {
