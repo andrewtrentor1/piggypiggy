@@ -3959,10 +3959,12 @@ function spinHogwashWheel() {
     // Calculate final rotation (multiple spins + target position)
     const spins = 5 + Math.random() * 3; // 5-8 full spins
     const finalRotation = currentWheelRotation + (spins * 2 * Math.PI) - segmentMiddle + (Math.PI / 2);
+    console.log('🎰 Wheel will spin for', spins.toFixed(1), 'rotations to land on', finalOutcome.type);
     
     // Animate the spin - longer duration with more gradual stop
     const startTime = Date.now();
     const duration = 8000 + Math.random() * 4000; // 8-12 seconds for more dramatic effect
+    console.log('🎰 Animation duration will be', (duration/1000).toFixed(1), 'seconds');
     
     function animateWheel() {
         const elapsed = Date.now() - startTime;
@@ -3978,8 +3980,10 @@ function spinHogwashWheel() {
             requestAnimationFrame(animateWheel);
         } else {
             // Spin complete - show result
+            console.log('🎰 Wheel animation completed after', ((Date.now() - startTime)/1000).toFixed(1), 'seconds');
             setTimeout(() => {
                 stopHogwashMusic(); // Stop the music when wheel stops
+                console.log('🎰 About to execute final outcome:', finalOutcome.type);
                 executeHogwashOutcome(finalOutcome);
                 document.getElementById('closeWheelBtn').style.display = 'inline-block';
                 isWheelSpinning = false;
