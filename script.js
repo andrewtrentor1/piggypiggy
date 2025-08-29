@@ -3948,26 +3948,28 @@ function spinHogwashWheel() {
     
     // Calculate final outcome first
     const finalOutcome = calculateHogwashOutcome();
+    console.log('🎰 Calculated final outcome:', finalOutcome);
     
     // Calculate target angle for the selected outcome
     const outcomeIndex = wheelOutcomes.findIndex(o => o.type === finalOutcome.type);
     const targetSegment = wheelOutcomes[outcomeIndex];
+    console.log('🎰 Target segment:', targetSegment);
     const segmentMiddle = (targetSegment.startAngle + targetSegment.endAngle) / 2;
     
     // Calculate final rotation (multiple spins + target position)
     const spins = 5 + Math.random() * 3; // 5-8 full spins
     const finalRotation = currentWheelRotation + (spins * 2 * Math.PI) - segmentMiddle + (Math.PI / 2);
     
-    // Animate the spin
+    // Animate the spin - longer duration with more gradual stop
     const startTime = Date.now();
-    const duration = 3000 + Math.random() * 2000; // 3-5 seconds
+    const duration = 8000 + Math.random() * 4000; // 8-12 seconds for more dramatic effect
     
     function animateWheel() {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
-        // Easing function for realistic deceleration
-        const easeOut = 1 - Math.pow(1 - progress, 3);
+        // More gradual easing function for realistic wheel deceleration
+        const easeOut = 1 - Math.pow(1 - progress, 4); // Changed from 3 to 4 for more gradual stop
         
         currentWheelRotation = currentWheelRotation + (finalRotation - currentWheelRotation) * easeOut;
         drawHogwashWheel();
@@ -4027,6 +4029,7 @@ function calculateHogwashOutcome() {
 
 function executeHogwashOutcome(selectedOutcome) {
     const playerName = selectedPlayerName;
+    console.log('🎰 Executing outcome for', playerName, ':', selectedOutcome);
     let outcome, resultText;
     
     // Create full outcome object based on type
