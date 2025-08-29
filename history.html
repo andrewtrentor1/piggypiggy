@@ -24,10 +24,14 @@
         }
 
         .header h1 {
-            color: #8B4513;
+            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             font-size: 2.5rem;
             margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
+            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));
         }
 
         .navigation {
@@ -39,27 +43,32 @@
         }
 
         .nav-btn {
-            background: linear-gradient(45deg, #daa520, #f0e68c);
+            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
             border: none;
             padding: 12px 24px;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             text-decoration: none;
-            color: #333;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
         .nav-btn:hover {
+            background: linear-gradient(45deg, #E91E63, #C2185B, #9C27B0);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .nav-btn.active {
-            background: linear-gradient(45deg, #8B4513, #A0522D);
-            color: white;
+            background: linear-gradient(45deg, #8B008B, #4B0082, #663399);
+            color: #FFD700;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(139,0,139,0.4);
         }
 
         .card {
@@ -72,11 +81,16 @@
         }
 
         .card-title {
-            color: #8B4513;
+            background: linear-gradient(45deg, #FF1493, #DA70D6, #8B008B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             font-size: 1.8rem;
             margin-bottom: 20px;
             text-align: center;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            text-shadow: 1px 1px 3px rgba(255, 105, 180, 0.3);
+            filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.1));
+            font-weight: 700;
         }
 
         .year-section {

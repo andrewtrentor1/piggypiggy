@@ -61,17 +61,22 @@
         .title {
             font-size: 3rem;
             font-weight: 700;
-            color: #8B4513;
-            text-shadow: 2px 2px 0px #FFD700;
+            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
             margin-bottom: 10px;
+            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));
         }
         
         .subtitle {
             font-size: 1.5rem;
-            color: #654321;
+            color: #8B008B;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 3px;
+            text-shadow: 1px 1px 2px rgba(255, 105, 180, 0.4);
         }
         
         .pig-emoji {
@@ -85,19 +90,20 @@
         }
         
         .nav-link {
-            background: linear-gradient(45deg, #daa520, #f0e68c);
+            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
             border: none;
             padding: 10px 20px;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: bold;
             border-radius: 25px;
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
             text-decoration: none;
-            color: #8B4513;
+            color: white;
             margin: 0 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
         
         .nav-link:hover {
@@ -116,7 +122,10 @@
         
         .card-title {
             font-size: 2rem;
-            color: #8B4513;
+            background: linear-gradient(45deg, #FF1493, #DA70D6, #8B008B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 20px;
             text-align: center;
             font-weight: 700;
