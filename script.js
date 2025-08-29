@@ -4159,26 +4159,112 @@ function spinHogwashSlot() {
     console.log('🎰 Fresh reel generated with winner at index:', winnerIndex);
     
     // Start the simple animation - just scroll to center the winner
-    animateSlotMachineSimple(finalOutcome, winnerIndex);
+    animateSlotMachineFixed(finalOutcome, winnerIndex);
+}
+
+function animateSlotMachineFixed(finalOutcome, winnerIndex) {
+    const startTime = Date.now();
+    const duration = 3000 + Math.random() * 2000; // 3-5 seconds
+    console.log('🎰 Starting fixed animation for', (duration/1000).toFixed(1), 'seconds');
+    
+    const uniformHeight = 70;
+    const windowHeight = 200;
+    const windowCenter = windowHeight / 2;
+    
+    // Calculate the current position of the reel
+    const currentTransform = slotReel.style.transform;
+    const currentMatch = currentTransform.match(/translateY\((-?\d+(?:\.\d+)?)px\)/);
+    const startPosition = currentMatch ? parseFloat(currentMatch[1]) : 0;
+    
+    // Calculate where we want the winner to be (centered in window)
+    const winnerPosition = (winnerIndex * uniformHeight) + (uniformHeight / 2);
+    const targetOffset = winnerPosition - windowCenter;
+    
+    // Add some visual spins but keep them reasonable
+    const extraSpins = 2 + Math.random(); // 2-3 extra full rotations
+    const totalOptions = slotReel.children.length;
+    const reelHeight = totalOptions * uniformHeight;
+    const finalPosition = startPosition + (extraSpins * reelHeight) + targetOffset;
+    
+    console.log('🎰 Animation: start=' + startPosition + ', target=' + targetOffset + ', final=' + finalPosition);
+    
+    let lastBeepTime = 0;
+    
+    function animate() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Smooth easing - fast start, slow end
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        
+        // Calculate current position
+        const currentPos = startPosition + (finalPosition - startPosition) * easeOut;
+        
+        // Apply the transform
+        slotReel.style.transform = `translateY(${currentPos}px)`;
+        
+        // Beep sound
+        if (elapsed - lastBeepTime > 200 && progress < 0.9) {
+            if (slotBeepAudio && slotBeepAudio.play) {
+                try {
+                    slotBeepAudio.play();
+                } catch (error) {
+                    // Ignore audio errors
+                }
+            }
+            lastBeepTime = elapsed;
+        }
+        
+        // Log progress
+        if (Math.floor(progress * 10) !== Math.floor((progress - 0.1) * 10)) {
+            console.log('🎰 Animation progress:', (progress * 100).toFixed(0) + '%');
+        }
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            // Animation complete
+            console.log('🎰 Animation completed! Winner should be centered.');
+            
+            // Highlight the winner
+            highlightWinner(finalOutcome);
+            
+            setTimeout(() => {
+                stopHogwashMusic();
+                console.log('🎰 Executing final outcome:', finalOutcome.type);
+                executeHogwashOutcome(finalOutcome);
+                document.getElementById('closeSlotBtn').style.display = 'inline-block';
+                isSlotSpinning = false;
+            }, 1500);
+        }
+    }
+    
+    animate();
 }
 
 function animateSlotMachineSimple(finalOutcome, winnerIndex) {
     const startTime = Date.now();
-    const duration = 12000 + Math.random() * 6000; // 12-18 seconds for MAXIMUM drama! 🐷
-    console.log('🐷 SQUEAL! Animation will be', (duration/1000).toFixed(1), 'seconds of pure pig-themed excitement!');
+    const duration = 4000 + Math.random() * 2000; // 4-6 seconds for better user experience
+    console.log('🎰 Animation will be', (duration/1000).toFixed(1), 'seconds');
     
     const uniformHeight = 70;
     
-    // SIMPLE MATH: Winner is at winnerIndex, we want it centered in the 200px window
-    // Window center is at 100px from the top, so we scroll to: (winnerIndex * 70) + 35 - 100
-    const targetPosition = (winnerIndex * uniformHeight) + (uniformHeight / 2) - 100;
+    // Get the actual number of options in the reel
+    const totalOptions = slotReel.children.length;
+    console.log('🎰 Total options in reel:', totalOptions);
     
-    // Add some visual spins for excitement (but keep it reasonable)
-    const visualSpins = 5 + Math.random() * 3; // 5-8 spins
-    const totalDistance = (visualSpins * 17 * uniformHeight) + targetPosition; // 17 total options in reel
+    // Calculate where the winner should be positioned to center it in the window
+    const windowCenter = 100; // 200px window height / 2
+    const winnerCenter = (winnerIndex * uniformHeight) + (uniformHeight / 2);
+    const targetPosition = winnerCenter - windowCenter;
     
-    console.log('🐷 SIMPLE! Winner at index', winnerIndex, 'will be centered after', visualSpins.toFixed(1), 'spins');
-    console.log('🐷 Total scroll distance:', totalDistance.toFixed(0), 'px to center', finalOutcome.type);
+    // Add moderate visual spins (not too many to avoid scrolling off-screen)
+    const visualSpins = 2 + Math.random() * 2; // 2-4 spins
+    const reelHeight = totalOptions * uniformHeight;
+    const totalDistance = (visualSpins * reelHeight) + targetPosition;
+    
+    console.log('🎰 Winner at index', winnerIndex, 'will be centered after', visualSpins.toFixed(1), 'spins');
+    console.log('🎰 Target position:', targetPosition, 'Total distance:', totalDistance.toFixed(0), 'px');
     
     let lastBeepTime = 0;
     const beepInterval = 150;
