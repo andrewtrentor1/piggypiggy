@@ -908,12 +908,13 @@
                     const timeDiff = now - eventTime;
                     
                     if (timeDiff < 10000) { // Within 10 seconds
-                        // Don't show alert to Alex (the person who assigned the drinks)
-                        if (currentPlayer !== 'Alex') {
-                            console.log('🍺 Showing drink assignment alert on golf page!');
+                        // Don't show alert to the person who assigned the drinks
+                        const assignedBy = drinkData.assignedBy || 'Alex';
+                        if (currentPlayer !== assignedBy) {
+                            console.log(`🍺 Showing drink assignment alert on golf page for non-${assignedBy} users!`);
                             showDrinkAssignmentAlert(drinkData);
                         } else {
-                            console.log('🍺 Skipping drink assignment alert for Alex (sender) on golf page');
+                            console.log(`🍺 Skipping drink assignment alert for ${assignedBy} (sender) on golf page`);
                         }
                     }
                 }

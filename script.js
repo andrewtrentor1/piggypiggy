@@ -52,9 +52,12 @@ let forceDangerZoneNext = false;
 // Audio management for autoplay bypass
 let audioContext = null;
 let dangerZoneAudioBuffer = null;
+let hogwashAudioBuffer = null;
 let audioUnlocked = false;
 let preloadedAudio = null;
+let preloadedHogwashAudio = null;
 let audioPlayingSuccessfully = false; // Flag to prevent multiple simultaneous playback
+let currentHogwashAudio = null;
 
 // Alex's drink assignment system
 let alexDrinkCredits = 0; // Current available drinks for Alex to assign
@@ -1739,19 +1742,40 @@ function updatePlayerUI() {
         }
     });
     
-    // Update Alex's drink section if he's logged in
-    if (currentPlayer === 'Alex') {
-        // Force reload Alex's drink data from Firebase when he logs in
-        if (window.firebaseDB) {
-            loadAlexDrinkCredits();
-            loadAlexDangerZoneCredits();
-        }
-        updateAlexDrinkUI();
-    } else {
-        // Clear Alex's drink section for other players
-        const alexDrinkSection = document.getElementById('alexDrinkSection');
-        if (alexDrinkSection) {
-            alexDrinkSection.innerHTML = '';
+    // Update drink assignment section
+    const drinkSection = document.getElementById('alexDrinkSection');
+    if (drinkSection) {
+        if (currentPlayer === 'Alex') {
+            // Alex has his own special system
+            if (window.firebaseDB) {
+                loadAlexDrinkCredits();
+                loadAlexDangerZoneCredits();
+            }
+            updateAlexDrinkUI();
+        } else {
+            // Check if current player has giveDrinks power-ups
+            const playerData = players[currentPlayer];
+            const giveDrinksCount = playerData?.powerUps?.giveDrinks || 0;
+            
+            if (giveDrinksCount > 0) {
+                // Show power-up drink assignment section
+                drinkSection.innerHTML = `
+                    <div style="text-align: center; margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #FF9800, #F57C00); border-radius: 10px;">
+                        <h4 style="color: white; margin: 0 0 10px 0;">🍺 POWER-UP DRINKS 🍺</h4>
+                        <p style="color: white; margin: 5px 0;">Available Drinks: <strong>${giveDrinksCount}</strong></p>
+                        <p style="color: #FFE0B2; margin: 5px 0; font-size: 0.9em;">Earned from HOGWASH gambling!</p>
+                        <button class="transfer-btn" onclick="showPowerUpDrinkAssignmentModal()" style="background: linear-gradient(45deg, #4CAF50, #45a049); color: white; font-weight: bold; margin-top: 10px;">
+                            🍻 ASSIGN DRINKS 🍻
+                        </button>
+                        <p style="font-size: 0.8em; color: #FFE0B2; margin: 8px 0 0 0;">
+                            Use your earned drinks to make others drink! 🐷
+                        </p>
+                    </div>
+                `;
+            } else {
+                // Clear the section if no drinks available
+                drinkSection.innerHTML = '';
+            }
         }
     }
     
@@ -2245,6 +2269,10 @@ function preloadDangerZoneAudio() {
     preloadedAudio = new Audio();
     preloadedAudio.preload = 'metadata'; // Changed from 'auto' to prevent auto-download/play
     preloadedAudio.volume = 0.8;
+    
+    // Also preload HOGWASH theme music
+    console.log('🎵 Preloading HOGWASH theme music...');
+    preloadHogwashMusic();
     preloadedAudio.src = 'danger-zone.mp3';
     
     // Prevent accidental playback during preload
@@ -2452,12 +2480,13 @@ function initializeAlexDrinkSystem() {
                 const timeDiff = now - eventTime;
                 
                 if (timeDiff < 10000) { // Within 10 seconds
-                    // Don't show alert to Alex (the person who assigned the drinks)
-                    if (currentPlayer !== 'Alex') {
-                        console.log('🍺 Showing drink assignment alert for non-Alex users!');
+                    // Don't show alert to the person who assigned the drinks
+                    const assignedBy = drinkData.assignedBy || 'Alex';
+                    if (currentPlayer !== assignedBy) {
+                        console.log(`🍺 Showing drink assignment alert for non-${assignedBy} users!`);
                         showDrinkAssignmentAlert(drinkData);
                     } else {
-                        console.log('🍺 Skipping drink assignment alert for Alex (sender)');
+                        console.log(`🍺 Skipping drink assignment alert for ${assignedBy} (sender)`);
                     }
                 }
             }
@@ -2870,27 +2899,7 @@ function startAlexDrinkCountdownTimer() {
     }, 1000);
 }
 
-// Drink Assignment Modal Functions
-function showDrinkAssignmentModal() {
-    if (!isPlayerLoggedIn || currentPlayer !== 'Alex') {
-        alert('🚫 Only Alex can assign drinks!');
-        return;
-    }
-    
-    if (alexDrinkCredits <= 0) {
-        alert('🍺 NO DRINKS AVAILABLE! 🍺\n\nYou don\'t have any drinks to assign right now.\nYou get 10 drinks per hour (max 20).');
-        return;
-    }
-    
-    // Update available drinks display
-    document.getElementById('availableDrinks').textContent = alexDrinkCredits;
-    
-    // Populate player list
-    populateDrinkPlayerList();
-    
-    // Show modal
-    document.getElementById('drinkAssignmentModal').style.display = 'flex';
-}
+// Alex's Drink Assignment Modal Functions (moved to unified system below)
 
 function closeDrinkAssignmentModal() {
     document.getElementById('drinkAssignmentModal').style.display = 'none';
@@ -2978,7 +2987,7 @@ function updateTotalDrinksToAssign() {
     }
 }
 
-function assignDrinks() {
+function assignAlexDrinks() {
     if (!isPlayerLoggedIn || currentPlayer !== 'Alex') {
         alert('🚫 Only Alex can assign drinks!');
         return;
@@ -3092,6 +3101,33 @@ function broadcastDrinkAssignment(assignments, totalDrinks, alexMessage = '') {
         })
         .catch((error) => {
             console.error('❌ Drink assignment broadcast failed:', error);
+        });
+}
+
+function broadcastPowerUpDrinkAssignment(assignments, totalDrinks, assignedBy) {
+    if (!window.firebaseDB) {
+        console.error('❌ Firebase DB not available for power-up drink assignment broadcast');
+        return;
+    }
+    
+    const drinkData = {
+        assignments: assignments,
+        totalDrinks: totalDrinks,
+        assignedBy: assignedBy,
+        message: `${assignedBy} used power-up drinks earned from HOGWASH!`,
+        timestamp: new Date().toISOString(),
+        eventId: Date.now() + '_' + Math.floor(Math.random() * 10000),
+        acknowledged: false,
+        isPowerUp: true
+    };
+    
+    const drinkAssignmentsRef = window.firebaseRef(window.firebaseDB, 'drinkAssignments');
+    window.firebaseSet(drinkAssignmentsRef, drinkData)
+        .then(() => {
+            console.log('🍺 Power-up drink assignment broadcast sent successfully!');
+        })
+        .catch((error) => {
+            console.error('❌ Power-up drink assignment broadcast failed:', error);
         });
 }
 
@@ -3561,8 +3597,8 @@ function closePowerUpModal() {
     document.getElementById('powerUpModal').style.display = 'none';
 }
 
-// Drink Assignment Functions
-function showDrinkAssignmentModal() {
+// Power-Up Drink Assignment Functions
+function showPowerUpDrinkAssignmentModal() {
     if (!isPlayerLoggedIn || !currentPlayer) {
         alert('🚫 You must be logged in to assign drinks!');
         return;
@@ -3599,11 +3635,51 @@ function showDrinkAssignmentModal() {
     modal.style.display = 'flex';
 }
 
+// Alex's original drink assignment modal (for his special system)
+function showAlexDrinkAssignmentModal() {
+    if (!isPlayerLoggedIn || currentPlayer !== 'Alex') {
+        alert('🚫 Only Alex can assign drinks!');
+        return;
+    }
+    
+    if (alexDrinkCredits <= 0) {
+        alert('🍺 NO DRINKS AVAILABLE! 🍺\n\nYou don\'t have any drinks to assign right now.\nYou get 10 drinks per hour (max 20).');
+        return;
+    }
+    
+    // Update available drinks display
+    document.getElementById('availableDrinks').textContent = alexDrinkCredits;
+    
+    // Populate player list
+    populateDrinkPlayerList();
+    
+    // Show modal
+    document.getElementById('drinkAssignmentModal').style.display = 'flex';
+}
+
+// Unified function that routes to the correct modal based on player
+function showDrinkAssignmentModal() {
+    if (currentPlayer === 'Alex') {
+        showAlexDrinkAssignmentModal();
+    } else {
+        showPowerUpDrinkAssignmentModal();
+    }
+}
+
 function closeDrinkAssignmentModal() {
     document.getElementById('drinkAssignmentModal').style.display = 'none';
 }
 
 function assignDrinks() {
+    // Route to correct assignment function based on current player
+    if (currentPlayer === 'Alex') {
+        assignAlexDrinks();
+    } else {
+        assignPowerUpDrinks();
+    }
+}
+
+function assignPowerUpDrinks() {
     const targetPlayer = document.getElementById('drinkTargetPlayer').value;
     const drinkAmount = parseInt(document.getElementById('drinkAmount').value);
     
@@ -3628,38 +3704,53 @@ function assignDrinks() {
         return;
     }
     
-    // Deduct drinks from current player's power-ups
-    players[currentPlayer].powerUps.giveDrinks -= drinkAmount;
-    savePlayers();
-    
-    // Close modals
-    closeDrinkAssignmentModal();
-    closePowerUpModal();
-    
-    // Show result
+    // Confirm assignment
     const drinkText = drinkAmount === 1 ? '1 DRINK' : `${drinkAmount} DRINKS`;
-    alert(`🍺 SUCCESS! 🍺\n\n${currentPlayer} assigned ${drinkText} to ${targetPlayer}!\n\n${targetPlayer} must drink up! 🐷`);
+    const confirmMessage = `🍺 CONFIRM DRINK ASSIGNMENT 🍺\n\n${targetPlayer}: ${drinkText}\n\nAssign these drinks?`;
     
-    // Log activity
-    addActivity('drink_assignment', '🍺', `${currentPlayer} assigned ${drinkText} to ${targetPlayer}`);
-    
-    // Update leaderboard to reflect power-up changes
-    updateLeaderboard();
-    if (isPlayerLoggedIn) {
-        updatePlayerUI();
+    if (confirm(confirmMessage)) {
+        // Deduct drinks from current player's power-ups
+        players[currentPlayer].powerUps.giveDrinks -= drinkAmount;
+        savePlayers();
+        
+        // Create assignments object in same format as Alex's system
+        const assignments = {};
+        assignments[targetPlayer] = drinkAmount;
+        
+        // Log activity
+        addActivity('drink_assignment', '🍺', `${currentPlayer} assigned ${drinkText} to ${targetPlayer} (Power-Up)`);
+        
+        // Broadcast drink assignment globally (same as Alex's system)
+        broadcastPowerUpDrinkAssignment(assignments, drinkAmount, currentPlayer);
+        
+        // Send push notification
+        sendPushNotification({
+            type: 'drink_assignment',
+            title: '🍺 DRINKS ASSIGNED!',
+            body: `${currentPlayer} assigned ${drinkText} to ${targetPlayer}!`,
+            assignments: assignments,
+            assignedBy: currentPlayer
+        });
+        
+        // Close modals
+        closeDrinkAssignmentModal();
+        closePowerUpModal();
+        
+        // Update leaderboard to reflect power-up changes
+        updateLeaderboard();
+        if (isPlayerLoggedIn) {
+            updatePlayerUI();
+        }
+        
+        // Show success message
+        alert(`🍺 SUCCESS! 🍺\n\n${currentPlayer} assigned ${drinkText} to ${targetPlayer}!\n\nRemaining drinks: ${players[currentPlayer].powerUps.giveDrinks}`);
     }
-    
-    // Send push notification
-    sendPushNotification({
-        type: 'drink_assignment',
-        title: '🍺 DRINKS ASSIGNED!',
-        body: `${currentPlayer} assigned ${drinkText} to ${targetPlayer}!`,
-        playerName: targetPlayer
-    });
 }
 
 function rollHogwash() {
+    console.log('🎰 rollHogwash function called!');
     const playerName = document.getElementById('hogwashPlayer').value;
+    console.log('🎰 Selected player:', playerName);
     if (!playerName) {
         alert('🚫 Select a player first, you pig!');
         return;
@@ -3681,155 +3772,364 @@ function rollHogwash() {
     // Set cooldown for this player
     setPlayerHogwashCooldown(playerName);
 
-    // Close the selection modal
+    // Close the selection modal and show the wheel
+    console.log('🎰 About to close HOGWASH modal and show wheel for:', playerName);
     closeHogwashModal();
+    console.log('🎰 HOGWASH modal closed, now showing wheel...');
+    showHogwashWheel(playerName);
+    console.log('🎰 showHogwashWheel function called');
+}
 
-    // Define possible outcomes with new probabilities
-    const outcomes = [
-        // 20% chance - Take a drink (4 outcomes out of 20)
-        {
-            type: 'drink',
-            title: '🍺 TAKE A DRINK YOU PIG! 🍺',
-            action: () => {
-                const isFinishDrink = Math.random() < 0.15; // 15% chance for finish drink
-                if (isFinishDrink) {
-                    return `${playerName} must FINISH their drink! 🍺💀`;
-                } else {
-                    const drinks = Math.floor(Math.random() * 5) + 1; // 1-5 drinks
-                    return `${playerName} must take ${drinks} DRINK${drinks > 1 ? 'S' : ''}! 🍺`;
-                }
-            },
-            color: '#ff6b6b',
-            weight: 4 // 20% (4/20)
-        },
-        // 10% chance - DANGER ZONE (2 outcomes out of 20)
-        {
-            type: 'danger',
-            title: '⚠️ DANGER ZONE ⚠️',
-            action: () => {
-                // Broadcast DANGER ZONE to all connected devices
-                broadcastDangerZone(playerName);
-                
-                // Send push notification for Danger Zone
-                sendPushNotification({
-                    type: 'danger_zone',
-                    title: '💀 DANGER ZONE 💀',
-                    body: `${playerName} triggered DANGER ZONE! All players affected!`,
-                    playerName: playerName
-                });
-                
-                return `${playerName} triggered the DANGER ZONE! 💀 ALL PLAYERS BEWARE!`;
-            },
-            color: '#ff4757',
-            weight: 2 // 10% (2/20)
-        },
-        // 20% chance - WIN POINTS (4 outcomes out of 20)
-        {
-            type: 'win',
-            title: '🎉 WIN POINTS FROM GOD! 🎉',
-            action: () => {
-                const points = Math.floor(Math.random() * 4) + 1; // 1-4 points
-                players[playerName].points += points;
-                players['GOD'].points -= points;
-                savePlayers();
-                return `${playerName} wins ${points} points from GOD! 🙏`;
-            },
-            color: '#2ed573',
-            weight: 4 // 20% (4/20)
-        },
-        // 20% chance - LOSE POINTS (4 outcomes out of 20)
-        {
-            type: 'lose',
-            title: '😈 LOSE POINTS TO GOD! 😈',
-            action: () => {
-                const points = Math.floor(Math.random() * 5) + 1; // 1-5 points
-                players[playerName].points -= points;
-                players['GOD'].points += points;
-                savePlayers();
-                return `${playerName} loses ${points} points to GOD! 💸`;
-            },
-            color: '#ff3838',
-            weight: 4 // 20% (4/20)
-        },
-        // 20% chance - GIVE DRINKS POWER (4 outcomes out of 20)
-        {
-            type: 'give_drinks',
-            title: '🍺 DRINK GIVER POWER! 🍺',
-            action: () => {
-                const drinks = Math.floor(Math.random() * 5) + 1; // 1-5 drinks to give
-                players[playerName].powerUps.giveDrinks += drinks;
-                savePlayers();
-                return `${playerName} gained the power to give ${drinks} DRINK${drinks > 1 ? 'S' : ''}! 🍺⚡`;
-            },
-            color: '#ff9500',
-            weight: 4 // 20% (4/20)
-        },
-        // 5% chance - MULLIGAN (1 outcome out of 20)
-        {
-            type: 'mulligan',
-            title: '⛳ MULLIGAN POWER! ⛳',
-            action: () => {
-                players[playerName].powerUps.mulligans += 1;
-                savePlayers();
-                return `${playerName} earned a MULLIGAN! Use it wisely on the golf course! ⛳✨`;
-            },
-            color: '#4CAF50',
-            weight: 1 // 5% (1/20)
-        },
-        // 5% chance - REVERSE MULLIGAN (1 outcome out of 20)
-        {
-            type: 'reverse_mulligan',
-            title: '🔄 REVERSE MULLIGAN POWER! 🔄',
-            action: () => {
-                players[playerName].powerUps.reverseMulligans += 1;
-                savePlayers();
-                return `${playerName} earned a REVERSE MULLIGAN! Force someone else to re-do their shot! 🔄💀`;
-            },
-            color: '#9C27B0',
-            weight: 1 // 5% (1/20)
-        }
+// HOGWASH Wheel Animation System
+let wheelCanvas, wheelCtx;
+let currentWheelRotation = 0;
+let isWheelSpinning = false;
+let wheelOutcomes = [];
+let selectedPlayerName = '';
+
+function showHogwashWheel(playerName) {
+    console.log('🎰 showHogwashWheel called for:', playerName);
+    selectedPlayerName = playerName;
+    
+    // Show the wheel modal
+    const modal = document.getElementById('hogwashWheelModal');
+    console.log('🎰 Wheel modal element:', modal);
+    
+    if (!modal) {
+        console.error('❌ Wheel modal not found! Make sure hogwashWheelModal exists in HTML');
+        return;
+    }
+    
+    modal.style.display = 'flex';
+    modal.classList.add('wheel-ready');
+    console.log('🎰 Wheel modal should now be visible');
+    
+    document.getElementById('wheelPlayerName').textContent = `${playerName} is gambling!`;
+    
+    // Add exciting animation to spin button
+    const spinBtn = document.getElementById('spinWheelBtn');
+    if (spinBtn) {
+        spinBtn.classList.add('spin-button-ready');
+    }
+    
+    // Initialize the wheel
+    try {
+        initializeHogwashWheel();
+        drawHogwashWheel();
+        console.log('🎰 Wheel initialized and drawn successfully');
+    } catch (error) {
+        console.error('❌ Error initializing wheel:', error);
+    }
+}
+
+function closeHogwashWheel() {
+    const modal = document.getElementById('hogwashWheelModal');
+    modal.style.display = 'none';
+    modal.classList.remove('wheel-ready', 'wheel-spinning');
+    
+    document.getElementById('closeWheelBtn').style.display = 'none';
+    
+    const spinBtn = document.getElementById('spinWheelBtn');
+    spinBtn.style.display = 'inline-block';
+    spinBtn.classList.remove('spin-button-ready');
+    
+    // Stop any playing HOGWASH music
+    stopHogwashMusic();
+    
+    isWheelSpinning = false;
+}
+
+function initializeHogwashWheel() {
+    wheelCanvas = document.getElementById('hogwashWheel');
+    wheelCtx = wheelCanvas.getContext('2d');
+    
+    // Define wheel segments with proper weights
+    wheelOutcomes = [
+        { type: 'drink', label: '🍺 DRINKS', color: '#ff6b6b', weight: 4, startAngle: 0 },
+        { type: 'win', label: '🎉 WIN POINTS', color: '#2ed573', weight: 4, startAngle: 0 },
+        { type: 'lose', label: '😈 LOSE POINTS', color: '#ff3838', weight: 4, startAngle: 0 },
+        { type: 'give_drinks', label: '🍺⚡ DRINK POWER', color: '#ff9500', weight: 4, startAngle: 0 },
+        { type: 'danger', label: '💀 DANGER ZONE', color: '#ff4757', weight: 2, startAngle: 0 },
+        { type: 'mulligan', label: '⛳ MULLIGAN', color: '#4CAF50', weight: 1, startAngle: 0 },
+        { type: 'reverse_mulligan', label: '🔄 REVERSE', color: '#9C27B0', weight: 1, startAngle: 0 }
     ];
+    
+    // Calculate angles based on weights
+    const totalWeight = wheelOutcomes.reduce((sum, outcome) => sum + outcome.weight, 0);
+    let currentAngle = 0;
+    
+    wheelOutcomes.forEach(outcome => {
+        outcome.startAngle = currentAngle;
+        outcome.endAngle = currentAngle + (outcome.weight / totalWeight) * 2 * Math.PI;
+        currentAngle = outcome.endAngle;
+    });
+}
 
-    // Check if DANGER ZONE test mode is active
-    let outcome;
-    if (forceDangerZoneNext) {
-        // Force DANGER ZONE for testing
-        outcome = outcomes.find(o => o.type === 'danger');
-        forceDangerZoneNext = false; // Reset flag after use
+function drawHogwashWheel() {
+    const centerX = wheelCanvas.width / 2;
+    const centerY = wheelCanvas.height / 2;
+    const radius = 180;
+    
+    wheelCtx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+    wheelCtx.save();
+    
+    // Rotate the entire wheel
+    wheelCtx.translate(centerX, centerY);
+    wheelCtx.rotate(currentWheelRotation);
+    wheelCtx.translate(-centerX, -centerY);
+    
+    // Draw each segment
+    wheelOutcomes.forEach((outcome, index) => {
+        // Draw segment
+        wheelCtx.beginPath();
+        wheelCtx.moveTo(centerX, centerY);
+        wheelCtx.arc(centerX, centerY, radius, outcome.startAngle, outcome.endAngle);
+        wheelCtx.closePath();
         
-        // Reset test button appearance
+        // Fill with gradient
+        const gradient = wheelCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+        gradient.addColorStop(0, outcome.color);
+        gradient.addColorStop(1, darkenColor(outcome.color, 0.3));
+        wheelCtx.fillStyle = gradient;
+        wheelCtx.fill();
+        
+        // Draw border
+        wheelCtx.strokeStyle = '#fff';
+        wheelCtx.lineWidth = 3;
+        wheelCtx.stroke();
+        
+        // Draw text
+        const textAngle = (outcome.startAngle + outcome.endAngle) / 2;
+        const textRadius = radius * 0.7;
+        const textX = centerX + Math.cos(textAngle) * textRadius;
+        const textY = centerY + Math.sin(textAngle) * textRadius;
+        
+        wheelCtx.save();
+        wheelCtx.translate(textX, textY);
+        wheelCtx.rotate(textAngle + Math.PI / 2);
+        wheelCtx.fillStyle = '#fff';
+        wheelCtx.font = 'bold 14px Arial';
+        wheelCtx.textAlign = 'center';
+        wheelCtx.strokeStyle = '#000';
+        wheelCtx.lineWidth = 3;
+        wheelCtx.strokeText(outcome.label, 0, 0);
+        wheelCtx.fillText(outcome.label, 0, 0);
+        wheelCtx.restore();
+    });
+    
+    wheelCtx.restore();
+}
+
+function darkenColor(color, amount) {
+    const hex = color.replace('#', '');
+    const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - Math.floor(255 * amount));
+    const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - Math.floor(255 * amount));
+    const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - Math.floor(255 * amount));
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+function spinHogwashWheel() {
+    if (isWheelSpinning) return;
+    
+    isWheelSpinning = true;
+    
+    // Update modal classes for spinning animation
+    const modal = document.getElementById('hogwashWheelModal');
+    modal.classList.remove('wheel-ready');
+    modal.classList.add('wheel-spinning');
+    
+    // Hide spin button and remove animations
+    const spinBtn = document.getElementById('spinWheelBtn');
+    spinBtn.style.display = 'none';
+    spinBtn.classList.remove('spin-button-ready');
+    
+    // Play HOGWASH theme music if available
+    playHogwashMusic();
+    
+    // Calculate final outcome first
+    const finalOutcome = calculateHogwashOutcome();
+    
+    // Calculate target angle for the selected outcome
+    const outcomeIndex = wheelOutcomes.findIndex(o => o.type === finalOutcome.type);
+    const targetSegment = wheelOutcomes[outcomeIndex];
+    const segmentMiddle = (targetSegment.startAngle + targetSegment.endAngle) / 2;
+    
+    // Calculate final rotation (multiple spins + target position)
+    const spins = 5 + Math.random() * 3; // 5-8 full spins
+    const finalRotation = currentWheelRotation + (spins * 2 * Math.PI) - segmentMiddle + (Math.PI / 2);
+    
+    // Animate the spin
+    const startTime = Date.now();
+    const duration = 3000 + Math.random() * 2000; // 3-5 seconds
+    
+    function animateWheel() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for realistic deceleration
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        
+        currentWheelRotation = currentWheelRotation + (finalRotation - currentWheelRotation) * easeOut;
+        drawHogwashWheel();
+        
+        if (progress < 1) {
+            requestAnimationFrame(animateWheel);
+        } else {
+            // Spin complete - show result
+            setTimeout(() => {
+                stopHogwashMusic(); // Stop the music when wheel stops
+                executeHogwashOutcome(finalOutcome);
+                document.getElementById('closeWheelBtn').style.display = 'inline-block';
+                isWheelSpinning = false;
+            }, 500);
+        }
+    }
+    
+    animateWheel();
+}
+
+function calculateHogwashOutcome() {
+    // Same logic as before but return the outcome object
+    const outcomes = [
+        { type: 'drink', weight: 4 },
+        { type: 'danger', weight: 2 },
+        { type: 'win', weight: 4 },
+        { type: 'lose', weight: 4 },
+        { type: 'give_drinks', weight: 4 },
+        { type: 'mulligan', weight: 1 },
+        { type: 'reverse_mulligan', weight: 1 }
+    ];
+    
+    // Check if DANGER ZONE test mode is active
+    if (forceDangerZoneNext) {
+        forceDangerZoneNext = false;
         const testButton = document.querySelector('button[onclick="testDangerZoneAlert()"]');
         if (testButton) {
             testButton.textContent = '💀 TEST DANGER ZONE ALERT 💀';
             testButton.style.animation = '';
         }
-        
-        console.log('🚨 DANGER ZONE forced for testing!');
-    } else {
-        // Weighted random selection based on weight property
-        const totalWeight = outcomes.reduce((sum, outcome) => sum + outcome.weight, 0);
-        let randomWeight = Math.random() * totalWeight;
-        
-        for (const possibleOutcome of outcomes) {
-            randomWeight -= possibleOutcome.weight;
-            if (randomWeight <= 0) {
-                outcome = possibleOutcome;
-                break;
-            }
-        }
-        
-        // Fallback (should never happen)
-        if (!outcome) {
-            outcome = outcomes[0];
+        return { type: 'danger' };
+    }
+    
+    // Weighted random selection
+    const totalWeight = outcomes.reduce((sum, outcome) => sum + outcome.weight, 0);
+    let randomWeight = Math.random() * totalWeight;
+    
+    for (const outcome of outcomes) {
+        randomWeight -= outcome.weight;
+        if (randomWeight <= 0) {
+            return outcome;
         }
     }
     
-    const resultText = outcome.action();
+    return outcomes[0]; // Fallback
+}
 
+function executeHogwashOutcome(selectedOutcome) {
+    const playerName = selectedPlayerName;
+    let outcome, resultText;
+    
+    // Create full outcome object based on type
+    switch (selectedOutcome.type) {
+        case 'drink':
+            const isFinishDrink = Math.random() < 0.15;
+            if (isFinishDrink) {
+                resultText = `${playerName} must FINISH their drink! 🍺💀`;
+            } else {
+                const drinks = Math.floor(Math.random() * 5) + 1;
+                resultText = `${playerName} must take ${drinks} DRINK${drinks > 1 ? 'S' : ''}! 🍺`;
+            }
+            outcome = {
+                type: 'drink',
+                title: '🍺 TAKE A DRINK YOU PIG! 🍺',
+                color: '#ff6b6b'
+            };
+            break;
+            
+        case 'danger':
+            broadcastDangerZone(playerName);
+            sendPushNotification({
+                type: 'danger_zone',
+                title: '💀 DANGER ZONE 💀',
+                body: `${playerName} triggered DANGER ZONE! All players affected!`,
+                playerName: playerName
+            });
+            resultText = `${playerName} triggered the DANGER ZONE! 💀 ALL PLAYERS BEWARE!`;
+            outcome = {
+                type: 'danger',
+                title: '⚠️ DANGER ZONE ⚠️',
+                color: '#ff4757'
+            };
+            break;
+            
+        case 'win':
+            const winPoints = Math.floor(Math.random() * 4) + 1;
+            players[playerName].points += winPoints;
+            players['GOD'].points -= winPoints;
+            savePlayers();
+            resultText = `${playerName} wins ${winPoints} points from GOD! 🙏`;
+            outcome = {
+                type: 'win',
+                title: '🎉 WIN POINTS FROM GOD! 🎉',
+                color: '#2ed573'
+            };
+            break;
+            
+        case 'lose':
+            const losePoints = Math.floor(Math.random() * 5) + 1;
+            players[playerName].points -= losePoints;
+            players['GOD'].points += losePoints;
+            savePlayers();
+            resultText = `${playerName} loses ${losePoints} points to GOD! 💸`;
+            outcome = {
+                type: 'lose',
+                title: '😈 LOSE POINTS TO GOD! 😈',
+                color: '#ff3838'
+            };
+            break;
+            
+        case 'give_drinks':
+            const drinks = Math.floor(Math.random() * 5) + 1;
+            players[playerName].powerUps.giveDrinks += drinks;
+            savePlayers();
+            resultText = `${playerName} gained the power to give ${drinks} DRINK${drinks > 1 ? 'S' : ''}! 🍺⚡`;
+            outcome = {
+                type: 'give_drinks',
+                title: '🍺 DRINK GIVER POWER! 🍺',
+                color: '#ff9500'
+            };
+            break;
+            
+        case 'mulligan':
+            players[playerName].powerUps.mulligans += 1;
+            savePlayers();
+            resultText = `${playerName} earned a MULLIGAN! Use it wisely on the golf course! ⛳✨`;
+            outcome = {
+                type: 'mulligan',
+                title: '⛳ MULLIGAN POWER! ⛳',
+                color: '#4CAF50'
+            };
+            break;
+            
+        case 'reverse_mulligan':
+            players[playerName].powerUps.reverseMulligans += 1;
+            savePlayers();
+            resultText = `${playerName} earned a REVERSE MULLIGAN! Force someone else to re-do their shot! 🔄💀`;
+            outcome = {
+                type: 'reverse_mulligan',
+                title: '🔄 REVERSE MULLIGAN POWER! 🔄',
+                color: '#9C27B0'
+            };
+            break;
+    }
+    
+    // Close wheel and show result
+    closeHogwashWheel();
+    
     // Show result modal
     document.getElementById('hogwashResultTitle').textContent = outcome.title;
     document.getElementById('hogwashResultContent').innerHTML = `
-        <div style="font-size: 2rem; margin-bottom: 20px;">🎲</div>
+        <div style="font-size: 2rem; margin-bottom: 20px;">🎰</div>
         <div style="color: ${outcome.color}; font-weight: bold;">${resultText}</div>
     `;
     document.querySelector('.hogwash-result').style.background = `linear-gradient(135deg, ${outcome.color}, #764ba2)`;
@@ -3846,6 +4146,84 @@ function rollHogwash() {
 
     // Log activity
     addActivity('hogwash', '🎲', resultText);
+}
+
+// HOGWASH Audio Functions
+function playHogwashMusic() {
+    try {
+        // Stop any currently playing HOGWASH music
+        stopHogwashMusic();
+        
+        // Try to play HOGWASH theme music (you can add your music file)
+        if (preloadedHogwashAudio) {
+            currentHogwashAudio = preloadedHogwashAudio.cloneNode();
+            currentHogwashAudio.volume = 0.7; // Adjust volume as needed
+            currentHogwashAudio.loop = false; // Don't loop, just play once
+            
+            const playPromise = currentHogwashAudio.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        console.log('🎵 HOGWASH music started successfully!');
+                    })
+                    .catch(error => {
+                        console.log('🎵 HOGWASH music autoplay prevented:', error.message);
+                    });
+            }
+        } else {
+            // Fallback: Create and play audio element directly
+            currentHogwashAudio = new Audio('hogwash-theme.mp3'); // You can change this filename
+            currentHogwashAudio.volume = 0.7;
+            currentHogwashAudio.loop = false;
+            
+            const playPromise = currentHogwashAudio.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        console.log('🎵 HOGWASH theme music playing!');
+                    })
+                    .catch(error => {
+                        console.log('🎵 HOGWASH music file not found or autoplay prevented:', error.message);
+                    });
+            }
+        }
+    } catch (error) {
+        console.log('🎵 HOGWASH music error:', error.message);
+    }
+}
+
+function stopHogwashMusic() {
+    if (currentHogwashAudio) {
+        try {
+            currentHogwashAudio.pause();
+            currentHogwashAudio.currentTime = 0;
+            console.log('🎵 HOGWASH music stopped');
+        } catch (error) {
+            console.log('🎵 Error stopping HOGWASH music:', error.message);
+        }
+        currentHogwashAudio = null;
+    }
+}
+
+function preloadHogwashMusic() {
+    try {
+        // Preload HOGWASH theme music
+        preloadedHogwashAudio = new Audio('hogwash-theme.mp3'); // You can change this filename
+        preloadedHogwashAudio.preload = 'auto';
+        preloadedHogwashAudio.volume = 0.7;
+        
+        preloadedHogwashAudio.addEventListener('canplaythrough', () => {
+            console.log('🎵 HOGWASH theme music preloaded successfully');
+        });
+        
+        preloadedHogwashAudio.addEventListener('error', (e) => {
+            console.log('🎵 HOGWASH music file not found - you can add hogwash-theme.mp3 to enable music');
+            preloadedHogwashAudio = null;
+        });
+    } catch (error) {
+        console.log('🎵 HOGWASH music preload error:', error.message);
+        preloadedHogwashAudio = null;
+    }
 }
 
 // Score Edit Functions
