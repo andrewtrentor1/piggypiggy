@@ -3923,14 +3923,29 @@ function drawHogwashWheel() {
 function createSlotReel() {
     if (!slotReel) return;
     
-    // Create multiple copies of outcomes for smooth scrolling effect
+    // Create many repeating options with weighted heights for visual probability
     const reelHTML = [];
+    const baseHeight = 50; // Base height for weight 1 outcomes
     
-    // Add multiple sets of outcomes (3 full sets for smooth scrolling)
-    for (let set = 0; set < 3; set++) {
+    // Create enough options to fill a long scrolling reel (50+ sets)
+    for (let set = 0; set < 50; set++) {
         slotOutcomes.forEach((outcome, index) => {
+            // Calculate height based on weight (higher weight = taller)
+            const height = baseHeight + (outcome.weight * 15); // 15px extra per weight point
+            
             reelHTML.push(`
-                <div class="slot-option" data-type="${outcome.type}" style="background: linear-gradient(135deg, ${outcome.color}, ${darkenColor(outcome.color, 0.3)});">
+                <div class="slot-option" data-type="${outcome.type}" style="
+                    height: ${height}px;
+                    background: linear-gradient(135deg, ${outcome.color}, ${darkenColor(outcome.color, 0.3)});
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: ${Math.min(1.1 + (outcome.weight * 0.1), 1.5)}em;
+                    font-weight: bold;
+                    color: white;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                    border-bottom: 1px solid #333;
+                ">
                     ${outcome.label}
                 </div>
             `);
@@ -3939,6 +3954,8 @@ function createSlotReel() {
     
     slotReel.innerHTML = reelHTML.join('');
     currentSlotPosition = 0;
+    
+    console.log('🎰 Created slot reel with', reelHTML.length, 'options');
 }
 
 function initializeSlotBeep() {
@@ -4018,11 +4035,26 @@ function animateSlotMachine(finalOutcome, targetIndex) {
     const duration = 8000 + Math.random() * 4000; // 8-12 seconds for dramatic effect
     console.log('🎰 Animation duration will be', (duration/1000).toFixed(1), 'seconds');
     
-    // Calculate how many options to scroll through
-    const totalOptions = slotOutcomes.length;
+    // Calculate total height of one complete set of outcomes
+    const baseHeight = 50;
+    let setHeight = 0;
+    slotOutcomes.forEach(outcome => {
+        setHeight += baseHeight + (outcome.weight * 15);
+    });
+    
+    // Calculate how many complete sets to scroll through, then land on target
     const spins = 15 + Math.random() * 10; // 15-25 full cycles through all options
-    const finalPosition = (targetIndex + totalOptions) * 66; // 66px per option height
-    const totalDistance = (spins * totalOptions * 66) + finalPosition;
+    
+    // Find the target outcome's position within one set
+    let targetPosition = 0;
+    for (let i = 0; i < targetIndex; i++) {
+        targetPosition += baseHeight + (slotOutcomes[i].weight * 15);
+    }
+    // Add half the target's height to center it in the window
+    targetPosition += (baseHeight + (finalOutcome.weight * 15)) / 2;
+    
+    const totalDistance = (spins * setHeight) + targetPosition;
+    console.log('🎰 Will scroll', totalDistance.toFixed(0), 'pixels to land on', finalOutcome.type);
     
     let lastBeepTime = 0;
     const beepInterval = 150; // Beep every 150ms initially
