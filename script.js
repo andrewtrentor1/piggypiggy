@@ -3788,6 +3788,13 @@ let selectedPlayerName = '';
 let currentSlotPosition = 0;
 let slotBeepAudio;
 
+// HOGWASH Wheel System Variables
+let wheelCanvas;
+let wheelCtx;
+let wheelOutcomes = [];
+let currentWheelRotation = 0;
+let isWheelSpinning = false;
+
 function showHogwashSlot(playerName) {
     console.log('🎰 showHogwashSlot called for:', playerName);
     selectedPlayerName = playerName;
@@ -3858,9 +3865,44 @@ function initializeHogwashSlot() {
         { type: 'reverse_mulligan', label: '🔄 REVERSE MULLIGAN', color: '#9C27B0', weight: 1 }
     ];
     
+    // Initialize wheel system (create canvas if it doesn't exist)
+    initializeWheelSystem();
+    
     // Don't create the reel yet - we'll generate it with the winner when spinning starts
     // Initialize beep sound for slot machine
     initializeSlotBeep();
+}
+
+function initializeWheelSystem() {
+    // Create canvas element if it doesn't exist
+    wheelCanvas = document.getElementById('wheelCanvas');
+    if (!wheelCanvas) {
+        wheelCanvas = document.createElement('canvas');
+        wheelCanvas.id = 'wheelCanvas';
+        wheelCanvas.width = 400;
+        wheelCanvas.height = 400;
+        wheelCanvas.style.display = 'none'; // Hidden by default
+        document.body.appendChild(wheelCanvas);
+    }
+    
+    wheelCtx = wheelCanvas.getContext('2d');
+    
+    // Initialize wheel outcomes with angles
+    wheelOutcomes = [];
+    const totalWeight = slotOutcomes.reduce((sum, outcome) => sum + outcome.weight, 0);
+    let currentAngle = 0;
+    
+    slotOutcomes.forEach((outcome) => {
+        const angleSize = (outcome.weight / totalWeight) * 2 * Math.PI;
+        wheelOutcomes.push({
+            ...outcome,
+            startAngle: currentAngle,
+            endAngle: currentAngle + angleSize
+        });
+        currentAngle += angleSize;
+    });
+    
+    // Don't draw the wheel initially - only draw when actually spinning
 }
 
 function drawHogwashWheel() {
