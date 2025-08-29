@@ -3820,10 +3820,11 @@ function showHogwashSlot(playerName) {
         spinBtn.classList.add('slot-spin-btn-ready');
     }
     
-    // Initialize the slot machine (but don't create the reel yet - we'll do that when we know the winner)
+    // Initialize the slot machine and create a preview reel
     try {
         initializeHogwashSlot();
-        console.log('🎰 Slot machine initialized successfully (reel will be generated with winner)');
+        createPreviewSlotReel(); // Show all options initially
+        console.log('🎰 Slot machine initialized successfully with preview reel');
     } catch (error) {
         console.error('❌ Error initializing slot machine:', error);
     }
@@ -3958,6 +3959,34 @@ function drawHogwashWheel() {
     });
     
     wheelCtx.restore();
+}
+
+function createPreviewSlotReel() {
+    if (!slotReel) return;
+    
+    // Create a preview reel showing all available options
+    const reelHTML = [];
+    const uniformHeight = 70;
+    
+    // Show each outcome type multiple times to fill the reel
+    const repetitions = 3; // Show each option 3 times
+    
+    for (let rep = 0; rep < repetitions; rep++) {
+        slotOutcomes.forEach((outcome) => {
+            reelHTML.push(createSlotOption(outcome, uniformHeight));
+        });
+    }
+    
+    slotReel.innerHTML = reelHTML.join('');
+    currentSlotPosition = 0;
+    
+    // Position the reel to show some options in the center
+    const totalHeight = reelHTML.length * uniformHeight;
+    const visibleHeight = 200; // Height of the slot window
+    const centerOffset = (totalHeight - visibleHeight) / 2;
+    slotReel.style.transform = `translateY(-${centerOffset}px)`;
+    
+    console.log('🎰 Created preview reel with', reelHTML.length, 'options showing all gambling choices');
 }
 
 function createSlotReelWithWinner(winnerOutcome) {
