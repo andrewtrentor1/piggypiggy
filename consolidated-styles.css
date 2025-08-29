@@ -389,13 +389,14 @@ body {
    LEADERBOARD & TABLES
    ============================================== */
 .leaderboard {
-    background: rgba(255, 255, 255, 0.95);
+    background: linear-gradient(135deg, rgba(255, 105, 180, 0.95), rgba(255, 20, 147, 0.9));
     border-radius: 15px;
     padding: 25px;
     margin: 20px auto;
     max-width: 800px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.3);
     backdrop-filter: blur(10px);
+    border: 2px solid #FF1493;
 }
 
 .leaderboard h1 {
@@ -411,15 +412,17 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px;
-    margin: 6px 0;
-    background: linear-gradient(90deg, #f0e68c, #daa520);
+    padding: 12px 15px;
+    margin: 8px 0;
+    background: linear-gradient(90deg, #FF69B4, #FF1493, #DA70D6);
     border-radius: 10px;
-    font-weight: 600;
-    font-size: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-weight: bold;
+    font-size: 1.2rem;
+    box-shadow: 0 3px 10px rgba(255, 105, 180, 0.3);
     transition: transform 0.2s ease;
     list-style: none;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
 .player:hover {
@@ -427,7 +430,8 @@ body {
 }
 
 .player.pig {
-    background: linear-gradient(90deg, #ffb6c1, #ff69b4);
+    background: linear-gradient(90deg, #8B008B, #4B0082, #663399);
+    box-shadow: 0 3px 10px rgba(139, 0, 139, 0.4);
 }
 
 .player.god-player {
@@ -457,14 +461,15 @@ body {
 
 .player-name {
     font-weight: bold;
-    font-size: 1rem;
-    color: #333;
+    font-size: 1.3rem;
+    color: white;
     display: flex;
     flex-direction: row;
     align-items: center;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
     flex: 1;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
 }
 
 /* For other pages that might use player-name differently */
@@ -473,23 +478,25 @@ body {
 }
 
 .pig-insult {
-    font-size: 0.7rem;
-    color: #8B4513;
-    font-weight: normal;
+    font-size: 0.9rem;
+    color: white;
+    font-weight: bold;
     font-style: italic;
-    opacity: 0.8;
+    opacity: 0.9;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
 /* Points styling for leaderboard */
 .points {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: bold;
-    color: #333;
+    color: white;
     display: flex;
     align-items: center;
     gap: 8px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
 }
 
 /* Player score for other pages */
