@@ -235,25 +235,34 @@ body {
    ============================================== */
 /* Navigation Buttons - CONSISTENT STYLE */
 .nav-btn, .nav-link, .nav-tab {
-    background: linear-gradient(45deg, #daa520, #f0e68c) !important;
+    background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6) !important;
     border: none !important;
     padding: 12px 24px !important;
     font-size: 1rem !important;
-    font-weight: 600 !important;
+    font-weight: bold !important;
     border-radius: 8px !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
     text-decoration: none !important;
-    color: #333 !important;
+    color: white !important;
     display: inline-block !important;
     font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;
 }
 
 .nav-btn:hover, .nav-link:hover, .nav-tab:hover {
-    background: linear-gradient(45deg, #b8860b, #daa520) !important;
+    background: linear-gradient(45deg, #E91E63, #C2185B, #9C27B0) !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+.nav-btn.active, .nav-link.active, .nav-tab.active {
+    background: linear-gradient(45deg, #8B008B, #4B0082, #663399) !important;
+    color: #FFD700 !important;
+    font-weight: bold !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 4px 15px rgba(139,0,139,0.4) !important;
 }
 
 /* Login and Main Action Buttons */
