@@ -3819,7 +3819,7 @@ function showHogwashSlot(playerName) {
     modal.classList.add('slot-machine-ready');
     console.log('🎰 Slot modal should now be visible');
     
-    document.getElementById('slotPlayerName').textContent = `${playerName} is gambling!`;
+    document.getElementById('slotPlayerName').textContent = `PIG ${playerName}`;
     
     // Add exciting animation to spin button
     const spinBtn = document.getElementById('spinSlotBtn');
