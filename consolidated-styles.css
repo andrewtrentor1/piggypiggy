@@ -65,17 +65,22 @@ body {
 .title {
     font-size: 3rem;
     font-weight: 700;
-    color: #8B4513;
-    text-shadow: 2px 2px 0px #FFD700;
+    background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
     margin-bottom: 10px;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));
 }
 
 .subtitle {
     font-size: 1.5rem;
-    color: #654321;
+    color: #8B008B;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 3px;
+    text-shadow: 1px 1px 2px rgba(255, 105, 180, 0.4);
 }
 
 .pig-emoji {
@@ -102,10 +107,15 @@ body {
 
 .card-title {
     font-size: 2rem;
-    color: #8B4513;
+    background: linear-gradient(45deg, #FF1493, #DA70D6, #8B008B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 20px;
     text-align: center;
     font-weight: 700;
+    text-shadow: 1px 1px 3px rgba(255, 105, 180, 0.3);
+    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.1));
 }
 
 /* Login Section */
@@ -317,29 +327,47 @@ body {
 
 /* Special Buttons */
 .hogwash-btn {
-    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
     color: white;
     border: none;
-    padding: 15px 30px;
+    padding: 18px 35px;
     border-radius: 25px;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-    animation: pulse 2s infinite;
+    box-shadow: 0 5px 20px rgba(255, 105, 180, 0.5);
+    animation: pigPulse 2s infinite;
     margin: 10px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .hogwash-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 8px 30px rgba(255, 105, 180, 0.8);
+    background: linear-gradient(45deg, #FF1493, #DA70D6, #8B008B);
 }
 
 @keyframes pulse {
     0% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
     50% { box-shadow: 0 4px 25px rgba(255, 107, 107, 0.8); }
     100% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
+}
+
+@keyframes pigPulse {
+    0% { 
+        box-shadow: 0 5px 20px rgba(255, 105, 180, 0.5);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 8px 30px rgba(255, 105, 180, 0.8);
+        transform: scale(1.02);
+    }
+    100% { 
+        box-shadow: 0 5px 20px rgba(255, 105, 180, 0.5);
+        transform: scale(1);
+    }
 }
 
 /* ==============================================
@@ -389,14 +417,14 @@ body {
    LEADERBOARD & TABLES
    ============================================== */
 .leaderboard {
-    background: linear-gradient(135deg, rgba(255, 105, 180, 0.95), rgba(255, 20, 147, 0.9));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 245, 0.9));
     border-radius: 15px;
     padding: 25px;
     margin: 20px auto;
     max-width: 800px;
-    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.3);
+    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.2);
     backdrop-filter: blur(10px);
-    border: 2px solid #FF1493;
+    border: 2px solid rgba(255, 105, 180, 0.3);
 }
 
 .leaderboard h1 {
