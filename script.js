@@ -2012,7 +2012,8 @@ function updateStatusBar() {
             statusPlayerName.textContent = `Greetings ${playerInsult} ${currentPlayer}!`;
         }
         
-        const points = players[currentPlayer] || 0;
+        const playerData = players[currentPlayer];
+        const points = playerData ? (typeof playerData === 'object' ? playerData.points : playerData) : 0;
         statusPlayerPoints.textContent = `${points} points`;
     } else if (isBookkeeperLoggedIn && !isPlayerLoggedIn) {
         // Ham Handler only (old PIG/PIG login)

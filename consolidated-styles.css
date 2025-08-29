@@ -744,8 +744,8 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(45deg, #8B4513, #daa520);
-    color: white;
+    background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
+    color: #4B0082;
     padding: 10px 20px;
     display: none; /* Hidden by default */
     justify-content: space-between;
@@ -754,6 +754,7 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
     box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
     font-size: 0.9rem;
     font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
+    font-weight: bold;
 }
 
 .status-bar.visible {
@@ -768,12 +769,13 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
 
 .status-points {
     font-weight: bold;
-    color: #FFD700;
+    color: #2E0854;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
 }
 
 .status-logout {
-    background: rgba(255,255,255,0.2);
-    border: none;
+    background: rgba(75,0,130,0.8);
+    border: 2px solid #4B0082;
     color: white;
     padding: 5px 10px;
     border-radius: 5px;
