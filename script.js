@@ -3826,13 +3826,13 @@ function showHogwashSlot(playerName) {
         spinBtn.classList.add('slot-spin-btn-ready');
     }
     
-    // Initialize the slot machine and reset to clean state
+    // Initialize the mystery box and reset to clean state
     try {
-        initializeHogwashSlot();
-        resetSlotMachine(); // Ensure clean state for new session
-        console.log('🎰 Slot machine initialized and reset successfully');
+        initializeHogwashSlot(); // Still need this for outcomes and audio
+        resetSlotMachine(); // Reset mystery box state
+        console.log('🎁 Mystery box initialized and reset successfully');
     } catch (error) {
-        console.error('❌ Error initializing slot machine:', error);
+        console.error('❌ Error initializing mystery box:', error);
     }
 }
 
@@ -4132,87 +4132,189 @@ function darkenColor(color, amount) {
 }
 
 function resetSlotMachine() {
-    console.log('🎰 Resetting slot machine state');
+    console.log('🎁 Resetting mystery box state');
     
-    if (!slotReel) {
-        console.warn('⚠️ slotReel not found during reset');
-        return;
+    // Reset mystery box elements
+    const mysteryBox = document.getElementById('mysteryBox');
+    const boxLid = document.getElementById('boxLid');
+    const outcomeDisplay = document.getElementById('outcomeDisplay');
+    const confettiContainer = document.getElementById('confettiContainer');
+    
+    if (mysteryBox) {
+        mysteryBox.style.animation = '';
     }
     
-    // Reset position to top
-    slotReel.style.transform = 'translateY(0px)';
+    if (boxLid) {
+        boxLid.style.transform = '';
+    }
+    
+    if (outcomeDisplay) {
+        outcomeDisplay.style.opacity = '0';
+        outcomeDisplay.style.transform = 'scale(0)';
+    }
+    
+    if (confettiContainer) {
+        confettiContainer.innerHTML = '';
+    }
     
     // Reset slot position tracking
     currentSlotPosition = 0;
     
-    // Clear any existing content and show preview reel
-    createPreviewSlotReel();
-    
-    // Reset modal classes
-    const modal = document.getElementById('hogwashWheelModal');
-    if (modal) {
-        modal.classList.remove('slot-machine-spinning');
-        modal.classList.add('slot-machine-ready');
-    }
-    
-    // Show spin button
-    const spinBtn = document.getElementById('spinSlotBtn');
-    if (spinBtn) {
-        spinBtn.style.display = 'inline-block';
-        spinBtn.classList.add('slot-spin-btn-ready');
+    // Show open button
+    const openBtn = document.getElementById('openBoxBtn');
+    if (openBtn) {
+        openBtn.style.display = 'inline-block';
     }
     
     // Hide close button
-    const closeBtn = document.getElementById('closeSlotBtn');
+    const closeBtn = document.getElementById('closeBoxBtn');
     if (closeBtn) {
         closeBtn.style.display = 'none';
     }
     
-    console.log('🎰 Slot machine reset complete');
+    console.log('🎁 Mystery box reset complete');
 }
 
-function spinHogwashSlot() {
-    console.log('🎰 spinHogwashSlot called!');
+function openMysteryBox() {
+    console.log('🎁 openMysteryBox called!');
     
     if (isSlotSpinning) {
-        console.log('🎰 Slot is already spinning, ignoring click');
+        console.log('🎁 Box is already opening, ignoring click');
         return;
     }
     
-    if (!slotReel) {
-        console.error('❌ slotReel element not found!');
+    const mysteryBox = document.getElementById('mysteryBox');
+    if (!mysteryBox) {
+        console.error('❌ Mystery box element not found!');
         return;
     }
     
-    // Reset slot machine state before starting new spin
-    resetSlotMachine();
+    isSlotSpinning = true; // Reuse this flag for box animation
+    console.log('🎁 Starting mystery box animation!');
     
-    isSlotSpinning = true;
-    console.log('🎰 Starting slot machine spin!');
-    
-    // Update modal classes for spinning animation
-    const modal = document.getElementById('hogwashWheelModal');
-    modal.classList.remove('slot-machine-ready');
-    modal.classList.add('slot-machine-spinning');
-    
-    // Hide spin button and remove animations
-    const spinBtn = document.getElementById('spinSlotBtn');
-    spinBtn.style.display = 'none';
-    spinBtn.classList.remove('slot-spin-btn-ready');
+    // Hide open button
+    const openBtn = document.getElementById('openBoxBtn');
+    openBtn.style.display = 'none';
     
     // Play HOGWASH theme music if available
     playHogwashMusic();
     
     // Calculate final outcome first
     const finalOutcome = calculateHogwashOutcome();
-    console.log('🎰 Calculated final outcome:', finalOutcome);
+    console.log('🎁 Calculated final outcome:', finalOutcome);
     
-    // Generate a fresh reel with the winner guaranteed to be in the center!
-    const winnerIndex = createSlotReelWithWinner(finalOutcome);
-    console.log('🎰 Fresh reel generated with winner at index:', winnerIndex);
+    // Start the mystery box animation
+    animateMysteryBox(finalOutcome);
+}
+
+function animateMysteryBox(finalOutcome) {
+    console.log('🎁 Starting mystery box animation for:', finalOutcome.type);
     
-    // Start the simple animation - just scroll to center the winner
-    animateSlotMachineFixed(finalOutcome, winnerIndex);
+    const mysteryBox = document.getElementById('mysteryBox');
+    const boxLid = document.getElementById('boxLid');
+    const outcomeDisplay = document.getElementById('outcomeDisplay');
+    const outcomeContent = document.getElementById('outcomeContent');
+    const confettiContainer = document.getElementById('confettiContainer');
+    
+    // Phase 1: Box shaking and glowing (2 seconds)
+    mysteryBox.style.animation = 'shake 0.5s infinite, glow 1s infinite';
+    
+    // Play some beep sounds during shaking
+    let beepCount = 0;
+    const beepInterval = setInterval(() => {
+        if (slotBeepAudio && slotBeepAudio.play) {
+            try {
+                slotBeepAudio.play();
+            } catch (error) {
+                // Ignore audio errors
+            }
+        }
+        beepCount++;
+        if (beepCount >= 6) { // Stop after 6 beeps
+            clearInterval(beepInterval);
+        }
+    }, 300);
+    
+    setTimeout(() => {
+        // Phase 2: Box bouncing (1 second)
+        mysteryBox.style.animation = 'bounce 0.5s ease-in-out 2, glow 1s infinite';
+        
+        setTimeout(() => {
+            // Phase 3: Lid opens and outcome reveals (0.5 seconds)
+            boxLid.style.transform = 'rotateX(-120deg)';
+            mysteryBox.style.animation = 'glow 1s infinite';
+            
+            // Set outcome content with proper styling
+            outcomeContent.innerHTML = `
+                <div style="background: ${finalOutcome.color}; padding: 15px; border-radius: 10px; border: 3px solid #FFD700;">
+                    ${finalOutcome.label}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                // Phase 4: Outcome appears with confetti
+                outcomeDisplay.style.opacity = '1';
+                outcomeDisplay.style.transform = 'scale(1)';
+                
+                // Create confetti explosion
+                createConfetti(confettiContainer);
+                
+                setTimeout(() => {
+                    // Phase 5: Stop music and show result modal
+                    stopHogwashMusic();
+                    mysteryBox.style.animation = '';
+                    
+                    // Execute the outcome and show result
+                    executeHogwashOutcome(finalOutcome);
+                    
+                    // Show close button and reset state
+                    document.getElementById('closeBoxBtn').style.display = 'inline-block';
+                    isSlotSpinning = false;
+                    
+                }, 2000); // Wait 2 seconds to enjoy the reveal
+                
+            }, 500); // Wait for lid to open
+            
+        }, 1000); // Wait for bouncing to finish
+        
+    }, 2000); // Wait for shaking to finish
+}
+
+function createConfetti(container) {
+    const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+    const shapes = ['🎉', '🎊', '✨', '🌟', '💫', '🎈'];
+    
+    // Clear any existing confetti
+    container.innerHTML = '';
+    
+    // Create 20 confetti pieces
+    for (let i = 0; i < 20; i++) {
+        const confetti = document.createElement('div');
+        const isEmoji = Math.random() > 0.5;
+        
+        if (isEmoji) {
+            confetti.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+            confetti.style.fontSize = '20px';
+        } else {
+            confetti.style.width = '10px';
+            confetti.style.height = '10px';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        confetti.style.position = 'absolute';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.top = '50%';
+        confetti.style.pointerEvents = 'none';
+        confetti.style.animation = `confetti ${2 + Math.random() * 2}s ease-out forwards`;
+        confetti.style.animationDelay = Math.random() * 0.5 + 's';
+        
+        container.appendChild(confetti);
+    }
+    
+    // Clean up confetti after animation
+    setTimeout(() => {
+        container.innerHTML = '';
+    }, 4000);
 }
 
 function animateSlotMachineFixed(finalOutcome, winnerIndex) {

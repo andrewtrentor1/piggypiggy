@@ -291,153 +291,147 @@
     <!-- HOGWASH Wheel Modal -->
     <div class="modal" id="hogwashWheelModal" style="background: rgba(0,0,0,0.9);">
         <div class="modal-content" style="background: linear-gradient(135deg, #2c1810, #8B4513); border: 5px solid #FFD700; max-width: 500px; border-radius: 20px;">
-            <h2 style="color: #FFD700; text-align: center; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">🎰 HOGWASH SLOT MACHINE 🎰</h2>
+            <h2 style="color: #FFD700; text-align: center; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">🎁 HOGWASH MYSTERY BOX 🎁</h2>
             
-            <!-- Slot Machine Container -->
-            <div class="slot-machine-container" style="
+            <!-- Mystery Box Container -->
+            <div class="mystery-box-container" style="
                 position: relative;
                 width: 350px;
                 height: 300px;
                 margin: 20px auto;
-                background: linear-gradient(145deg, #1a1a1a, #333);
-                border: 8px solid #FFD700;
-                border-radius: 20px;
-                box-shadow: 
-                    inset 0 0 20px rgba(0,0,0,0.5),
-                    0 0 30px rgba(255, 215, 0, 0.3);
-                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             ">
-                <!-- Slot Machine Window -->
-                <div class="slot-window" style="
-                    position: absolute;
-                    top: 50px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    width: 280px;
+                <!-- The Mystery Box -->
+                <div id="mysteryBox" class="mystery-box" style="
+                    width: 200px;
                     height: 200px;
-                    background: #000;
-                    border: 4px solid #444;
-                    border-radius: 10px;
-                    overflow: hidden;
-                    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+                    background: linear-gradient(145deg, #8B4513, #A0522D);
+                    border: 8px solid #FFD700;
+                    border-radius: 15px;
+                    position: relative;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 
+                        0 10px 30px rgba(0,0,0,0.5),
+                        inset 0 0 20px rgba(255, 215, 0, 0.2);
                 ">
-                    <!-- Winner Indicator Lines -->
-                    <div class="winner-line top" style="
+                    <!-- Box Label -->
+                    <div class="box-label" style="
                         position: absolute;
-                        top: 33%;
-                        left: 0;
-                        right: 0;
-                        height: 2px;
-                        background: #FFD700;
-                        box-shadow: 0 0 10px #FFD700;
-                        z-index: 10;
-                    "></div>
-                    <div class="winner-line bottom" style="
-                        position: absolute;
-                        bottom: 33%;
-                        left: 0;
-                        right: 0;
-                        height: 2px;
-                        background: #FFD700;
-                        box-shadow: 0 0 10px #FFD700;
-                        z-index: 10;
-                    "></div>
-                    
-                    <!-- Scrolling Options Container -->
-                    <div id="slotReel" class="slot-reel" style="
-                        position: absolute;
-                        width: 100%;
-                        transition: transform 0.1s ease-out;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: #FFD700;
+                        font-size: 1.8em;
+                        font-weight: bold;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                        text-align: center;
+                        line-height: 1.2;
                     ">
-                        <!-- Options will be populated by JavaScript -->
+                        🐷<br>
+                        HOGWASH<br>
+                        🐷
                     </div>
                     
-                    <!-- Center Winner Highlight -->
-                    <div class="winner-highlight" style="
+                    <!-- Box Lid -->
+                    <div id="boxLid" class="box-lid" style="
                         position: absolute;
-                        top: 33%;
+                        top: -4px;
+                        left: -4px;
+                        right: -4px;
+                        height: 50%;
+                        background: linear-gradient(145deg, #A0522D, #8B4513);
+                        border: 4px solid #FFD700;
+                        border-bottom: none;
+                        border-radius: 15px 15px 0 0;
+                        transform-origin: bottom;
+                        transition: transform 0.5s ease;
+                        z-index: 2;
+                    ">
+                        <!-- Lid Decoration -->
+                        <div style="
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            color: #FFD700;
+                            font-size: 1.2em;
+                            font-weight: bold;
+                        ">🎁</div>
+                    </div>
+                    
+                    <!-- Outcome Display (hidden initially) -->
+                    <div id="outcomeDisplay" class="outcome-display" style="
+                        position: absolute;
+                        top: 0;
                         left: 0;
                         right: 0;
-                        height: 34%;
-                        background: rgba(255, 215, 0, 0.1);
-                        border: 2px solid rgba(255, 215, 0, 0.3);
-                        border-left: none;
-                        border-right: none;
-                        z-index: 5;
-                        pointer-events: none;
-                    "></div>
+                        bottom: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0;
+                        transform: scale(0);
+                        transition: all 0.5s ease;
+                        z-index: 3;
+                    ">
+                        <div id="outcomeContent" style="
+                            text-align: center;
+                            color: white;
+                            font-size: 1.5em;
+                            font-weight: bold;
+                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                        "></div>
+                    </div>
                 </div>
                 
-                <!-- Pig-Themed Decorations -->
-                <div style="
+                <!-- Floating Pigs -->
+                <div class="floating-pig" style="
                     position: absolute;
-                    top: 10px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    color: #FFD700;
-                    font-size: 1.2em;
-                    font-weight: bold;
-                    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                ">🐷 PIGGY SLOTS OF DOOM 🐷</div>
-                
-                <!-- Scared Sweating Pigs -->
-                <div style="
-                    position: absolute;
-                    top: 15px;
-                    left: 15px;
+                    top: 20px;
+                    left: 20px;
                     font-size: 2em;
-                    animation: pigSweat 1s infinite;
-                ">😰🐷</div>
-                <div style="
+                    animation: float 3s ease-in-out infinite;
+                ">🐷</div>
+                <div class="floating-pig" style="
                     position: absolute;
-                    top: 15px;
-                    right: 15px;
+                    top: 20px;
+                    right: 20px;
                     font-size: 2em;
-                    animation: pigSweat 1.2s infinite;
-                ">🐷💦</div>
-                <div style="
+                    animation: float 3s ease-in-out infinite 1s;
+                ">🐽</div>
+                <div class="floating-pig" style="
                     position: absolute;
-                    bottom: 15px;
-                    left: 15px;
+                    bottom: 20px;
+                    left: 30px;
                     font-size: 1.5em;
-                    animation: pigTremble 0.8s infinite;
-                ">🐽😱</div>
-                <div style="
+                    animation: float 3s ease-in-out infinite 2s;
+                ">🐷💨</div>
+                <div class="floating-pig" style="
                     position: absolute;
-                    bottom: 15px;
-                    right: 15px;
+                    bottom: 20px;
+                    right: 30px;
                     font-size: 1.5em;
-                    animation: pigTremble 0.9s infinite;
-                ">😨🐷💧</div>
+                    animation: float 3s ease-in-out infinite 0.5s;
+                ">🥓</div>
                 
-                <!-- Side Lights -->
-                <div class="slot-lights-left" style="
+                <!-- Confetti Container (hidden initially) -->
+                <div id="confettiContainer" class="confetti-container" style="
                     position: absolute;
-                    left: 10px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    width: 20px;
-                    height: 150px;
-                    background: linear-gradient(to bottom, #ff0000, #ffff00, #00ff00, #0000ff, #ff00ff);
-                    border-radius: 10px;
-                    opacity: 0.7;
-                "></div>
-                <div class="slot-lights-right" style="
-                    position: absolute;
-                    right: 10px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    width: 20px;
-                    height: 150px;
-                    background: linear-gradient(to bottom, #ff00ff, #0000ff, #00ff00, #ffff00, #ff0000);
-                    border-radius: 10px;
-                    opacity: 0.7;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    pointer-events: none;
+                    overflow: hidden;
                 "></div>
             </div>
             
-            <!-- Spin Button -->
+            <!-- Open Box Button -->
             <div style="text-align: center; margin: 20px 0;">
-                <button id="spinSlotBtn" class="hogwash-btn slot-spin-btn" onclick="spinHogwashSlot()" style="
+                <button id="openBoxBtn" class="hogwash-btn mystery-box-btn" onclick="openMysteryBox()" style="
                     font-size: 1.5em;
                     padding: 15px 30px;
                     background: linear-gradient(45deg, #FFD700, #FFA500);
@@ -448,17 +442,17 @@
                     transform: scale(1);
                     transition: all 0.3s ease;
                 " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                    🐷 SPIN THE PIGGY WHEEL OF FATE! 🐷
+                    🎁 OPEN THE HOGWASH BOX! 🎁
                 </button>
             </div>
             
             <!-- Player Name Display -->
             <div id="slotPlayerName" style="text-align: center; color: #FFD700; font-size: 1.2em; font-weight: bold; margin-bottom: 10px;"></div>
             
-            <!-- Close Button (hidden during spin) -->
+            <!-- Close Button (hidden during animation) -->
             <div style="text-align: center;">
-                <button id="closeSlotBtn" class="transfer-btn" onclick="closeHogwashSlot()" style="display: none; background: linear-gradient(45deg, #666, #999);">
-                    🐷 CLOSE SLOT MACHINE 🐷
+                <button id="closeBoxBtn" class="transfer-btn" onclick="closeHogwashSlot()" style="display: none; background: linear-gradient(45deg, #666, #999);">
+                    🐷 CLOSE MYSTERY BOX 🐷
                 </button>
             </div>
         </div>
