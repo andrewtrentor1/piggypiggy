@@ -4043,12 +4043,15 @@ function animateSlotMachine(finalOutcome, targetIndex) {
     const totalOptions = slotOutcomes.length;
     const setHeight = totalOptions * uniformHeight;
     
-    // SIMPLE: Just land exactly on the outcome we calculated
-    // Do a few visual spins, then land precisely on the target
+    // SIMPLE: Land with the target option centered between the yellow lines
+    // The slot window is 200px tall, so the center (between yellow lines) is at 100px from the top
+    // We need to position the reel so the target option's center aligns with the window center
     const visualSpins = 3; // Just for show
-    const targetPosition = targetIndex * uniformHeight + (uniformHeight / 2); // Center of target option
+    const slotWindowCenter = 100; // Center of the 200px slot window (between yellow lines)
+    const targetOptionCenter = targetIndex * uniformHeight + (uniformHeight / 2); // Center of target option
+    const targetPosition = targetOptionCenter - slotWindowCenter; // Adjust so target centers in window
     const totalDistance = (visualSpins * setHeight) + targetPosition;
-    console.log('🎰 Will land exactly on', finalOutcome.type, 'after', visualSpins, 'visual spins, total distance:', totalDistance.toFixed(0), 'pixels');
+    console.log('🎰 Will center', finalOutcome.type, 'between yellow lines after', visualSpins, 'spins, distance:', totalDistance.toFixed(0), 'px');
     
     let lastBeepTime = 0;
     const beepInterval = 150; // Beep every 150ms initially
