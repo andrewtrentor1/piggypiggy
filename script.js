@@ -3958,8 +3958,11 @@ function spinHogwashWheel() {
     
     // Calculate final rotation (multiple spins + target position)
     const spins = 5 + Math.random() * 3; // 5-8 full spins
-    const finalRotation = currentWheelRotation + (spins * 2 * Math.PI) - segmentMiddle + (Math.PI / 2);
+    // The pointer is at the top (12 o'clock), so we want the segment middle to align with 0 degrees (top)
+    // We need to rotate so that segmentMiddle ends up at 0 (top of wheel where pointer is)
+    const finalRotation = currentWheelRotation + (spins * 2 * Math.PI) - segmentMiddle;
     console.log('🎰 Wheel will spin for', spins.toFixed(1), 'rotations to land on', finalOutcome.type);
+    console.log('🎰 Target segment middle angle:', (segmentMiddle * 180 / Math.PI).toFixed(1), 'degrees');
     
     // Animate the spin - longer duration with more gradual stop
     const startTime = Date.now();
@@ -3970,8 +3973,8 @@ function spinHogwashWheel() {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
-        // More gradual easing function for realistic wheel deceleration
-        const easeOut = 1 - Math.pow(1 - progress, 4); // Changed from 3 to 4 for more gradual stop
+        // Improved easing function - linear for most of the spin, then slow down at the end
+        const easeOut = progress < 0.8 ? progress : 0.8 + (1 - Math.pow(1 - (progress - 0.8) / 0.2, 2)) * 0.2;
         
         currentWheelRotation = currentWheelRotation + (finalRotation - currentWheelRotation) * easeOut;
         drawHogwashWheel();
