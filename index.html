@@ -42,21 +42,19 @@
         </header>
         
         <div class="main-content">
-            <!-- Just the title (no card padding) -->
-            <div class="leaderboard-header" style="text-align: center; margin-bottom: 20px;">
-                <h2 class="card-title">🏆 LEADERBOARD 🏆</h2>
-            </div>
-            
             <!-- Loading indicator -->
             <div id="loadingIndicator" style="text-align: center; padding: 40px; color: #8B4513;">
                 <div style="font-size: 3rem; margin-bottom: 10px;">🐷</div>
                 <div style="font-size: 1.2rem; font-weight: bold;">Loading pig points...</div>
             </div>
             
-            <!-- Leaderboard with its own styling (no outer card) -->
-            <ul class="leaderboard" id="leaderboard" style="display: none;">
-                <!-- Leaderboard will be populated by JavaScript -->
-            </ul>
+            <!-- Leaderboard with title inside for white backing -->
+            <div class="leaderboard" id="leaderboard" style="display: none;">
+                <h2 class="card-title" style="margin-top: 0; margin-bottom: 25px;">🏆 LEADERBOARD 🏆</h2>
+                <ul id="leaderboardList" style="list-style: none; padding: 0; margin: 0;">
+                    <!-- Leaderboard will be populated by JavaScript -->
+                </ul>
+            </div>
             
             <!-- Separate card for actions -->
             <div class="card">

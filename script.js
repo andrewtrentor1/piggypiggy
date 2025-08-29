@@ -837,14 +837,15 @@ createBubbles();
 
 function updateLeaderboard() {
     const leaderboard = document.getElementById('leaderboard');
+    const leaderboardList = document.getElementById('leaderboardList');
     const loadingIndicator = document.getElementById('loadingIndicator');
     
     console.log('🏆 updateLeaderboard called, players:', players);
     console.log('🏆 leaderboard element:', leaderboard);
     
     // Safety check - if leaderboard element doesn't exist, we're not on the main page
-    if (!leaderboard) {
-        console.log('🏆 No leaderboard element found - not on main page');
+    if (!leaderboard || !leaderboardList) {
+        console.log('🏆 No leaderboard elements found - not on main page');
         return;
     }
     
@@ -880,7 +881,7 @@ function updateLeaderboard() {
     // Check if all regular players have the same points (tie situation)
     const allSamePoints = maxPoints === minPoints;
     
-    leaderboard.innerHTML = '';
+    leaderboardList.innerHTML = '';
     
     // Add regular players first
     sortedPlayers.forEach((player, index) => {
@@ -910,7 +911,7 @@ function updateLeaderboard() {
             </div>
         `;
         
-        leaderboard.appendChild(li);
+        leaderboardList.appendChild(li);
     });
     
     // Add GOD at the bottom with special styling
@@ -932,7 +933,7 @@ function updateLeaderboard() {
             </div>
         `;
         
-        leaderboard.appendChild(li);
+        leaderboardList.appendChild(li);
     }
 }
 
