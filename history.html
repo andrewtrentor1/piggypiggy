@@ -95,18 +95,21 @@
 
         .year-section {
             margin-bottom: 30px;
-            border: 2px solid #daa520;
-            border-radius: 10px;
+            border: 3px solid #FF69B4;
+            border-radius: 15px;
             overflow: hidden;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 245, 0.9));
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
         }
 
         .year-header {
-            background: linear-gradient(45deg, #daa520, #f0e68c);
+            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
             padding: 15px;
             text-align: center;
             font-size: 1.5rem;
             font-weight: bold;
-            color: #333;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
         }
 
         .year-content {
@@ -124,18 +127,37 @@
         .winner-card {
             text-align: center;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
         }
 
         .mvp-card {
-            background: linear-gradient(135deg, #ffd700, #ffed4e);
-            border: 3px solid #daa520;
+            background: linear-gradient(135deg, #FFD700, #FFA500, #FF8C00);
+            border: 3px solid #FFD700;
+            animation: crownGlow 2s infinite ease-in-out;
         }
 
         .pig-card {
-            background: linear-gradient(135deg, #ff6b6b, #ffa8a8);
-            border: 3px solid #ff4757;
+            background: linear-gradient(135deg, #FF69B4, #FF1493, #DA70D6);
+            border: 3px solid #FF1493;
+        }
+
+        @keyframes crownGlow {
+            0% {
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+                border-color: #FFD700;
+            }
+            50% {
+                box-shadow: 0 6px 25px rgba(255, 215, 0, 0.9);
+                border-color: #FFA500;
+            }
+            100% {
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+                border-color: #FFD700;
+            }
         }
 
         .winner-emoji {
@@ -257,7 +279,7 @@
 <body>
     <div class="header">
         <h1>🏆 MBE HALL OF FAME 🏆</h1>
-        <p style="color: #666; margin: 10px 0 0 0;">Historical results and legendary moments</p>
+        <p style="color: #8B008B; margin: 10px 0 0 0; font-weight: bold; text-shadow: 1px 1px 2px rgba(255, 105, 180, 0.4);">🐷 Historical pig slaughter and legendary oinks 🐷</p>
         
         <div class="navigation">
             <a href="index.html" class="nav-btn">🐷 Pig Points</a>
@@ -268,7 +290,7 @@
     </div>
 
     <div class="card">
-        <h2 class="card-title">📚 MBE HISTORY 📚</h2>
+        <h2 class="card-title">🐷💩 MBE PIG SLAUGHTER HISTORY 💩🐷</h2>
         
         <!-- Year 6 - Current Year 2025 -->
         <div class="year-section">
@@ -287,7 +309,7 @@
                         <div class="winner-emoji">🐷</div>
                         <div class="winner-title">THE PIG</div>
                         <div class="winner-name">TBD</div>
-                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">SNORTY MCPIGFACE 2025</p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em;">🐷💩 SNORTY MCPIGFACE 2025 💩🐷</p>
                     </div>
                 </div>
                 

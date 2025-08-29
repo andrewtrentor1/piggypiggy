@@ -93,7 +93,7 @@
         }
 
         .filter-btn {
-            background: linear-gradient(45deg, #4834d4, #686de0);
+            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
             color: white;
             border: none;
             padding: 8px 16px;
@@ -101,15 +101,22 @@
             font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
         .filter-btn:hover {
+            background: linear-gradient(45deg, #E91E63, #C2185B, #9C27B0);
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .filter-btn.active {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            background: linear-gradient(45deg, #8B008B, #4B0082, #663399);
+            color: #FFD700;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(139,0,139,0.4);
         }
 
         .activity-feed {

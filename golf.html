@@ -119,6 +119,15 @@
             border: 2px solid #DDD;
             margin-bottom: 20px;
         }
+
+        .sessions-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 245, 0.9));
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid rgba(255, 105, 180, 0.3);
+            margin-bottom: 20px;
+        }
         
         .card-title {
             font-size: 2rem;
@@ -178,7 +187,7 @@
         }
         
         .session-card {
-            background: linear-gradient(90deg, #f0e68c, #daa520);
+            background: linear-gradient(90deg, #FF69B4, #FF1493, #DA70D6);
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -186,17 +195,22 @@
             transition: transform 0.2s ease;
             width: 100%;
             box-sizing: border-box;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
         
         .session-card:hover {
             transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
         }
         
         .session-title {
             font-weight: bold;
             font-size: 1.5rem;
-            color: #8B4513;
+            color: white;
             margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
         }
         
         .session-teams {
@@ -219,18 +233,23 @@
         
         .team-name {
             font-weight: bold;
-            color: #8B4513;
+            color: white;
+            font-size: 1.1rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
         }
         
         .team-players {
             font-size: 0.9rem;
-            color: #666;
+            color: white;
+            opacity: 0.9;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
         
         .team-score {
             font-weight: bold;
-            color: #8B4513;
-            font-size: 1.1rem;
+            color: white;
+            font-size: 1.2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
         }
         
         .scorecard-container {
@@ -562,10 +581,9 @@
             <a href="history.html" class="nav-link">🏆 HALL OF FAME</a>
         </div>
         
-        <div class="card">
+        <!-- Sessions Display -->
+        <div class="sessions-container">
             <h2 class="card-title">🏌️ GOLF SESSIONS 🏌️</h2>
-            
-            <!-- Sessions Display -->
             <div id="sessionsDisplay">
                 <div id="sessionsLoadingIndicator" style="text-align: center; padding: 40px; color: #8B4513;">
                     <div style="font-size: 3rem; margin-bottom: 10px;">🏌️‍♂️</div>
@@ -575,19 +593,16 @@
                     <!-- Sessions will be populated by JavaScript -->
                 </div>
             </div>
-            
-            <!-- Login button for non-logged users -->
-            <div class="login-section" id="loginSection" style="text-align: center; margin-top: 20px;">
-                <button class="login-btn" onclick="showLoginModal()">🐷 HAM HANDLER ACCESS</button>
-                <p style="margin-top: 10px; color: #666;">Golf sessions will appear here once the Ham Handler creates them!</p>
-            </div>
-            
+        </div>
+
+        <!-- Golf Actions Card -->
+        <div class="card">
             <!-- Bookkeeper Controls (hidden by default) -->
-            <div id="bookkeeperControls" style="display: none; text-align: center; margin-top: 20px;">
+            <div id="bookkeeperControls" style="display: none; text-align: center;">
                 <button class="session-btn" onclick="showCreateSessionModal()">➕ CREATE NEW SESSION</button>
                 <button class="login-btn" onclick="logout()" style="background: linear-gradient(45deg, #666, #999);">👋 LOGOUT</button>
             </div>
-                </div>
+        </div>
     </div>
 
 
