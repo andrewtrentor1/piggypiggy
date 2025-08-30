@@ -3911,16 +3911,37 @@ function animateDancingPigMan(finalOutcome) {
     const outcomeContent = document.getElementById('outcomeContent');
     const explosionContainer = document.getElementById('explosionContainer');
     
-    // Phase 1: Gentle Waltz (2 seconds) - SLOWED DOWN FOR VISIBILITY
+    // Phase 1: Gentle Waltz (5 seconds) - MANUAL JAVASCRIPT ANIMATION
     console.log('🐷 Phase 1: Gentle waltz begins...');
-    dancingPigMan.style.animation = 'pigManWaltz 2s ease-in-out infinite';
     dancingPigMan.style.border = '3px solid lime'; // DEBUG: Green border
-    pigHead.style.animation = 'headBob 2s ease-in-out infinite';
     pigHead.style.border = '2px solid red'; // DEBUG: Red border
-    leftArm.style.animation = 'armWave 3s ease-in-out infinite';
-    rightArm.style.animation = 'armWave 3s ease-in-out infinite 0.5s';
-    leftLeg.style.animation = 'legKick 2.5s ease-in-out infinite';
-    rightLeg.style.animation = 'legKick 2.5s ease-in-out infinite 0.3s';
+    
+    // Manual waltz animation using JavaScript
+    let waltzAngle = 0;
+    let waltzScale = 1;
+    const waltzAnimation = setInterval(() => {
+        waltzAngle += 2; // Rotate slowly
+        waltzScale = 1 + Math.sin(waltzAngle * Math.PI / 180) * 0.05; // Gentle scaling
+        const rotation = Math.sin(waltzAngle * Math.PI / 180) * 10; // Sway left and right
+        
+        dancingPigMan.style.transform = `rotate(${rotation}deg) scale(${waltzScale})`;
+        
+        // Animate arms
+        const armRotation = Math.sin(waltzAngle * Math.PI / 90) * 30;
+        leftArm.style.transform = `rotate(${armRotation}deg)`;
+        rightArm.style.transform = `rotate(${-armRotation}deg)`;
+        
+        // Animate head
+        const headBob = Math.sin(waltzAngle * Math.PI / 45) * 5;
+        pigHead.style.transform = `translateY(${headBob}px)`;
+        
+        console.log('🐷 Waltz animation frame:', waltzAngle, rotation, waltzScale);
+    }, 50); // 20 FPS animation
+    
+    // Stop waltz animation after 5 seconds
+    setTimeout(() => {
+        clearInterval(waltzAnimation);
+    }, 5000);
     
     // Gentle beep sounds for waltz
     let waltzBeepCount = 0;
@@ -3942,15 +3963,43 @@ function animateDancingPigMan(finalOutcome) {
     }, 500);
     
     setTimeout(() => {
-        // Phase 2: Energetic Bouncing (5 seconds) - SLOWED DOWN FOR VISIBILITY
+        // Phase 2: Energetic Bouncing (3 seconds) - MANUAL JAVASCRIPT ANIMATION
         console.log('🐷 Phase 2: Getting more energetic...');
-        dancingPigMan.style.animation = 'pigManBounce 1.5s ease-in-out infinite';
         dancingPigMan.style.border = '3px solid yellow'; // DEBUG: Yellow border
-        pigHead.style.animation = 'headBob 1s ease-in-out infinite';
-        leftArm.style.animation = 'armWave 1.2s ease-in-out infinite';
-        rightArm.style.animation = 'armWave 1.2s ease-in-out infinite 0.2s';
-        leftLeg.style.animation = 'legKick 1.4s ease-in-out infinite';
-        rightLeg.style.animation = 'legKick 1.4s ease-in-out infinite 0.1s';
+        
+        // Manual bouncing animation using JavaScript
+        let bounceAngle = 0;
+        const bounceAnimation = setInterval(() => {
+            bounceAngle += 5; // Faster movement
+            
+            // Bouncing up and down
+            const bounceY = Math.abs(Math.sin(bounceAngle * Math.PI / 180)) * 30;
+            const rotation = Math.sin(bounceAngle * Math.PI / 90) * 15; // More rotation
+            const scale = 1 + Math.sin(bounceAngle * Math.PI / 180) * 0.1; // More scaling
+            
+            dancingPigMan.style.transform = `translateY(-${bounceY}px) rotate(${rotation}deg) scale(${scale})`;
+            
+            // More energetic arm movement
+            const armRotation = Math.sin(bounceAngle * Math.PI / 60) * 45;
+            leftArm.style.transform = `rotate(${armRotation}deg)`;
+            rightArm.style.transform = `rotate(${-armRotation + 20}deg)`;
+            
+            // Head bobbing faster
+            const headBob = Math.sin(bounceAngle * Math.PI / 30) * 8;
+            pigHead.style.transform = `translateY(${headBob}px) rotate(${Math.sin(bounceAngle * Math.PI / 120) * 5}deg)`;
+            
+            // Leg movement
+            const legKick = Math.sin(bounceAngle * Math.PI / 90) * 20;
+            leftLeg.style.transform = `rotate(${legKick}deg)`;
+            rightLeg.style.transform = `rotate(${-legKick + 10}deg)`;
+            
+            console.log('🐷 Bounce animation frame:', bounceAngle, bounceY, rotation);
+        }, 30); // Faster animation - 33 FPS
+        
+        // Stop bounce animation after 3 seconds
+        setTimeout(() => {
+            clearInterval(bounceAnimation);
+        }, 3000);
         
         // Faster beep sounds for bouncing
         let bounceBeepCount = 0;
