@@ -3991,6 +3991,7 @@ function animatePigSlots(finalOutcome) {
         singleReel.style.transform = `translateY(${finalPosition}px)`;
         console.log('🎰 Single reel stopped at winning position!');
         
+        // Wait for the CSS transition to complete (3 seconds) + extra buffer
         setTimeout(() => {
             // Show jackpot display
             jackpotDisplay.style.opacity = '1';
@@ -4031,7 +4032,7 @@ function animatePigSlots(finalOutcome) {
                 
             }, 1000); // Wait 1 second after jackpot display
             
-        }, 500); // Wait 0.5 seconds after reel stops
+        }, 3500); // Wait 3.5 seconds for CSS transition to complete (3s transition + 0.5s buffer)
         
     }, 1500); // Wait 1.5 seconds before stopping reel
 }
