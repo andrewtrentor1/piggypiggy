@@ -4034,9 +4034,20 @@ function animatePigSlots(finalOutcome) {
         // Stop the fast spinning
         clearInterval(fastSpinInterval);
         
-        // Apply the final position with smooth deceleration
+        // Reset to a known position first, then animate to final position
+        singleReel.style.transition = 'none';
+        singleReel.style.transform = 'translateY(0px)';
+        
+        // Force a reflow
+        singleReel.offsetHeight;
+        
+        // Now apply the smooth transition to the final position
+        singleReel.style.transition = 'transform 2s cubic-bezier(0.25, 0.1, 0.25, 1)';
         singleReel.style.transform = `translateY(${finalPosition}px)`;
+        
         console.log('🎰 Single reel slowing down to winning position!');
+        console.log('🎰 Target symbol:', winningSymbol.symbol, 'at position', winningPosition);
+        console.log('🎰 Final transform:', finalPosition + 'px');
         
         // Wait for the CSS transition to complete (2 seconds) + extra buffer
         setTimeout(() => {
