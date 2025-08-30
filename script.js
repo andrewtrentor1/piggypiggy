@@ -3934,10 +3934,29 @@ function animatePigSlots(finalOutcome) {
         return strip;
     }
     
-    // Generate strips for each reel
-    const reel1Strip = generateReelStrip(winningSymbol, 10);
-    const reel2Strip = generateReelStrip(winningSymbol, 11);
-    const reel3Strip = generateReelStrip(winningSymbol, 12);
+    // Create SUSPENSEFUL reels - each reel shows different random symbols
+    // Only when they all align do we get the "jackpot"
+    function generateSuspensefulReel(reelNumber) {
+        const strip = [];
+        for (let i = 0; i < totalSymbols; i++) {
+            if (i === 10 + reelNumber) { // Stagger the winning positions slightly
+                strip.push(winningSymbol);
+            } else {
+                // Add random symbols, but avoid too many of the same winning symbol
+                let randomSymbol;
+                do {
+                    randomSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)];
+                } while (randomSymbol.symbol === winningSymbol.symbol && Math.random() < 0.7); // 70% chance to avoid winning symbol
+                strip.push(randomSymbol);
+            }
+        }
+        return strip;
+    }
+    
+    // Generate suspenseful strips
+    const reel1Strip = generateSuspensefulReel(0);
+    const reel2Strip = generateSuspensefulReel(1); 
+    const reel3Strip = generateSuspensefulReel(2);
     
     // Populate reel HTML
     function populateReel(reelElement, stripSymbols) {
@@ -3963,8 +3982,8 @@ function animatePigSlots(finalOutcome) {
     populateReel(reel2, reel2Strip);
     populateReel(reel3, reel3Strip);
     
-    // Calculate final positions (to show winning symbol in center)
-    const reel1FinalPos = -(10 * symbolHeight) + (symbolHeight * 1); // Show symbol at position 10 in center
+    // Calculate final positions to align winning symbols in center
+    const reel1FinalPos = -(10 * symbolHeight) + (symbolHeight * 1);
     const reel2FinalPos = -(11 * symbolHeight) + (symbolHeight * 1);
     const reel3FinalPos = -(12 * symbolHeight) + (symbolHeight * 1);
     
@@ -4005,7 +4024,7 @@ function animatePigSlots(finalOutcome) {
                 reel3.style.transform = `translateY(${reel3FinalPos}px)`;
                 console.log('🎰 Reel 3 stopped - JACKPOT!');
                 
-                // Show winning line and jackpot
+                // Wait a moment, then show winning line and jackpot
                 setTimeout(() => {
                     winningLine.style.opacity = '1';
                     jackpotDisplay.style.opacity = '1';
@@ -4014,8 +4033,9 @@ function animatePigSlots(finalOutcome) {
                     // Stop music
                     stopHogwashMusic();
                     
-                    // Show outcome
+                    // Wait longer before showing outcome to build suspense
                     setTimeout(() => {
+                        // NOW reveal the outcome after all reels have stopped and we've built suspense
                         outcomeContent.innerHTML = `
                             <div style="
                                 background: ${winningSymbol.color}; 
@@ -4026,7 +4046,7 @@ function animatePigSlots(finalOutcome) {
                                 animation: pulse 1s infinite;
                             ">
                                 <div style="font-size: 2em; margin-bottom: 10px;">${winningSymbol.symbol}</div>
-                                <div style="font-size: 1.2em; margin-bottom: 10px;">🎰 SLOT JACKPOT! 🎰</div>
+                                <div style="font-size: 1.2em; margin-bottom: 10px;">🎰 TRIPLE MATCH! 🎰</div>
                                 <div style="font-size: 1.4em;">${winningSymbol.label}</div>
                             </div>
                         `;
@@ -4044,9 +4064,9 @@ function animatePigSlots(finalOutcome) {
                             
                         }, 2000); // Wait 2 seconds to enjoy the reveal
                         
-                    }, 1000); // Wait 1 second after jackpot display
+                    }, 1500); // Wait 1.5 seconds after jackpot display for suspense
                     
-                }, 500); // Wait 0.5 seconds after final reel stops
+                }, 1000); // Wait 1 second after final reel stops
                 
             }, 1000); // Wait 1 second between reel 2 and 3
             
