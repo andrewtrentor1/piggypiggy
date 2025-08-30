@@ -84,32 +84,7 @@
             display: inline-block;
         }
         
-        .nav-links {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .nav-link {
-            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
-            border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
-            text-decoration: none;
-            color: white;
-            margin: 0 10px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        }
-        
-        .nav-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
+
         
         .card {
             background: rgba(255, 255, 255, 0.95);
@@ -540,15 +515,7 @@
                 align-self: flex-end;
             }
             
-            .nav-links {
-                flex-wrap: wrap;
-            }
-            
-            .nav-link {
-                margin: 5px;
-                padding: 8px 16px;
-                font-size: 0.9rem;
-            }
+
             
             .modal-content {
                 margin: 10px;
@@ -573,14 +540,15 @@
             <h1 class="title">MBE GOLF SESSIONS</h1>
             <p class="subtitle">Male Bonding Extravaganza Golf</p>
             <div class="pig-emoji">🐷</div>
+            
+            <!-- Navigation Links -->
+            <div class="nav-tabs">
+                <a href="index.html" class="nav-tab">🏆 PIG POINTS</a>
+                <a href="golf.html" class="nav-tab active">🏌️ GOLF SESSIONS</a>
+                <a href="activity.html" class="nav-tab">📜 ACTIVITY FEED</a>
+                <a href="history.html" class="nav-tab">🏆 HALL OF FAME</a>
+            </div>
         </header>
-        
-        <div class="nav-links">
-            <a href="index.html" class="nav-link">🏆 PIG POINTS</a>
-            <a href="golf.html" class="nav-link active">🏌️ GOLF SESSIONS</a>
-            <a href="activity.html" class="nav-link">📜 ACTIVITY FEED</a>
-            <a href="history.html" class="nav-link">🏆 HALL OF FAME</a>
-        </div>
         
         <!-- Sessions Display -->
         <div class="sessions-container">

@@ -14,56 +14,7 @@
             min-height: 100vh;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px 0;
-        }
 
-        .header h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
-            margin-bottom: 10px;
-            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));
-        }
-
-        .navigation {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .nav-btn {
-            background: linear-gradient(45deg, #FF69B4, #FF1493, #DA70D6);
-            border: none;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            text-decoration: none;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        }
-
-        .nav-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .nav-btn.active {
-            background: linear-gradient(45deg, #8B4513, #A0522D);
-            color: white;
-        }
 
         .card {
             background: rgba(255, 255, 255, 0.95);
@@ -228,17 +179,21 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>📜 MBE ACTIVITY FEED 📜</h1>
-        <p class="subtitle">Real-time log of all pig point activities</p>
-        
-        <div class="navigation">
-            <a href="index.html" class="nav-btn">🐷 Pig Points</a>
-            <a href="golf.html" class="nav-btn">⛳ Golf Sessions</a>
-            <a href="activity.html" class="nav-btn active">📜 Activity Feed</a>
-            <a href="history.html" class="nav-btn">🏆 Hall of Fame</a>
-        </div>
-    </div>
+    <div class="container">
+        <header class="header">
+            <div class="pig-emoji">📜</div>
+            <h1 class="title">MBE ACTIVITY FEED</h1>
+            <p class="subtitle">Real-time log of all pig point activities</p>
+            <div class="pig-emoji">🐷</div>
+            
+            <!-- Navigation Links -->
+            <div class="nav-tabs">
+                <a href="index.html" class="nav-tab">🏆 PIG POINTS</a>
+                <a href="golf.html" class="nav-tab">🏌️ GOLF SESSIONS</a>
+                <a href="activity.html" class="nav-tab active">📜 ACTIVITY FEED</a>
+                <a href="history.html" class="nav-tab">🏆 HALL OF FAME</a>
+            </div>
+        </header>
 
     <div class="card">
         <h2 class="card-title">📊 LIVE ACTIVITY STREAM 📊</h2>
