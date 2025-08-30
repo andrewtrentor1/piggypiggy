@@ -3986,8 +3986,11 @@ function animatePigSlots(finalOutcome) {
         singleReel.appendChild(symbolDiv);
     });
     
-    // Calculate final position to show winning symbol in center
-    const finalPosition = -(winningPosition * symbolHeight) + (symbolHeight * 1.5); // Center the winning symbol
+    // Calculate final position to show winning symbol centered on the gold line
+    // The gold line is at 50% of the container (60px from top of 120px container)
+    // We want the CENTER of the winning symbol to align with the gold line
+    const containerCenter = 60; // 50% of 120px container height
+    const finalPosition = -(winningPosition * symbolHeight) + containerCenter - (symbolHeight / 2);
     
     console.log('🎰 Final position:', finalPosition);
     
