@@ -3687,17 +3687,40 @@ function darkenColor(color, amount) {
 }
 
 function resetSlotMachine() {
-    console.log('🎰 Resetting pig slot machine state');
+    console.log('🎰 Resetting single reel slot machine state');
     
-    // Reset slot machine elements
+    // Reset single reel slot machine elements
+    const singleReel = document.getElementById('singleReel');
+    const outcomeDisplay = document.getElementById('outcomeDisplay');
+    const jackpotDisplay = document.getElementById('jackpotDisplay');
+    
+    // Reset single reel position
+    if (singleReel) {
+        singleReel.style.transform = 'translateY(0px)';
+        singleReel.style.transition = 'none';
+        setTimeout(() => {
+            singleReel.style.transition = 'transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        }, 50);
+    }
+    
+    // Reset outcome display
+    if (outcomeDisplay) {
+        outcomeDisplay.style.opacity = '0';
+        outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
+    }
+    
+    // Reset jackpot display
+    if (jackpotDisplay) {
+        jackpotDisplay.style.opacity = '0';
+        jackpotDisplay.style.transform = 'translateX(-50%) scale(1)';
+    }
+    
+    // Also reset legacy elements if they exist (for backwards compatibility)
     const reel1 = document.getElementById('reel1');
     const reel2 = document.getElementById('reel2');
     const reel3 = document.getElementById('reel3');
-    const outcomeDisplay = document.getElementById('outcomeDisplay');
-    const jackpotDisplay = document.getElementById('jackpotDisplay');
     const winningLine = document.querySelector('.winning-line');
     
-    // Reset reel positions
     if (reel1) {
         reel1.style.transform = 'translateY(0px)';
         reel1.style.transition = 'none';
@@ -3722,19 +3745,6 @@ function resetSlotMachine() {
         }, 50);
     }
     
-    // Reset outcome display
-    if (outcomeDisplay) {
-        outcomeDisplay.style.opacity = '0';
-        outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
-    }
-    
-    // Reset jackpot display
-    if (jackpotDisplay) {
-        jackpotDisplay.style.opacity = '0';
-        jackpotDisplay.style.transform = 'translateX(-50%) scale(1)';
-    }
-    
-    // Reset winning line
     if (winningLine) {
         winningLine.style.opacity = '0';
     }
@@ -3888,15 +3898,12 @@ function openMysteryBox() {
 }
 
 function animatePigSlots(finalOutcome) {
-    console.log('🎰 Starting pig slots animation for:', finalOutcome.type);
+    console.log('🎰 Starting single reel pig slots animation for:', finalOutcome.type);
     
-    const reel1 = document.getElementById('reel1');
-    const reel2 = document.getElementById('reel2');
-    const reel3 = document.getElementById('reel3');
+    const singleReel = document.getElementById('singleReel');
     const outcomeDisplay = document.getElementById('outcomeDisplay');
     const outcomeContent = document.getElementById('outcomeContent');
     const jackpotDisplay = document.getElementById('jackpotDisplay');
-    const winningLine = document.querySelector('.winning-line');
     
     // Define slot symbols for each outcome type
     const slotSymbols = {
@@ -3913,18 +3920,18 @@ function animatePigSlots(finalOutcome) {
     const winningSymbol = slotSymbols[finalOutcome.type] || slotSymbols['drink'];
     console.log('🎰 Winning symbol:', winningSymbol);
     
-    // Create reel strips with random symbols + winning symbol at the right position
+    // Create single reel strip
     const allSymbols = Object.values(slotSymbols);
     const symbolHeight = 40; // Height of each symbol in pixels
-    const visibleSymbols = 3; // Number of visible symbols per reel
-    const totalSymbols = 20; // Total symbols per reel strip
+    const totalSymbols = 20; // Total symbols on the reel strip
+    const winningPosition = 10; // Position where winning symbol will be placed
     
-    // Generate reel strips
-    function generateReelStrip(targetSymbol, targetPosition = 10) {
+    // Generate reel strip with winning symbol at specific position
+    function generateSingleReelStrip() {
         const strip = [];
         for (let i = 0; i < totalSymbols; i++) {
-            if (i === targetPosition) {
-                strip.push(targetSymbol);
+            if (i === winningPosition) {
+                strip.push(winningSymbol);
             } else {
                 // Add random symbols
                 const randomSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)];
@@ -3934,60 +3941,30 @@ function animatePigSlots(finalOutcome) {
         return strip;
     }
     
-    // Create SUSPENSEFUL reels - each reel shows different random symbols
-    // Only when they all align do we get the "jackpot"
-    function generateSuspensefulReel(reelNumber) {
-        const strip = [];
-        for (let i = 0; i < totalSymbols; i++) {
-            if (i === 10 + reelNumber) { // Stagger the winning positions slightly
-                strip.push(winningSymbol);
-            } else {
-                // Add random symbols, but avoid too many of the same winning symbol
-                let randomSymbol;
-                do {
-                    randomSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)];
-                } while (randomSymbol.symbol === winningSymbol.symbol && Math.random() < 0.7); // 70% chance to avoid winning symbol
-                strip.push(randomSymbol);
-            }
-        }
-        return strip;
-    }
-    
-    // Generate suspenseful strips
-    const reel1Strip = generateSuspensefulReel(0);
-    const reel2Strip = generateSuspensefulReel(1); 
-    const reel3Strip = generateSuspensefulReel(2);
+    const reelStrip = generateSingleReelStrip();
     
     // Populate reel HTML
-    function populateReel(reelElement, stripSymbols) {
-        reelElement.innerHTML = '';
-        stripSymbols.forEach((symbolData, index) => {
-            const symbolDiv = document.createElement('div');
-            symbolDiv.style.cssText = `
-                height: ${symbolHeight}px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                background: ${index % 2 === 0 ? '#111' : '#222'};
-                border-bottom: 1px solid #333;
-            `;
-            symbolDiv.textContent = symbolData.symbol;
-            reelElement.appendChild(symbolDiv);
-        });
-    }
+    singleReel.innerHTML = '';
+    reelStrip.forEach((symbolData, index) => {
+        const symbolDiv = document.createElement('div');
+        symbolDiv.style.cssText = `
+            height: ${symbolHeight}px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            background: ${index % 2 === 0 ? '#111' : '#222'};
+            border-bottom: 1px solid #333;
+            color: white;
+        `;
+        symbolDiv.textContent = symbolData.symbol;
+        singleReel.appendChild(symbolDiv);
+    });
     
-    // Populate all reels
-    populateReel(reel1, reel1Strip);
-    populateReel(reel2, reel2Strip);
-    populateReel(reel3, reel3Strip);
+    // Calculate final position to show winning symbol in center
+    const finalPosition = -(winningPosition * symbolHeight) + (symbolHeight * 1.5); // Center the winning symbol
     
-    // Calculate final positions to align winning symbols in center
-    const reel1FinalPos = -(10 * symbolHeight) + (symbolHeight * 1);
-    const reel2FinalPos = -(11 * symbolHeight) + (symbolHeight * 1);
-    const reel3FinalPos = -(12 * symbolHeight) + (symbolHeight * 1);
-    
-    console.log('🎰 Final positions:', reel1FinalPos, reel2FinalPos, reel3FinalPos);
+    console.log('🎰 Final position:', finalPosition);
     
     // Start spinning with sound effects
     let spinSoundCount = 0;
@@ -4003,76 +3980,60 @@ function animatePigSlots(finalOutcome) {
             }
         }
         spinSoundCount++;
-        if (spinSoundCount >= 15) { // Stop after 15 beeps
+        if (spinSoundCount >= 12) { // Stop after 12 beeps
             clearInterval(spinSoundInterval);
         }
-    }, 200);
+    }, 250);
     
-    // Animate reels with staggered stops
+    // Animate the single reel
     setTimeout(() => {
-        // Stop reel 1 first
-        reel1.style.transform = `translateY(${reel1FinalPos}px)`;
-        console.log('🎰 Reel 1 stopped');
+        // Stop the reel at the winning position
+        singleReel.style.transform = `translateY(${finalPosition}px)`;
+        console.log('🎰 Single reel stopped at winning position!');
         
         setTimeout(() => {
-            // Stop reel 2
-            reel2.style.transform = `translateY(${reel2FinalPos}px)`;
-            console.log('🎰 Reel 2 stopped');
+            // Show jackpot display
+            jackpotDisplay.style.opacity = '1';
+            jackpotDisplay.style.transform = 'translateX(-50%) scale(1.2)';
+            
+            // Stop music
+            stopHogwashMusic();
             
             setTimeout(() => {
-                // Stop reel 3 - JACKPOT!
-                reel3.style.transform = `translateY(${reel3FinalPos}px)`;
-                console.log('🎰 Reel 3 stopped - JACKPOT!');
+                // Show outcome
+                outcomeContent.innerHTML = `
+                    <div style="
+                        background: ${winningSymbol.color}; 
+                        padding: 20px; 
+                        border-radius: 15px; 
+                        border: 4px solid #FFD700;
+                        box-shadow: 0 0 30px ${winningSymbol.color};
+                        animation: pulse 1s infinite;
+                    ">
+                        <div style="font-size: 2.5em; margin-bottom: 10px;">${winningSymbol.symbol}</div>
+                        <div style="font-size: 1.2em; margin-bottom: 10px;">🎰 SLOT WIN! 🎰</div>
+                        <div style="font-size: 1.4em;">${winningSymbol.label}</div>
+                    </div>
+                `;
                 
-                // Wait a moment, then show winning line and jackpot
+                outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
+                outcomeDisplay.style.opacity = '1';
+                
                 setTimeout(() => {
-                    winningLine.style.opacity = '1';
-                    jackpotDisplay.style.opacity = '1';
-                    jackpotDisplay.style.transform = 'translateX(-50%) scale(1.2)';
+                    // Execute the outcome and show result
+                    executeHogwashOutcome(finalOutcome);
                     
-                    // Stop music
-                    stopHogwashMusic();
+                    // Show close button and reset state
+                    document.getElementById('closeBoxBtn').style.display = 'inline-block';
+                    isSlotSpinning = false;
                     
-                    // Wait longer before showing outcome to build suspense
-                    setTimeout(() => {
-                        // NOW reveal the outcome after all reels have stopped and we've built suspense
-                        outcomeContent.innerHTML = `
-                            <div style="
-                                background: ${winningSymbol.color}; 
-                                padding: 20px; 
-                                border-radius: 15px; 
-                                border: 4px solid #FFD700;
-                                box-shadow: 0 0 30px ${winningSymbol.color};
-                                animation: pulse 1s infinite;
-                            ">
-                                <div style="font-size: 2em; margin-bottom: 10px;">${winningSymbol.symbol}</div>
-                                <div style="font-size: 1.2em; margin-bottom: 10px;">🎰 TRIPLE MATCH! 🎰</div>
-                                <div style="font-size: 1.4em;">${winningSymbol.label}</div>
-                            </div>
-                        `;
-                        
-                        outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
-                        outcomeDisplay.style.opacity = '1';
-                        
-                        setTimeout(() => {
-                            // Execute the outcome and show result
-                            executeHogwashOutcome(finalOutcome);
-                            
-                            // Show close button and reset state
-                            document.getElementById('closeBoxBtn').style.display = 'inline-block';
-                            isSlotSpinning = false;
-                            
-                        }, 2000); // Wait 2 seconds to enjoy the reveal
-                        
-                    }, 1500); // Wait 1.5 seconds after jackpot display for suspense
-                    
-                }, 1000); // Wait 1 second after final reel stops
+                }, 2000); // Wait 2 seconds to enjoy the reveal
                 
-            }, 1000); // Wait 1 second between reel 2 and 3
+            }, 1000); // Wait 1 second after jackpot display
             
-        }, 800); // Wait 0.8 seconds between reel 1 and 2
+        }, 500); // Wait 0.5 seconds after reel stops
         
-    }, 1000); // Wait 1 second before stopping first reel
+    }, 1500); // Wait 1.5 seconds before stopping reel
 }
 
 function animateSpinningWheel(finalOutcome) {
