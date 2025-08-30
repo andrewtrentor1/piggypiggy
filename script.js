@@ -3920,24 +3920,49 @@ function animatePigSlots(finalOutcome) {
     const winningSymbol = slotSymbols[finalOutcome.type] || slotSymbols['drink'];
     console.log('🎰 Winning symbol:', winningSymbol);
     
-    // Create single reel strip
+    // Create single reel strip with ALL possible outcomes for maximum anticipation
     const allSymbols = Object.values(slotSymbols);
     const symbolHeight = 40; // Height of each symbol in pixels
-    const totalSymbols = 20; // Total symbols on the reel strip
-    const winningPosition = 10; // Position where winning symbol will be placed
+    const totalSymbols = 50; // Much longer reel strip for extended spinning
+    const winningPosition = 35; // Position where winning symbol will be placed (later in the strip)
     
-    // Generate reel strip with winning symbol at specific position
+    // Generate reel strip with ALL outcomes multiple times + winning symbol
     function generateSingleReelStrip() {
         const strip = [];
+        
+        // Fill the strip with multiple cycles of all possible outcomes
         for (let i = 0; i < totalSymbols; i++) {
             if (i === winningPosition) {
+                // Place the actual winning symbol at the target position
                 strip.push(winningSymbol);
             } else {
-                // Add random symbols
-                const randomSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)];
-                strip.push(randomSymbol);
+                // Cycle through ALL possible outcomes multiple times
+                const symbolIndex = i % allSymbols.length;
+                strip.push(allSymbols[symbolIndex]);
             }
         }
+        
+        // Shuffle the non-winning positions to add randomness while keeping all symbols
+        const nonWinningIndices = [];
+        for (let i = 0; i < totalSymbols; i++) {
+            if (i !== winningPosition) {
+                nonWinningIndices.push(i);
+            }
+        }
+        
+        // Create a shuffled array of symbols (excluding the winning position)
+        const shuffledSymbols = [];
+        for (let cycle = 0; cycle < Math.ceil(nonWinningIndices.length / allSymbols.length); cycle++) {
+            shuffledSymbols.push(...allSymbols.sort(() => Math.random() - 0.5));
+        }
+        
+        // Apply shuffled symbols to non-winning positions
+        nonWinningIndices.forEach((index, i) => {
+            if (shuffledSymbols[i]) {
+                strip[index] = shuffledSymbols[i];
+            }
+        });
+        
         return strip;
     }
     
@@ -3966,32 +3991,54 @@ function animatePigSlots(finalOutcome) {
     
     console.log('🎰 Final position:', finalPosition);
     
-    // Start spinning with sound effects
+    // Start with fast spinning animation to show all symbols
+    let fastSpinPosition = 0;
+    const fastSpinSpeed = 8; // pixels per frame
+    const fastSpinDuration = 4000; // 4 seconds of fast spinning
+    
+    // Update the CSS transition for the final slow-down
+    singleReel.style.transition = 'transform 2s cubic-bezier(0.25, 0.1, 0.25, 1)';
+    
+    // Fast spinning phase - cycle through all symbols quickly
+    const fastSpinInterval = setInterval(() => {
+        fastSpinPosition -= fastSpinSpeed;
+        singleReel.style.transform = `translateY(${fastSpinPosition}px)`;
+        
+        // Wrap around when we've gone through the entire strip
+        if (Math.abs(fastSpinPosition) >= totalSymbols * symbolHeight) {
+            fastSpinPosition = 0;
+        }
+    }, 16); // ~60fps
+    
+    // Sound effects during fast spinning
     let spinSoundCount = 0;
     const spinSoundInterval = setInterval(() => {
         if (slotBeepAudio && slotBeepAudio.play) {
             try {
                 const beepClone = slotBeepAudio.cloneNode();
-                beepClone.volume = 0.4;
-                beepClone.playbackRate = 1.2 + Math.random() * 0.3;
+                beepClone.volume = 0.3;
+                beepClone.playbackRate = 1.5 + Math.random() * 0.5; // Faster beeps
                 beepClone.play();
             } catch (error) {
                 // Ignore audio errors
             }
         }
         spinSoundCount++;
-        if (spinSoundCount >= 12) { // Stop after 12 beeps
+        if (spinSoundCount >= 25) { // More beeps for longer spin
             clearInterval(spinSoundInterval);
         }
-    }, 250);
+    }, 160); // Faster beeping
     
-    // Animate the single reel
+    // After fast spinning, slow down to final position
     setTimeout(() => {
-        // Stop the reel at the winning position
-        singleReel.style.transform = `translateY(${finalPosition}px)`;
-        console.log('🎰 Single reel stopped at winning position!');
+        // Stop the fast spinning
+        clearInterval(fastSpinInterval);
         
-        // Wait for the CSS transition to complete (3 seconds) + extra buffer
+        // Apply the final position with smooth deceleration
+        singleReel.style.transform = `translateY(${finalPosition}px)`;
+        console.log('🎰 Single reel slowing down to winning position!');
+        
+        // Wait for the CSS transition to complete (2 seconds) + extra buffer
         setTimeout(() => {
             // Show jackpot display
             jackpotDisplay.style.opacity = '1';
@@ -4032,9 +4079,9 @@ function animatePigSlots(finalOutcome) {
                 
             }, 1000); // Wait 1 second after jackpot display
             
-        }, 3500); // Wait 3.5 seconds for CSS transition to complete (3s transition + 0.5s buffer)
+        }, 2500); // Wait 2.5 seconds for CSS transition to complete (2s transition + 0.5s buffer)
         
-    }, 1500); // Wait 1.5 seconds before stopping reel
+    }, 4000); // Wait 4 seconds of fast spinning before slowing down
 }
 
 function animateSpinningWheel(finalOutcome) {
