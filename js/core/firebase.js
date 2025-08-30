@@ -291,5 +291,7 @@ function testFirebaseConnection() {
         });
 }
 
-// Make test function available globally for debugging
+// Make functions available globally
+window.initializeFirebase = initializeFirebase;
+window.savePlayers = savePlayers;
 window.testFirebaseConnection = testFirebaseConnection;

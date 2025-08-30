@@ -116,5 +116,6 @@ function refreshLeaderboard() {
     updateLeaderboard();
 }
 
-// Make refresh function available globally for debugging
+// Make functions available globally
+window.updateLeaderboard = updateLeaderboard;
 window.refreshLeaderboard = refreshLeaderboard;
