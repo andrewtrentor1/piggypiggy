@@ -800,8 +800,7 @@ setTimeout(() => {
     }
 }, 500);
 
-// Initialize HOGWASH cooldowns
-loadHogwashCooldowns();
+// Initialize HOGWASH cooldowns - will be called after Firebase is ready
 
 // Initialize audio system for autoplay bypass
 initializeAudioSystem();

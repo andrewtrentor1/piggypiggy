@@ -16,6 +16,12 @@ function initializeFirebase() {
     
     console.log('🔥 Setting up Firebase listeners...');
     
+    // Initialize HOGWASH cooldowns now that Firebase is ready
+    if (typeof loadHogwashCooldowns === 'function') {
+        loadHogwashCooldowns();
+        console.log('🕐 HOGWASH cooldowns initialized after Firebase ready');
+    }
+    
     // Listen for player changes in real-time
     window.firebaseOnValue(playersRef, (snapshot) => {
         const data = snapshot.val();
@@ -274,8 +280,8 @@ function testFirebaseConnection(showAlert = false) {
                 .then((snapshot) => {
                     if (snapshot.exists()) {
                         console.log('✅ Firebase read test successful!', snapshot.val());
-                        console.log('✅ Firebase connection working perfectly!');
-                        if (showAlert) alert('✅ Firebase connection working perfectly!');
+                                    console.log('✅ Firebase connection working perfectly!');
+            if (showAlert) alert('✅ Firebase connection working perfectly!');
                     } else {
                         console.error('❌ Firebase read test failed - no data');
                         if (showAlert) alert('❌ Firebase read test failed');
