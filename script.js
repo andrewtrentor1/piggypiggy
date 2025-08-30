@@ -3784,6 +3784,7 @@ function resetSlotMachine() {
 
 function startDancingPigMan() {
     console.log('🐷💃 startDancingPigMan called!');
+    alert('🐷 Dancing pig man function called!'); // Debug alert
     
     if (isSlotSpinning) {
         console.log('🐷 Pig man is already dancing, ignoring click');
@@ -3791,8 +3792,14 @@ function startDancingPigMan() {
     }
     
     const dancingPigMan = document.getElementById('dancingPigMan');
+    console.log('🐷 Looking for dancingPigMan element:', dancingPigMan);
+    
     if (!dancingPigMan) {
         console.error('❌ Dancing pig man element not found!');
+        console.log('🔍 Available elements with pig in ID:');
+        const allElements = document.querySelectorAll('[id*="pig"], [id*="Pig"]');
+        allElements.forEach(el => console.log('  -', el.id, el));
+        alert('❌ Dancing pig man element not found! Check console for details.');
         return;
     }
     
