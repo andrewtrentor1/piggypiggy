@@ -320,225 +320,145 @@
         <div class="modal-content" style="background: linear-gradient(135deg, #2c1810, #8B4513); border: 5px solid #FFD700; max-width: 500px; border-radius: 20px;">
             <h2 style="color: #FFD700; text-align: center; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">🐷💩 GET FUCKED BY THE SLOP, PIG! 💩🐷</h2>
             
-            <!-- Pig Wheel of Fortune Container -->
-            <div class="pig-wheel-container" style="
+            <!-- Pig Slot Machine Container -->
+            <div class="pig-slot-container" style="
                 position: relative;
                 width: 400px;
-                height: 400px;
+                height: 300px;
                 margin: 20px auto;
                 display: flex;
                 align-items: center;
                 justify-content: center;
             ">
-                <!-- The Spinning Wheel -->
-                <div id="pigWheel" class="pig-wheel" style="
-                    width: 320px;
-                    height: 320px;
-                    border-radius: 50%;
+                <!-- The Slot Machine -->
+                <div id="pigSlotMachine" class="pig-slot-machine" style="
+                    width: 350px;
+                    height: 250px;
+                    background: linear-gradient(145deg, #8B4513, #A0522D);
+                    border: 8px solid #FFD700;
+                    border-radius: 20px;
                     position: relative;
-                    border: 8px solid #8B4513;
                     box-shadow: 
                         0 0 30px rgba(0,0,0,0.5),
                         inset 0 0 20px rgba(255, 215, 0, 0.3);
-                    background: conic-gradient(
-                        #FF6B6B 0deg 51.4deg,
-                        #4ECDC4 51.4deg 102.8deg,
-                        #FFD93D 102.8deg 154.2deg,
-                        #6BCF7F 154.2deg 205.6deg,
-                        #FF8C42 205.6deg 257deg,
-                        #A8E6CF 257deg 308.4deg,
-                        #FF69B4 308.4deg 360deg
-                    );
-                    transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
                 ">
-                    <!-- Wheel Segments with Text -->
-                    <div class="wheel-segment" style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        width: 140px;
-                        height: 2px;
-                        transform-origin: 0 0;
-                        transform: translate(0, -1px) rotate(25.7deg);
-                    ">
-                        <div style="
-                            position: absolute;
-                            left: 80px;
-                            top: -15px;
-                            color: white;
-                            font-weight: bold;
-                            font-size: 14px;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                            transform: rotate(-25.7deg);
-                            white-space: nowrap;
-                        ">🍺 DRINKS</div>
-                    </div>
-                    
-                    <div class="wheel-segment" style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        width: 140px;
-                        height: 2px;
-                        transform-origin: 0 0;
-                        transform: translate(0, -1px) rotate(77.1deg);
-                    ">
-                        <div style="
-                            position: absolute;
-                            left: 80px;
-                            top: -15px;
-                            color: white;
-                            font-weight: bold;
-                            font-size: 14px;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                            transform: rotate(-77.1deg);
-                            white-space: nowrap;
-                        ">🎉 WIN POINTS</div>
-                    </div>
-                    
-                    <div class="wheel-segment" style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        width: 140px;
-                        height: 2px;
-                        transform-origin: 0 0;
-                        transform: translate(0, -1px) rotate(128.5deg);
-                    ">
-                        <div style="
-                            position: absolute;
-                            left: 80px;
-                            top: -15px;
-                            color: white;
-                            font-weight: bold;
-                            font-size: 14px;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                            transform: rotate(-128.5deg);
-                            white-space: nowrap;
-                        ">😈 LOSE POINTS</div>
-                    </div>
-                    
-                    <div class="wheel-segment" style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        width: 140px;
-                        height: 2px;
-                        transform-origin: 0 0;
-                        transform: translate(0, -1px) rotate(180deg);
-                    ">
-                        <div style="
-                            position: absolute;
-                            left: 80px;
-                            top: -15px;
-                            color: white;
-                            font-weight: bold;
-                            font-size: 14px;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                            transform: rotate(-180deg);
-                            white-space: nowrap;
-                        ">🍺⚡ GIVE DRINKS</div>
-                    </div>
-                    
-                    <div class="wheel-segment" style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        width: 140px;
-                        height: 2px;
-                        transform-origin: 0 0;
-                        transform: translate(0, -1px) rotate(231.4deg);
-                    ">
-                        <div style="
-                            position: absolute;
-                            left: 80px;
-                            top: -15px;
-                            color: white;
-                            font-weight: bold;
-                            font-size: 14px;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                            transform: rotate(-231.4deg);
-                            white-space: nowrap;
-                        ">⛳ MULLIGAN</div>
-                    </div>
-                    
-                    <div class="wheel-segment" style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        width: 140px;
-                        height: 2px;
-                        transform-origin: 0 0;
-                        transform: translate(0, -1px) rotate(282.8deg);
-                    ">
-                        <div style="
-                            position: absolute;
-                            left: 80px;
-                            top: -15px;
-                            color: white;
-                            font-weight: bold;
-                            font-size: 14px;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                            transform: rotate(-282.8deg);
-                            white-space: nowrap;
-                        ">🔄 REVERSE</div>
-                    </div>
-                    
-                    <div class="wheel-segment" style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        width: 140px;
-                        height: 2px;
-                        transform-origin: 0 0;
-                        transform: translate(0, -1px) rotate(334.2deg);
-                    ">
-                        <div style="
-                            position: absolute;
-                            left: 80px;
-                            top: -15px;
-                            color: white;
-                            font-weight: bold;
-                            font-size: 14px;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                            transform: rotate(-334.2deg);
-                            white-space: nowrap;
-                        ">💀 DANGER ZONE</div>
-                    </div>
-                    
-                    <!-- Center Hub -->
+                    <!-- Slot Machine Header -->
                     <div style="
                         position: absolute;
-                        top: 50%;
+                        top: 10px;
                         left: 50%;
-                        width: 60px;
-                        height: 60px;
-                        background: linear-gradient(145deg, #8B4513, #A0522D);
-                        border-radius: 50%;
-                        transform: translate(-50%, -50%);
-                        border: 4px solid #FFD700;
+                        transform: translateX(-50%);
+                        color: #FFD700;
+                        font-size: 1.2em;
+                        font-weight: bold;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                    ">🎰 PIG SLOTS 🎰</div>
+                    
+                    <!-- Slot Reels Container -->
+                    <div class="slot-reels-container" style="
+                        position: absolute;
+                        top: 50px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        width: 280px;
+                        height: 120px;
+                        background: #000;
+                        border: 4px solid #333;
+                        border-radius: 10px;
                         display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 24px;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                        overflow: hidden;
+                    ">
+                        <!-- Reel 1 -->
+                        <div class="slot-reel" style="
+                            flex: 1;
+                            position: relative;
+                            border-right: 2px solid #333;
+                            overflow: hidden;
+                        ">
+                            <div id="reel1" class="reel-strip" style="
+                                position: absolute;
+                                width: 100%;
+                                transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1);
+                            ">
+                                <!-- Reel symbols will be generated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Reel 2 -->
+                        <div class="slot-reel" style="
+                            flex: 1;
+                            position: relative;
+                            border-right: 2px solid #333;
+                            overflow: hidden;
+                        ">
+                            <div id="reel2" class="reel-strip" style="
+                                position: absolute;
+                                width: 100%;
+                                transition: transform 3.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+                            ">
+                                <!-- Reel symbols will be generated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Reel 3 -->
+                        <div class="slot-reel" style="
+                            flex: 1;
+                            position: relative;
+                            overflow: hidden;
+                        ">
+                            <div id="reel3" class="reel-strip" style="
+                                position: absolute;
+                                width: 100%;
+                                transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+                            ">
+                                <!-- Reel symbols will be generated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Winning Line Indicator -->
+                    <div class="winning-line" style="
+                        position: absolute;
+                        top: 110px;
+                        left: 35px;
+                        right: 35px;
+                        height: 2px;
+                        background: #FFD700;
+                        box-shadow: 0 0 10px #FFD700;
+                        opacity: 0;
+                        transition: opacity 0.5s ease;
+                    "></div>
+                    
+                    <!-- Slot Machine Decorations -->
+                    <div style="
+                        position: absolute;
+                        bottom: 20px;
+                        left: 20px;
+                        color: #FFD700;
+                        font-size: 2em;
                     ">🐷</div>
+                    <div style="
+                        position: absolute;
+                        bottom: 20px;
+                        right: 20px;
+                        color: #FFD700;
+                        font-size: 2em;
+                    ">🐷</div>
+                    
+                    <!-- Jackpot Display -->
+                    <div id="jackpotDisplay" style="
+                        position: absolute;
+                        bottom: 10px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        color: #FFD700;
+                        font-size: 0.9em;
+                        font-weight: bold;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                        opacity: 0;
+                        transition: all 0.5s ease;
+                    ">🎉 JACKPOT! 🎉</div>
                 </div>
-                
-                <!-- Wheel Pointer -->
-                <div id="wheelPointer" class="wheel-pointer" style="
-                    position: absolute;
-                    top: 50%;
-                    right: 40px;
-                    width: 0;
-                    height: 0;
-                    border-left: 25px solid #FFD700;
-                    border-top: 15px solid transparent;
-                    border-bottom: 15px solid transparent;
-                    transform: translateY(-50%);
-                    z-index: 10;
-                    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
-                "></div>
                 
                 <!-- Outcome Display (hidden initially) -->
                 <div id="outcomeDisplay" class="outcome-display" style="
@@ -608,7 +528,7 @@
             
             <!-- Open Box Button -->
             <div style="text-align: center; margin: 20px 0;">
-                <button id="openBoxBtn" class="hogwash-btn mystery-box-btn" onclick="spinPigWheel()" style="
+                <button id="openBoxBtn" class="hogwash-btn mystery-box-btn" onclick="spinPigSlots()" style="
                     font-size: 1.5em;
                     padding: 15px 30px;
                     background: linear-gradient(45deg, #FFD700, #FFA500);
@@ -619,7 +539,7 @@
                     transform: scale(1);
                     transition: all 0.3s ease;
                 " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                    🎡🐷 SPIN THE WHEEL OF SLOP! 🐷🎡
+                    🎰🐷 PULL THE PIG SLOTS! 🐷🎰
                 </button>
             </div>
             

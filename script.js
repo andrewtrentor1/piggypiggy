@@ -3687,32 +3687,72 @@ function darkenColor(color, amount) {
 }
 
 function resetSlotMachine() {
-    console.log('🎡 Resetting pig wheel state');
+    console.log('🎰 Resetting pig slot machine state');
     
-    // Reset pig wheel elements
-    const pigWheel = document.getElementById('pigWheel');
-    const wheelPointer = document.getElementById('wheelPointer');
+    // Reset slot machine elements
+    const reel1 = document.getElementById('reel1');
+    const reel2 = document.getElementById('reel2');
+    const reel3 = document.getElementById('reel3');
     const outcomeDisplay = document.getElementById('outcomeDisplay');
+    const jackpotDisplay = document.getElementById('jackpotDisplay');
+    const winningLine = document.querySelector('.winning-line');
     
-    // Reset wheel rotation
-    if (pigWheel) {
-        pigWheel.style.transform = 'rotate(0deg)';
-        pigWheel.style.transition = 'none'; // Remove transition for instant reset
-        // Re-add transition after a brief delay
+    // Reset reel positions
+    if (reel1) {
+        reel1.style.transform = 'translateY(0px)';
+        reel1.style.transition = 'none';
         setTimeout(() => {
-            pigWheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+            reel1.style.transition = 'transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)';
         }, 50);
     }
     
-    // Reset pointer
-    if (wheelPointer) {
-        wheelPointer.style.transform = 'translateY(-50%)';
+    if (reel2) {
+        reel2.style.transform = 'translateY(0px)';
+        reel2.style.transition = 'none';
+        setTimeout(() => {
+            reel2.style.transition = 'transform 3.5s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        }, 50);
+    }
+    
+    if (reel3) {
+        reel3.style.transform = 'translateY(0px)';
+        reel3.style.transition = 'none';
+        setTimeout(() => {
+            reel3.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        }, 50);
     }
     
     // Reset outcome display
     if (outcomeDisplay) {
         outcomeDisplay.style.opacity = '0';
         outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
+    }
+    
+    // Reset jackpot display
+    if (jackpotDisplay) {
+        jackpotDisplay.style.opacity = '0';
+        jackpotDisplay.style.transform = 'translateX(-50%) scale(1)';
+    }
+    
+    // Reset winning line
+    if (winningLine) {
+        winningLine.style.opacity = '0';
+    }
+    
+    // Also reset legacy elements if they exist (for backwards compatibility)
+    const pigWheel = document.getElementById('pigWheel');
+    const wheelPointer = document.getElementById('wheelPointer');
+    
+    if (pigWheel) {
+        pigWheel.style.transform = 'rotate(0deg)';
+        pigWheel.style.transition = 'none';
+        setTimeout(() => {
+            pigWheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        }, 50);
+    }
+    
+    if (wheelPointer) {
+        wheelPointer.style.transform = 'translateY(-50%)';
     }
     
     // Also reset legacy elements if they exist (for backwards compatibility)
@@ -3800,22 +3840,22 @@ function resetSlotMachine() {
     console.log('🎁 Mystery box reset complete');
 }
 
-function spinPigWheel() {
-    console.log('🎡 spinPigWheel called!');
+function spinPigSlots() {
+    console.log('🎰 spinPigSlots called!');
     
     if (isSlotSpinning) {
-        console.log('🎡 Wheel is already spinning, ignoring click');
+        console.log('🎰 Slots are already spinning, ignoring click');
         return;
     }
     
-    const pigWheel = document.getElementById('pigWheel');
-    if (!pigWheel) {
-        console.error('❌ Pig wheel element not found!');
+    const pigSlotMachine = document.getElementById('pigSlotMachine');
+    if (!pigSlotMachine) {
+        console.error('❌ Pig slot machine element not found!');
         return;
     }
     
     isSlotSpinning = true; // Reuse this flag for animation
-    console.log('🎡 Starting pig wheel spin!');
+    console.log('🎰 Starting pig slots spin!');
     
     // Hide open button
     const openBtn = document.getElementById('openBoxBtn');
@@ -3826,10 +3866,15 @@ function spinPigWheel() {
     
     // Calculate final outcome first
     const finalOutcome = calculateHogwashOutcome();
-    console.log('🎡 Calculated final outcome:', finalOutcome);
+    console.log('🎰 Calculated final outcome:', finalOutcome);
     
-    // Start the spinning wheel animation
-    animateSpinningWheel(finalOutcome);
+    // Initialize and start the slot machine animation
+    animatePigSlots(finalOutcome);
+}
+
+// Legacy function for compatibility
+function spinPigWheel() {
+    spinPigSlots();
 }
 
 // Legacy function for compatibility
@@ -3840,6 +3885,174 @@ function startDancingPigMan() {
 // Legacy function for compatibility
 function openMysteryBox() {
     startDancingPigMan();
+}
+
+function animatePigSlots(finalOutcome) {
+    console.log('🎰 Starting pig slots animation for:', finalOutcome.type);
+    
+    const reel1 = document.getElementById('reel1');
+    const reel2 = document.getElementById('reel2');
+    const reel3 = document.getElementById('reel3');
+    const outcomeDisplay = document.getElementById('outcomeDisplay');
+    const outcomeContent = document.getElementById('outcomeContent');
+    const jackpotDisplay = document.getElementById('jackpotDisplay');
+    const winningLine = document.querySelector('.winning-line');
+    
+    // Define slot symbols for each outcome type
+    const slotSymbols = {
+        'drink': { symbol: '🍺', color: '#FF6B6B', label: 'TAKE DRINKS' },
+        'win': { symbol: '💰', color: '#4ECDC4', label: 'WIN POINTS' },
+        'lose': { symbol: '😈', color: '#FFD93D', label: 'LOSE POINTS' },
+        'give_drinks': { symbol: '🍻', color: '#6BCF7F', label: 'DRINK POWER' },
+        'mulligan': { symbol: '⛳', color: '#FF8C42', label: 'MULLIGAN' },
+        'reverse_mulligan': { symbol: '🔄', color: '#A8E6CF', label: 'REVERSE MULLIGAN' },
+        'danger': { symbol: '💀', color: '#FF69B4', label: 'DANGER ZONE' }
+    };
+    
+    // Get the winning symbol
+    const winningSymbol = slotSymbols[finalOutcome.type] || slotSymbols['drink'];
+    console.log('🎰 Winning symbol:', winningSymbol);
+    
+    // Create reel strips with random symbols + winning symbol at the right position
+    const allSymbols = Object.values(slotSymbols);
+    const symbolHeight = 40; // Height of each symbol in pixels
+    const visibleSymbols = 3; // Number of visible symbols per reel
+    const totalSymbols = 20; // Total symbols per reel strip
+    
+    // Generate reel strips
+    function generateReelStrip(targetSymbol, targetPosition = 10) {
+        const strip = [];
+        for (let i = 0; i < totalSymbols; i++) {
+            if (i === targetPosition) {
+                strip.push(targetSymbol);
+            } else {
+                // Add random symbols
+                const randomSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)];
+                strip.push(randomSymbol);
+            }
+        }
+        return strip;
+    }
+    
+    // Generate strips for each reel
+    const reel1Strip = generateReelStrip(winningSymbol, 10);
+    const reel2Strip = generateReelStrip(winningSymbol, 11);
+    const reel3Strip = generateReelStrip(winningSymbol, 12);
+    
+    // Populate reel HTML
+    function populateReel(reelElement, stripSymbols) {
+        reelElement.innerHTML = '';
+        stripSymbols.forEach((symbolData, index) => {
+            const symbolDiv = document.createElement('div');
+            symbolDiv.style.cssText = `
+                height: ${symbolHeight}px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                background: ${index % 2 === 0 ? '#111' : '#222'};
+                border-bottom: 1px solid #333;
+            `;
+            symbolDiv.textContent = symbolData.symbol;
+            reelElement.appendChild(symbolDiv);
+        });
+    }
+    
+    // Populate all reels
+    populateReel(reel1, reel1Strip);
+    populateReel(reel2, reel2Strip);
+    populateReel(reel3, reel3Strip);
+    
+    // Calculate final positions (to show winning symbol in center)
+    const reel1FinalPos = -(10 * symbolHeight) + (symbolHeight * 1); // Show symbol at position 10 in center
+    const reel2FinalPos = -(11 * symbolHeight) + (symbolHeight * 1);
+    const reel3FinalPos = -(12 * symbolHeight) + (symbolHeight * 1);
+    
+    console.log('🎰 Final positions:', reel1FinalPos, reel2FinalPos, reel3FinalPos);
+    
+    // Start spinning with sound effects
+    let spinSoundCount = 0;
+    const spinSoundInterval = setInterval(() => {
+        if (slotBeepAudio && slotBeepAudio.play) {
+            try {
+                const beepClone = slotBeepAudio.cloneNode();
+                beepClone.volume = 0.4;
+                beepClone.playbackRate = 1.2 + Math.random() * 0.3;
+                beepClone.play();
+            } catch (error) {
+                // Ignore audio errors
+            }
+        }
+        spinSoundCount++;
+        if (spinSoundCount >= 15) { // Stop after 15 beeps
+            clearInterval(spinSoundInterval);
+        }
+    }, 200);
+    
+    // Animate reels with staggered stops
+    setTimeout(() => {
+        // Stop reel 1 first
+        reel1.style.transform = `translateY(${reel1FinalPos}px)`;
+        console.log('🎰 Reel 1 stopped');
+        
+        setTimeout(() => {
+            // Stop reel 2
+            reel2.style.transform = `translateY(${reel2FinalPos}px)`;
+            console.log('🎰 Reel 2 stopped');
+            
+            setTimeout(() => {
+                // Stop reel 3 - JACKPOT!
+                reel3.style.transform = `translateY(${reel3FinalPos}px)`;
+                console.log('🎰 Reel 3 stopped - JACKPOT!');
+                
+                // Show winning line and jackpot
+                setTimeout(() => {
+                    winningLine.style.opacity = '1';
+                    jackpotDisplay.style.opacity = '1';
+                    jackpotDisplay.style.transform = 'translateX(-50%) scale(1.2)';
+                    
+                    // Stop music
+                    stopHogwashMusic();
+                    
+                    // Show outcome
+                    setTimeout(() => {
+                        outcomeContent.innerHTML = `
+                            <div style="
+                                background: ${winningSymbol.color}; 
+                                padding: 20px; 
+                                border-radius: 15px; 
+                                border: 4px solid #FFD700;
+                                box-shadow: 0 0 30px ${winningSymbol.color};
+                                animation: pulse 1s infinite;
+                            ">
+                                <div style="font-size: 2em; margin-bottom: 10px;">${winningSymbol.symbol}</div>
+                                <div style="font-size: 1.2em; margin-bottom: 10px;">🎰 SLOT JACKPOT! 🎰</div>
+                                <div style="font-size: 1.4em;">${winningSymbol.label}</div>
+                            </div>
+                        `;
+                        
+                        outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
+                        outcomeDisplay.style.opacity = '1';
+                        
+                        setTimeout(() => {
+                            // Execute the outcome and show result
+                            executeHogwashOutcome(finalOutcome);
+                            
+                            // Show close button and reset state
+                            document.getElementById('closeBoxBtn').style.display = 'inline-block';
+                            isSlotSpinning = false;
+                            
+                        }, 2000); // Wait 2 seconds to enjoy the reveal
+                        
+                    }, 1000); // Wait 1 second after jackpot display
+                    
+                }, 500); // Wait 0.5 seconds after final reel stops
+                
+            }, 1000); // Wait 1 second between reel 2 and 3
+            
+        }, 800); // Wait 0.8 seconds between reel 1 and 2
+        
+    }, 1000); // Wait 1 second before stopping first reel
 }
 
 function animateSpinningWheel(finalOutcome) {
