@@ -320,174 +320,224 @@
         <div class="modal-content" style="background: linear-gradient(135deg, #2c1810, #8B4513); border: 5px solid #FFD700; max-width: 500px; border-radius: 20px;">
             <h2 style="color: #FFD700; text-align: center; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">🐷💩 GET FUCKED BY THE SLOP, PIG! 💩🐷</h2>
             
-            <!-- Dancing Pig Man Container -->
-            <div class="pig-man-container" style="
+            <!-- Pig Wheel of Fortune Container -->
+            <div class="pig-wheel-container" style="
                 position: relative;
                 width: 400px;
-                height: 350px;
+                height: 400px;
                 margin: 20px auto;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                overflow: hidden;
             ">
-                <!-- The Dancing Pig Man -->
-                <div id="dancingPigMan" class="dancing-pig-man" style="
-                    width: 200px;
-                    height: 280px;
+                <!-- The Spinning Wheel -->
+                <div id="pigWheel" class="pig-wheel" style="
+                    width: 320px;
+                    height: 320px;
+                    border-radius: 50%;
                     position: relative;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
+                    border: 8px solid #8B4513;
+                    box-shadow: 
+                        0 0 30px rgba(0,0,0,0.5),
+                        inset 0 0 20px rgba(255, 215, 0, 0.3);
+                    background: conic-gradient(
+                        #FF6B6B 0deg 51.4deg,
+                        #4ECDC4 51.4deg 102.8deg,
+                        #FFD93D 102.8deg 154.2deg,
+                        #6BCF7F 154.2deg 205.6deg,
+                        #FF8C42 205.6deg 257deg,
+                        #A8E6CF 257deg 308.4deg,
+                        #FF69B4 308.4deg 360deg
+                    );
+                    transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
                 ">
-                    <!-- Pig Man Head -->
-                    <div id="pigHead" class="pig-head" style="
-                        width: 80px;
-                        height: 80px;
-                        background: #FFB6C1;
-                        border-radius: 50%;
-                        border: 4px solid #FF69B4;
-                        position: relative;
-                        margin-bottom: 10px;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    <!-- Wheel Segments with Text -->
+                    <div class="wheel-segment" style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 140px;
+                        height: 2px;
+                        transform-origin: 0 0;
+                        transform: translate(0, -1px) rotate(25.7deg);
                     ">
-                        <!-- Eyes -->
                         <div style="
                             position: absolute;
-                            top: 20px;
-                            left: 15px;
-                            width: 12px;
-                            height: 12px;
-                            background: black;
-                            border-radius: 50%;
-                        "></div>
-                        <div style="
-                            position: absolute;
-                            top: 20px;
-                            right: 15px;
-                            width: 12px;
-                            height: 12px;
-                            background: black;
-                            border-radius: 50%;
-                        "></div>
-                        <!-- Pig Nose -->
-                        <div style="
-                            position: absolute;
-                            bottom: 25px;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            width: 20px;
-                            height: 15px;
-                            background: #FF1493;
-                            border-radius: 50%;
-                            border: 2px solid #8B0000;
-                        ">
-                            <!-- Nostrils -->
-                            <div style="
-                                position: absolute;
-                                top: 4px;
-                                left: 4px;
-                                width: 3px;
-                                height: 3px;
-                                background: black;
-                                border-radius: 50%;
-                            "></div>
-                            <div style="
-                                position: absolute;
-                                top: 4px;
-                                right: 4px;
-                                width: 3px;
-                                height: 3px;
-                                background: black;
-                                border-radius: 50%;
-                            "></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Pig Man Body -->
-                    <div id="pigBody" class="pig-body" style="
-                        width: 100px;
-                        height: 120px;
-                        background: linear-gradient(145deg, #FF69B4, #FF1493);
-                        border-radius: 20px;
-                        border: 4px solid #FFD700;
-                        position: relative;
-                        margin-bottom: 10px;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                    ">
-                        <!-- Arms -->
-                        <div id="leftArm" class="pig-arm" style="
-                            position: absolute;
-                            top: 20px;
-                            left: -25px;
-                            width: 20px;
-                            height: 60px;
-                            background: #FFB6C1;
-                            border-radius: 10px;
-                            border: 2px solid #FF69B4;
-                            transform-origin: top center;
-                        "></div>
-                        <div id="rightArm" class="pig-arm" style="
-                            position: absolute;
-                            top: 20px;
-                            right: -25px;
-                            width: 20px;
-                            height: 60px;
-                            background: #FFB6C1;
-                            border-radius: 10px;
-                            border: 2px solid #FF69B4;
-                            transform-origin: top center;
-                        "></div>
-                        
-                        <!-- Pig Suit Details -->
-                        <div style="
-                            position: absolute;
-                            top: 15px;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            color: #FFD700;
-                            font-size: 1.2em;
+                            left: 80px;
+                            top: -15px;
+                            color: white;
                             font-weight: bold;
+                            font-size: 14px;
                             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                        ">🐷</div>
+                            transform: rotate(-25.7deg);
+                            white-space: nowrap;
+                        ">🍺 DRINKS</div>
                     </div>
                     
-                    <!-- Pig Man Legs -->
-                    <div class="pig-legs" style="
-                        display: flex;
-                        gap: 20px;
+                    <div class="wheel-segment" style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 140px;
+                        height: 2px;
+                        transform-origin: 0 0;
+                        transform: translate(0, -1px) rotate(77.1deg);
                     ">
-                        <div id="leftLeg" class="pig-leg" style="
-                            width: 25px;
-                            height: 50px;
-                            background: #FFB6C1;
-                            border-radius: 12px;
-                            border: 2px solid #FF69B4;
-                            transform-origin: top center;
-                        "></div>
-                        <div id="rightLeg" class="pig-leg" style="
-                            width: 25px;
-                            height: 50px;
-                            background: #FFB6C1;
-                            border-radius: 12px;
-                            border: 2px solid #FF69B4;
-                            transform-origin: top center;
-                        "></div>
+                        <div style="
+                            position: absolute;
+                            left: 80px;
+                            top: -15px;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 14px;
+                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                            transform: rotate(-77.1deg);
+                            white-space: nowrap;
+                        ">🎉 WIN POINTS</div>
                     </div>
+                    
+                    <div class="wheel-segment" style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 140px;
+                        height: 2px;
+                        transform-origin: 0 0;
+                        transform: translate(0, -1px) rotate(128.5deg);
+                    ">
+                        <div style="
+                            position: absolute;
+                            left: 80px;
+                            top: -15px;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 14px;
+                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                            transform: rotate(-128.5deg);
+                            white-space: nowrap;
+                        ">😈 LOSE POINTS</div>
+                    </div>
+                    
+                    <div class="wheel-segment" style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 140px;
+                        height: 2px;
+                        transform-origin: 0 0;
+                        transform: translate(0, -1px) rotate(180deg);
+                    ">
+                        <div style="
+                            position: absolute;
+                            left: 80px;
+                            top: -15px;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 14px;
+                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                            transform: rotate(-180deg);
+                            white-space: nowrap;
+                        ">🍺⚡ GIVE DRINKS</div>
+                    </div>
+                    
+                    <div class="wheel-segment" style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 140px;
+                        height: 2px;
+                        transform-origin: 0 0;
+                        transform: translate(0, -1px) rotate(231.4deg);
+                    ">
+                        <div style="
+                            position: absolute;
+                            left: 80px;
+                            top: -15px;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 14px;
+                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                            transform: rotate(-231.4deg);
+                            white-space: nowrap;
+                        ">⛳ MULLIGAN</div>
+                    </div>
+                    
+                    <div class="wheel-segment" style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 140px;
+                        height: 2px;
+                        transform-origin: 0 0;
+                        transform: translate(0, -1px) rotate(282.8deg);
+                    ">
+                        <div style="
+                            position: absolute;
+                            left: 80px;
+                            top: -15px;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 14px;
+                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                            transform: rotate(-282.8deg);
+                            white-space: nowrap;
+                        ">🔄 REVERSE</div>
+                    </div>
+                    
+                    <div class="wheel-segment" style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 140px;
+                        height: 2px;
+                        transform-origin: 0 0;
+                        transform: translate(0, -1px) rotate(334.2deg);
+                    ">
+                        <div style="
+                            position: absolute;
+                            left: 80px;
+                            top: -15px;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 14px;
+                            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                            transform: rotate(-334.2deg);
+                            white-space: nowrap;
+                        ">💀 DANGER ZONE</div>
+                    </div>
+                    
+                    <!-- Center Hub -->
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 60px;
+                        height: 60px;
+                        background: linear-gradient(145deg, #8B4513, #A0522D);
+                        border-radius: 50%;
+                        transform: translate(-50%, -50%);
+                        border: 4px solid #FFD700;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 24px;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    ">🐷</div>
                 </div>
                 
-                <!-- Explosion Particles Container (hidden initially) -->
-                <div id="explosionContainer" class="explosion-container" style="
+                <!-- Wheel Pointer -->
+                <div id="wheelPointer" class="wheel-pointer" style="
                     position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    pointer-events: none;
+                    top: 50%;
+                    right: 40px;
+                    width: 0;
+                    height: 0;
+                    border-left: 25px solid #FFD700;
+                    border-top: 15px solid transparent;
+                    border-bottom: 15px solid transparent;
+                    transform: translateY(-50%);
                     z-index: 10;
+                    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
                 "></div>
                 
                 <!-- Outcome Display (hidden initially) -->
@@ -558,7 +608,7 @@
             
             <!-- Open Box Button -->
             <div style="text-align: center; margin: 20px 0;">
-                <button id="openBoxBtn" class="hogwash-btn mystery-box-btn" onclick="startDancingPigMan()" style="
+                <button id="openBoxBtn" class="hogwash-btn mystery-box-btn" onclick="spinPigWheel()" style="
                     font-size: 1.5em;
                     padding: 15px 30px;
                     background: linear-gradient(45deg, #FFD700, #FFA500);
@@ -569,7 +619,7 @@
                     transform: scale(1);
                     transition: all 0.3s ease;
                 " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                    🐷💃 MAKE THE PIG MAN DANCE! 💃🐷
+                    🎡🐷 SPIN THE WHEEL OF SLOP! 🐷🎡
                 </button>
             </div>
             

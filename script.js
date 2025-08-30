@@ -3687,9 +3687,35 @@ function darkenColor(color, amount) {
 }
 
 function resetSlotMachine() {
-    console.log('🐷 Resetting dancing pig man state');
+    console.log('🎡 Resetting pig wheel state');
     
-    // Reset dancing pig man elements
+    // Reset pig wheel elements
+    const pigWheel = document.getElementById('pigWheel');
+    const wheelPointer = document.getElementById('wheelPointer');
+    const outcomeDisplay = document.getElementById('outcomeDisplay');
+    
+    // Reset wheel rotation
+    if (pigWheel) {
+        pigWheel.style.transform = 'rotate(0deg)';
+        pigWheel.style.transition = 'none'; // Remove transition for instant reset
+        // Re-add transition after a brief delay
+        setTimeout(() => {
+            pigWheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        }, 50);
+    }
+    
+    // Reset pointer
+    if (wheelPointer) {
+        wheelPointer.style.transform = 'translateY(-50%)';
+    }
+    
+    // Reset outcome display
+    if (outcomeDisplay) {
+        outcomeDisplay.style.opacity = '0';
+        outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
+    }
+    
+    // Also reset legacy elements if they exist (for backwards compatibility)
     const dancingPigMan = document.getElementById('dancingPigMan');
     const pigHead = document.getElementById('pigHead');
     const pigBody = document.getElementById('pigBody');
@@ -3697,19 +3723,22 @@ function resetSlotMachine() {
     const rightArm = document.getElementById('rightArm');
     const leftLeg = document.getElementById('leftLeg');
     const rightLeg = document.getElementById('rightLeg');
-    const outcomeDisplay = document.getElementById('outcomeDisplay');
     const explosionContainer = document.getElementById('explosionContainer');
+    const mysteryBox = document.getElementById('mysteryBox');
+    const boxLid = document.getElementById('boxLid');
+    const confettiContainer = document.getElementById('confettiContainer');
     
-    // Reset all animations and styles
     if (dancingPigMan) {
         dancingPigMan.style.animation = '';
         dancingPigMan.style.transform = '';
         dancingPigMan.style.opacity = '1';
+        dancingPigMan.style.border = '';
     }
     
     if (pigHead) {
         pigHead.style.animation = '';
         pigHead.style.transform = '';
+        pigHead.style.border = '';
     }
     
     if (pigBody) {
@@ -3737,20 +3766,9 @@ function resetSlotMachine() {
         rightLeg.style.transform = '';
     }
     
-    if (outcomeDisplay) {
-        outcomeDisplay.style.opacity = '0';
-        outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
-        outcomeDisplay.style.animation = '';
-    }
-    
     if (explosionContainer) {
         explosionContainer.innerHTML = '';
     }
-    
-    // Also reset legacy mystery box elements if they exist
-    const mysteryBox = document.getElementById('mysteryBox');
-    const boxLid = document.getElementById('boxLid');
-    const confettiContainer = document.getElementById('confettiContainer');
     
     if (mysteryBox) {
         mysteryBox.style.animation = '';
@@ -3782,27 +3800,22 @@ function resetSlotMachine() {
     console.log('🎁 Mystery box reset complete');
 }
 
-function startDancingPigMan() {
-    console.log('🐷💃 startDancingPigMan called!');
+function spinPigWheel() {
+    console.log('🎡 spinPigWheel called!');
     
     if (isSlotSpinning) {
-        console.log('🐷 Pig man is already dancing, ignoring click');
+        console.log('🎡 Wheel is already spinning, ignoring click');
         return;
     }
     
-    const dancingPigMan = document.getElementById('dancingPigMan');
-    console.log('🐷 Looking for dancingPigMan element:', dancingPigMan);
-    
-    if (!dancingPigMan) {
-        console.error('❌ Dancing pig man element not found!');
-        console.log('🔍 Available elements with pig in ID:');
-        const allElements = document.querySelectorAll('[id*="pig"], [id*="Pig"]');
-        allElements.forEach(el => console.log('  -', el.id, el));
+    const pigWheel = document.getElementById('pigWheel');
+    if (!pigWheel) {
+        console.error('❌ Pig wheel element not found!');
         return;
     }
     
     isSlotSpinning = true; // Reuse this flag for animation
-    console.log('🐷💃 Starting dancing pig man animation!');
+    console.log('🎡 Starting pig wheel spin!');
     
     // Hide open button
     const openBtn = document.getElementById('openBoxBtn');
@@ -3813,15 +3826,119 @@ function startDancingPigMan() {
     
     // Calculate final outcome first
     const finalOutcome = calculateHogwashOutcome();
-    console.log('🐷 Calculated final outcome:', finalOutcome);
+    console.log('🎡 Calculated final outcome:', finalOutcome);
     
-    // Start the dancing pig man animation
-    animateDancingPigMan(finalOutcome);
+    // Start the spinning wheel animation
+    animateSpinningWheel(finalOutcome);
+}
+
+// Legacy function for compatibility
+function startDancingPigMan() {
+    spinPigWheel();
 }
 
 // Legacy function for compatibility
 function openMysteryBox() {
     startDancingPigMan();
+}
+
+function animateSpinningWheel(finalOutcome) {
+    console.log('🎡 Starting spinning wheel animation for:', finalOutcome.type);
+    
+    const pigWheel = document.getElementById('pigWheel');
+    const wheelPointer = document.getElementById('wheelPointer');
+    const outcomeDisplay = document.getElementById('outcomeDisplay');
+    const outcomeContent = document.getElementById('outcomeContent');
+    
+    // Define wheel segments (7 segments, each 51.43 degrees)
+    const wheelSegments = [
+        { type: 'drink', angle: 25.7, label: '🍺 TAKE DRINKS', color: '#FF6B6B' },
+        { type: 'win', angle: 77.1, label: '🎉 WIN POINTS', color: '#4ECDC4' },
+        { type: 'lose', angle: 128.5, label: '😈 LOSE POINTS', color: '#FFD93D' },
+        { type: 'give_drinks', angle: 180, label: '🍺⚡ DRINK POWER', color: '#6BCF7F' },
+        { type: 'mulligan', angle: 231.4, label: '⛳ MULLIGAN', color: '#FF8C42' },
+        { type: 'reverse_mulligan', angle: 282.8, label: '🔄 REVERSE MULLIGAN', color: '#A8E6CF' },
+        { type: 'danger', angle: 334.2, label: '💀 DANGER ZONE', color: '#FF69B4' }
+    ];
+    
+    // Find target segment
+    const targetSegment = wheelSegments.find(segment => segment.type === finalOutcome.type) || wheelSegments[0];
+    console.log('🎡 Target segment:', targetSegment);
+    
+    // Calculate spin amount
+    const baseSpins = 5 + Math.random() * 3; // 5-8 full rotations
+    const finalAngle = 360 - targetSegment.angle; // Point to the target (pointer is at right)
+    const totalRotation = (baseSpins * 360) + finalAngle;
+    
+    console.log('🎡 Spinning wheel:', baseSpins.toFixed(1), 'rotations, final angle:', finalAngle, 'total:', totalRotation);
+    
+    // Apply the spin with CSS transition
+    pigWheel.style.transform = `rotate(${totalRotation}deg)`;
+    
+    // Add clicking sound effects during spin
+    let clickCount = 0;
+    const maxClicks = Math.floor(baseSpins * 7); // Approximate clicks based on segments
+    const clickInterval = setInterval(() => {
+        // Play click sound
+        if (slotBeepAudio && slotBeepAudio.play) {
+            try {
+                const clickClone = slotBeepAudio.cloneNode();
+                clickClone.volume = 0.3;
+                clickClone.playbackRate = 1.5 + Math.random() * 0.5; // Vary pitch
+                clickClone.play();
+            } catch (error) {
+                // Ignore audio errors
+            }
+        }
+        
+        // Make pointer wiggle slightly
+        const wiggle = Math.sin(clickCount * 0.5) * 2;
+        wheelPointer.style.transform = `translateY(-50%) rotate(${wiggle}deg)`;
+        
+        clickCount++;
+        if (clickCount >= maxClicks) {
+            clearInterval(clickInterval);
+            wheelPointer.style.transform = 'translateY(-50%)'; // Reset pointer
+        }
+    }, 100 + Math.random() * 50); // Slightly random timing
+    
+    // Wait for spin to complete, then show result
+    setTimeout(() => {
+        console.log('🎡 Wheel spin completed!');
+        
+        // Stop music
+        stopHogwashMusic();
+        
+        // Show dramatic outcome reveal
+        outcomeContent.innerHTML = `
+            <div style="
+                background: ${targetSegment.color}; 
+                padding: 20px; 
+                border-radius: 15px; 
+                border: 4px solid #FFD700;
+                box-shadow: 0 0 30px ${targetSegment.color};
+                animation: pulse 1s infinite;
+            ">
+                <div style="font-size: 1.5em; margin-bottom: 10px;">🎡 WHEEL RESULT! 🎡</div>
+                <div style="font-size: 1.8em;">${targetSegment.label}</div>
+            </div>
+        `;
+        
+        // Dramatic outcome reveal
+        outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
+        outcomeDisplay.style.opacity = '1';
+        
+        setTimeout(() => {
+            // Execute the outcome and show result
+            executeHogwashOutcome(finalOutcome);
+            
+            // Show close button and reset state
+            document.getElementById('closeBoxBtn').style.display = 'inline-block';
+            isSlotSpinning = false;
+            
+        }, 2000); // Wait 2 seconds to enjoy the reveal
+        
+    }, 4000); // Wait for 4-second CSS transition to complete
 }
 
 function animateMysteryBox(finalOutcome) {
