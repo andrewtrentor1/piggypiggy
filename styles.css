@@ -39,6 +39,133 @@ body {
     100% { transform: translateY(-100px) scale(1); opacity: 0; }
 }
 
+/* Dancing Pig Man Animations */
+@keyframes pigManWaltz {
+    0%, 100% { transform: rotate(-5deg) scale(1); }
+    50% { transform: rotate(5deg) scale(1.05); }
+}
+
+@keyframes pigManBounce {
+    0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+    25% { transform: translateY(-20px) rotate(-10deg) scale(1.1); }
+    50% { transform: translateY(-30px) rotate(0deg) scale(1.15); }
+    75% { transform: translateY(-20px) rotate(10deg) scale(1.1); }
+}
+
+@keyframes pigManBreakdance {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(1.2) translateX(20px); }
+    50% { transform: rotate(180deg) scale(1.3) translateY(-10px); }
+    75% { transform: rotate(270deg) scale(1.2) translateX(-20px); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes pigManSeizure {
+    0% { transform: rotate(0deg) scale(1) translateX(0); }
+    10% { transform: rotate(45deg) scale(1.3) translateX(-15px); }
+    20% { transform: rotate(-30deg) scale(0.8) translateX(20px); }
+    30% { transform: rotate(60deg) scale(1.4) translateX(-10px); }
+    40% { transform: rotate(-45deg) scale(0.9) translateX(25px); }
+    50% { transform: rotate(90deg) scale(1.5) translateX(-20px); }
+    60% { transform: rotate(-60deg) scale(0.7) translateX(15px); }
+    70% { transform: rotate(120deg) scale(1.2) translateX(-25px); }
+    80% { transform: rotate(-90deg) scale(1.1) translateX(30px); }
+    90% { transform: rotate(180deg) scale(1.6) translateX(-15px); }
+    100% { transform: rotate(0deg) scale(1) translateX(0); }
+}
+
+@keyframes armWave {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-45deg); }
+    50% { transform: rotate(45deg); }
+    75% { transform: rotate(-30deg); }
+}
+
+@keyframes armFlail {
+    0% { transform: rotate(0deg); }
+    10% { transform: rotate(90deg); }
+    20% { transform: rotate(-90deg); }
+    30% { transform: rotate(120deg); }
+    40% { transform: rotate(-120deg); }
+    50% { transform: rotate(180deg); }
+    60% { transform: rotate(-60deg); }
+    70% { transform: rotate(150deg); }
+    80% { transform: rotate(-150deg); }
+    90% { transform: rotate(270deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes legKick {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(30deg); }
+    50% { transform: rotate(-15deg); }
+    75% { transform: rotate(45deg); }
+}
+
+@keyframes legSpasm {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(60deg); }
+    40% { transform: rotate(-45deg); }
+    60% { transform: rotate(90deg); }
+    80% { transform: rotate(-30deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes headBob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+@keyframes headSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pigSuitTear {
+    0% { border-color: #FFD700; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    25% { border-color: #FF6B6B; box-shadow: 0 5px 15px rgba(255,0,0,0.5); }
+    50% { border-color: #FF3838; box-shadow: 0 5px 15px rgba(255,0,0,0.7); }
+    75% { border-color: #8B0000; box-shadow: 0 5px 15px rgba(139,0,0,0.9); }
+    100% { border-color: #000; box-shadow: 0 5px 15px rgba(0,0,0,1); }
+}
+
+@keyframes explosionParticle {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0);
+        opacity: 0;
+    }
+}
+
+@keyframes explosionShockwave {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(10);
+        opacity: 0;
+    }
+}
+
+@keyframes outcomeReveal {
+    0% {
+        transform: translate(-50%, -50%) scale(0) rotate(180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2) rotate(0deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
 /* Layout */
 .container {
     position: relative;

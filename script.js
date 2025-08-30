@@ -3687,12 +3687,69 @@ function darkenColor(color, amount) {
 }
 
 function resetSlotMachine() {
-    console.log('🎁 Resetting mystery box state');
+    console.log('🐷 Resetting dancing pig man state');
     
-    // Reset mystery box elements
+    // Reset dancing pig man elements
+    const dancingPigMan = document.getElementById('dancingPigMan');
+    const pigHead = document.getElementById('pigHead');
+    const pigBody = document.getElementById('pigBody');
+    const leftArm = document.getElementById('leftArm');
+    const rightArm = document.getElementById('rightArm');
+    const leftLeg = document.getElementById('leftLeg');
+    const rightLeg = document.getElementById('rightLeg');
+    const outcomeDisplay = document.getElementById('outcomeDisplay');
+    const explosionContainer = document.getElementById('explosionContainer');
+    
+    // Reset all animations and styles
+    if (dancingPigMan) {
+        dancingPigMan.style.animation = '';
+        dancingPigMan.style.transform = '';
+        dancingPigMan.style.opacity = '1';
+    }
+    
+    if (pigHead) {
+        pigHead.style.animation = '';
+        pigHead.style.transform = '';
+    }
+    
+    if (pigBody) {
+        pigBody.style.animation = '';
+        pigBody.style.transform = '';
+    }
+    
+    if (leftArm) {
+        leftArm.style.animation = '';
+        leftArm.style.transform = '';
+    }
+    
+    if (rightArm) {
+        rightArm.style.animation = '';
+        rightArm.style.transform = '';
+    }
+    
+    if (leftLeg) {
+        leftLeg.style.animation = '';
+        leftLeg.style.transform = '';
+    }
+    
+    if (rightLeg) {
+        rightLeg.style.animation = '';
+        rightLeg.style.transform = '';
+    }
+    
+    if (outcomeDisplay) {
+        outcomeDisplay.style.opacity = '0';
+        outcomeDisplay.style.transform = 'translate(-50%, -50%) scale(0)';
+        outcomeDisplay.style.animation = '';
+    }
+    
+    if (explosionContainer) {
+        explosionContainer.innerHTML = '';
+    }
+    
+    // Also reset legacy mystery box elements if they exist
     const mysteryBox = document.getElementById('mysteryBox');
     const boxLid = document.getElementById('boxLid');
-    const outcomeDisplay = document.getElementById('outcomeDisplay');
     const confettiContainer = document.getElementById('confettiContainer');
     
     if (mysteryBox) {
@@ -3701,11 +3758,6 @@ function resetSlotMachine() {
     
     if (boxLid) {
         boxLid.style.transform = '';
-    }
-    
-    if (outcomeDisplay) {
-        outcomeDisplay.style.opacity = '0';
-        outcomeDisplay.style.transform = 'scale(0)';
     }
     
     if (confettiContainer) {
@@ -3730,22 +3782,22 @@ function resetSlotMachine() {
     console.log('🎁 Mystery box reset complete');
 }
 
-function openMysteryBox() {
-    console.log('🎁 openMysteryBox called!');
+function startDancingPigMan() {
+    console.log('🐷💃 startDancingPigMan called!');
     
     if (isSlotSpinning) {
-        console.log('🎁 Box is already opening, ignoring click');
+        console.log('🐷 Pig man is already dancing, ignoring click');
         return;
     }
     
-    const mysteryBox = document.getElementById('mysteryBox');
-    if (!mysteryBox) {
-        console.error('❌ Mystery box element not found!');
+    const dancingPigMan = document.getElementById('dancingPigMan');
+    if (!dancingPigMan) {
+        console.error('❌ Dancing pig man element not found!');
         return;
     }
     
-    isSlotSpinning = true; // Reuse this flag for box animation
-    console.log('🎁 Starting mystery box animation!');
+    isSlotSpinning = true; // Reuse this flag for animation
+    console.log('🐷💃 Starting dancing pig man animation!');
     
     // Hide open button
     const openBtn = document.getElementById('openBoxBtn');
@@ -3756,10 +3808,15 @@ function openMysteryBox() {
     
     // Calculate final outcome first
     const finalOutcome = calculateHogwashOutcome();
-    console.log('🎁 Calculated final outcome:', finalOutcome);
+    console.log('🐷 Calculated final outcome:', finalOutcome);
     
-    // Start the mystery box animation
-    animateMysteryBox(finalOutcome);
+    // Start the dancing pig man animation
+    animateDancingPigMan(finalOutcome);
+}
+
+// Legacy function for compatibility
+function openMysteryBox() {
+    startDancingPigMan();
 }
 
 function animateMysteryBox(finalOutcome) {
@@ -3833,6 +3890,318 @@ function animateMysteryBox(finalOutcome) {
         }, 1000); // Wait for bouncing to finish
         
     }, 2000); // Wait for shaking to finish
+}
+
+function animateDancingPigMan(finalOutcome) {
+    console.log('🐷💃 Starting dancing pig man animation for:', finalOutcome.type);
+    
+    const dancingPigMan = document.getElementById('dancingPigMan');
+    const pigHead = document.getElementById('pigHead');
+    const pigBody = document.getElementById('pigBody');
+    const leftArm = document.getElementById('leftArm');
+    const rightArm = document.getElementById('rightArm');
+    const leftLeg = document.getElementById('leftLeg');
+    const rightLeg = document.getElementById('rightLeg');
+    const outcomeDisplay = document.getElementById('outcomeDisplay');
+    const outcomeContent = document.getElementById('outcomeContent');
+    const explosionContainer = document.getElementById('explosionContainer');
+    
+    // Phase 1: Gentle Waltz (2 seconds)
+    console.log('🐷 Phase 1: Gentle waltz begins...');
+    dancingPigMan.style.animation = 'pigManWaltz 1s ease-in-out infinite';
+    pigHead.style.animation = 'headBob 1s ease-in-out infinite';
+    leftArm.style.animation = 'armWave 2s ease-in-out infinite';
+    rightArm.style.animation = 'armWave 2s ease-in-out infinite 0.5s';
+    leftLeg.style.animation = 'legKick 1.5s ease-in-out infinite';
+    rightLeg.style.animation = 'legKick 1.5s ease-in-out infinite 0.3s';
+    
+    // Gentle beep sounds for waltz
+    let waltzBeepCount = 0;
+    const waltzBeepInterval = setInterval(() => {
+        if (slotBeepAudio && slotBeepAudio.play) {
+            try {
+                const beepClone = slotBeepAudio.cloneNode();
+                beepClone.volume = 0.3; // Gentle volume
+                beepClone.playbackRate = 0.8; // Slower, more elegant
+                beepClone.play();
+            } catch (error) {
+                // Ignore audio errors
+            }
+        }
+        waltzBeepCount++;
+        if (waltzBeepCount >= 4) { // 4 gentle beeps
+            clearInterval(waltzBeepInterval);
+        }
+    }, 500);
+    
+    setTimeout(() => {
+        // Phase 2: Energetic Bouncing (2 seconds)
+        console.log('🐷 Phase 2: Getting more energetic...');
+        dancingPigMan.style.animation = 'pigManBounce 0.8s ease-in-out infinite';
+        pigHead.style.animation = 'headBob 0.5s ease-in-out infinite';
+        leftArm.style.animation = 'armWave 0.6s ease-in-out infinite';
+        rightArm.style.animation = 'armWave 0.6s ease-in-out infinite 0.2s';
+        leftLeg.style.animation = 'legKick 0.7s ease-in-out infinite';
+        rightLeg.style.animation = 'legKick 0.7s ease-in-out infinite 0.1s';
+        
+        // Faster beep sounds for bouncing
+        let bounceBeepCount = 0;
+        const bounceBeepInterval = setInterval(() => {
+            if (slotBeepAudio && slotBeepAudio.play) {
+                try {
+                    const beepClone = slotBeepAudio.cloneNode();
+                    beepClone.volume = 0.5; // Medium volume
+                    beepClone.playbackRate = 1.2; // Faster tempo
+                    beepClone.play();
+                } catch (error) {
+                    // Ignore audio errors
+                }
+            }
+            bounceBeepCount++;
+            if (bounceBeepCount >= 6) { // 6 bouncy beeps
+                clearInterval(bounceBeepInterval);
+            }
+        }, 300);
+        
+        setTimeout(() => {
+            // Phase 3: Full Breakdancing (2 seconds)
+            console.log('🐷 Phase 3: BREAKDANCING MODE!');
+            dancingPigMan.style.animation = 'pigManBreakdance 0.5s ease-in-out infinite';
+            pigHead.style.animation = 'headSpin 0.8s linear infinite';
+            leftArm.style.animation = 'armFlail 0.3s ease-in-out infinite';
+            rightArm.style.animation = 'armFlail 0.3s ease-in-out infinite 0.1s';
+            leftLeg.style.animation = 'legSpasm 0.4s ease-in-out infinite';
+            rightLeg.style.animation = 'legSpasm 0.4s ease-in-out infinite 0.2s';
+            
+            // Rapid beep sounds for breakdancing
+            let breakdanceBeepCount = 0;
+            const breakdanceBeepInterval = setInterval(() => {
+                if (slotBeepAudio && slotBeepAudio.play) {
+                    try {
+                        const beepClone = slotBeepAudio.cloneNode();
+                        beepClone.volume = 0.7; // High volume
+                        beepClone.playbackRate = 1.5; // Much faster
+                        beepClone.play();
+                    } catch (error) {
+                        // Ignore audio errors
+                    }
+                }
+                breakdanceBeepCount++;
+                if (breakdanceBeepCount >= 10) { // 10 rapid beeps
+                    clearInterval(breakdanceBeepInterval);
+                }
+            }, 200);
+            
+            setTimeout(() => {
+                // Phase 4: SEIZURE MODE - Pig suit starts falling apart (2 seconds)
+                console.log('🐷 Phase 4: SEIZURE MODE - SUIT FALLING APART!');
+                dancingPigMan.style.animation = 'pigManSeizure 0.2s ease-in-out infinite';
+                pigHead.style.animation = 'headSpin 0.3s linear infinite';
+                pigBody.style.animation = 'pigSuitTear 0.5s ease-in-out infinite';
+                leftArm.style.animation = 'armFlail 0.15s ease-in-out infinite';
+                rightArm.style.animation = 'armFlail 0.15s ease-in-out infinite 0.05s';
+                leftLeg.style.animation = 'legSpasm 0.2s ease-in-out infinite';
+                rightLeg.style.animation = 'legSpasm 0.2s ease-in-out infinite 0.1s';
+                
+                // INSANE beep sounds for seizure mode
+                let seizureBeepCount = 0;
+                const seizureBeepInterval = setInterval(() => {
+                    if (slotBeepAudio && slotBeepAudio.play) {
+                        try {
+                            const beepClone = slotBeepAudio.cloneNode();
+                            beepClone.volume = 0.9; // MAXIMUM volume
+                            beepClone.playbackRate = 2.0 + Math.random(); // INSANE speed variation
+                            beepClone.play();
+                        } catch (error) {
+                            // Ignore audio errors
+                        }
+                    }
+                    seizureBeepCount++;
+                    if (seizureBeepCount >= 15) { // 15 INSANE beeps
+                        clearInterval(seizureBeepInterval);
+                    }
+                }, 100); // SUPER FAST
+                
+                setTimeout(() => {
+                    // Phase 5: EXPLOSION! (1 second)
+                    console.log('🐷💥 Phase 5: EXPLOSION TIME!');
+                    
+                    // Hide the pig man
+                    dancingPigMan.style.opacity = '0';
+                    dancingPigMan.style.animation = '';
+                    
+                    // Create massive explosion
+                    createPigManExplosion(explosionContainer, finalOutcome);
+                    
+                    setTimeout(() => {
+                        // Phase 6: Outcome reveal from the ashes (2 seconds)
+                        console.log('🐷✨ Phase 6: Outcome reveals from the ashes!');
+                        
+                        // Set outcome content with dramatic styling
+                        outcomeContent.innerHTML = `
+                            <div style="
+                                background: ${finalOutcome.color}; 
+                                padding: 20px; 
+                                border-radius: 15px; 
+                                border: 4px solid #FFD700;
+                                box-shadow: 0 0 30px ${finalOutcome.color};
+                                animation: pulse 1s infinite;
+                            ">
+                                <div style="font-size: 1.5em; margin-bottom: 10px;">💥 EXPLOSION RESULT! 💥</div>
+                                <div style="font-size: 1.8em;">${finalOutcome.label}</div>
+                            </div>
+                        `;
+                        
+                        // Dramatic outcome reveal
+                        outcomeDisplay.style.animation = 'outcomeReveal 1s ease-out forwards';
+                        
+                        setTimeout(() => {
+                            // Phase 7: Stop music and execute outcome
+                            stopHogwashMusic();
+                            
+                            // Execute the outcome and show result
+                            executeHogwashOutcome(finalOutcome);
+                            
+                            // Show close button and reset state
+                            document.getElementById('closeBoxBtn').style.display = 'inline-block';
+                            isSlotSpinning = false;
+                            
+                        }, 2000); // Wait 2 seconds to enjoy the reveal
+                        
+                    }, 1000); // Wait for explosion to finish
+                    
+                }, 2000); // Wait for seizure mode
+                
+            }, 2000); // Wait for breakdancing
+            
+        }, 2000); // Wait for bouncing
+        
+    }, 2000); // Wait for waltz
+}
+
+function createPigManExplosion(container, finalOutcome) {
+    console.log('💥 Creating pig man explosion!');
+    
+    // Clear any existing particles
+    container.innerHTML = '';
+    
+    // Create shockwave effect
+    const shockwave = document.createElement('div');
+    shockwave.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 50px;
+        height: 50px;
+        border: 3px solid #FFD700;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: explosionShockwave 1s ease-out forwards;
+    `;
+    container.appendChild(shockwave);
+    
+    // Pig-themed explosion particles
+    const pigParticles = ['🐷', '🥓', '🐽', '💨', '🌪️', '💥', '✨', '🎆'];
+    const colors = ['#FFD700', '#FF6B6B', '#FF1493', '#FFB6C1', '#8B4513', '#FFA500'];
+    
+    // Create 30 explosion particles
+    for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        const isEmoji = Math.random() > 0.3; // 70% chance for emoji
+        
+        if (isEmoji) {
+            particle.textContent = pigParticles[Math.floor(Math.random() * pigParticles.length)];
+            particle.style.fontSize = (15 + Math.random() * 20) + 'px';
+        } else {
+            particle.style.width = (8 + Math.random() * 12) + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.borderRadius = '50%';
+        }
+        
+        // Random explosion direction
+        const angle = (Math.PI * 2 * i) / 30 + (Math.random() - 0.5) * 0.5;
+        const distance = 100 + Math.random() * 150;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+        
+        particle.style.cssText += `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: ${10 + i};
+            --dx: ${dx}px;
+            --dy: ${dy}px;
+            animation: explosionParticle ${1 + Math.random()}s ease-out forwards;
+            animation-delay: ${Math.random() * 0.3}s;
+        `;
+        
+        container.appendChild(particle);
+    }
+    
+    // Add some extra dramatic effects based on outcome
+    if (finalOutcome.type === 'danger') {
+        // Extra dramatic explosion for danger zone
+        for (let i = 0; i < 10; i++) {
+            const skull = document.createElement('div');
+            skull.textContent = '💀';
+            skull.style.fontSize = '25px';
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 80 + Math.random() * 100;
+            const dx = Math.cos(angle) * distance;
+            const dy = Math.sin(angle) * distance;
+            
+            skull.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                z-index: 20;
+                --dx: ${dx}px;
+                --dy: ${dy}px;
+                animation: explosionParticle 1.5s ease-out forwards;
+                animation-delay: ${0.2 + Math.random() * 0.3}s;
+            `;
+            
+            container.appendChild(skull);
+        }
+    } else if (finalOutcome.type === 'win') {
+        // Golden explosion for wins
+        for (let i = 0; i < 8; i++) {
+            const gold = document.createElement('div');
+            gold.textContent = '🌟';
+            gold.style.fontSize = '30px';
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 60 + Math.random() * 80;
+            const dx = Math.cos(angle) * distance;
+            const dy = Math.sin(angle) * distance;
+            
+            gold.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                z-index: 20;
+                --dx: ${dx}px;
+                --dy: ${dy}px;
+                animation: explosionParticle 1.2s ease-out forwards;
+                animation-delay: ${0.1 + Math.random() * 0.2}s;
+            `;
+            
+            container.appendChild(gold);
+        }
+    }
+    
+    // Clean up explosion after animation
+    setTimeout(() => {
+        container.innerHTML = '';
+    }, 3000);
 }
 
 function createConfetti(container) {
