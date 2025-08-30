@@ -3784,7 +3784,6 @@ function resetSlotMachine() {
 
 function startDancingPigMan() {
     console.log('🐷💃 startDancingPigMan called!');
-    alert('🐷 Dancing pig man function called!'); // Debug alert
     
     if (isSlotSpinning) {
         console.log('🐷 Pig man is already dancing, ignoring click');
@@ -3799,7 +3798,6 @@ function startDancingPigMan() {
         console.log('🔍 Available elements with pig in ID:');
         const allElements = document.querySelectorAll('[id*="pig"], [id*="Pig"]');
         allElements.forEach(el => console.log('  -', el.id, el));
-        alert('❌ Dancing pig man element not found! Check console for details.');
         return;
     }
     
@@ -3913,14 +3911,16 @@ function animateDancingPigMan(finalOutcome) {
     const outcomeContent = document.getElementById('outcomeContent');
     const explosionContainer = document.getElementById('explosionContainer');
     
-    // Phase 1: Gentle Waltz (2 seconds)
+    // Phase 1: Gentle Waltz (2 seconds) - SLOWED DOWN FOR VISIBILITY
     console.log('🐷 Phase 1: Gentle waltz begins...');
-    dancingPigMan.style.animation = 'pigManWaltz 1s ease-in-out infinite';
-    pigHead.style.animation = 'headBob 1s ease-in-out infinite';
-    leftArm.style.animation = 'armWave 2s ease-in-out infinite';
-    rightArm.style.animation = 'armWave 2s ease-in-out infinite 0.5s';
-    leftLeg.style.animation = 'legKick 1.5s ease-in-out infinite';
-    rightLeg.style.animation = 'legKick 1.5s ease-in-out infinite 0.3s';
+    dancingPigMan.style.animation = 'pigManWaltz 2s ease-in-out infinite';
+    dancingPigMan.style.border = '3px solid lime'; // DEBUG: Green border
+    pigHead.style.animation = 'headBob 2s ease-in-out infinite';
+    pigHead.style.border = '2px solid red'; // DEBUG: Red border
+    leftArm.style.animation = 'armWave 3s ease-in-out infinite';
+    rightArm.style.animation = 'armWave 3s ease-in-out infinite 0.5s';
+    leftLeg.style.animation = 'legKick 2.5s ease-in-out infinite';
+    rightLeg.style.animation = 'legKick 2.5s ease-in-out infinite 0.3s';
     
     // Gentle beep sounds for waltz
     let waltzBeepCount = 0;
@@ -3942,14 +3942,15 @@ function animateDancingPigMan(finalOutcome) {
     }, 500);
     
     setTimeout(() => {
-        // Phase 2: Energetic Bouncing (2 seconds)
+        // Phase 2: Energetic Bouncing (5 seconds) - SLOWED DOWN FOR VISIBILITY
         console.log('🐷 Phase 2: Getting more energetic...');
-        dancingPigMan.style.animation = 'pigManBounce 0.8s ease-in-out infinite';
-        pigHead.style.animation = 'headBob 0.5s ease-in-out infinite';
-        leftArm.style.animation = 'armWave 0.6s ease-in-out infinite';
-        rightArm.style.animation = 'armWave 0.6s ease-in-out infinite 0.2s';
-        leftLeg.style.animation = 'legKick 0.7s ease-in-out infinite';
-        rightLeg.style.animation = 'legKick 0.7s ease-in-out infinite 0.1s';
+        dancingPigMan.style.animation = 'pigManBounce 1.5s ease-in-out infinite';
+        dancingPigMan.style.border = '3px solid yellow'; // DEBUG: Yellow border
+        pigHead.style.animation = 'headBob 1s ease-in-out infinite';
+        leftArm.style.animation = 'armWave 1.2s ease-in-out infinite';
+        rightArm.style.animation = 'armWave 1.2s ease-in-out infinite 0.2s';
+        leftLeg.style.animation = 'legKick 1.4s ease-in-out infinite';
+        rightLeg.style.animation = 'legKick 1.4s ease-in-out infinite 0.1s';
         
         // Faster beep sounds for bouncing
         let bounceBeepCount = 0;
@@ -4083,7 +4084,7 @@ function animateDancingPigMan(finalOutcome) {
             
         }, 2000); // Wait for bouncing
         
-    }, 2000); // Wait for waltz
+    }, 5000); // Wait 5 seconds for waltz
 }
 
 function createPigManExplosion(container, finalOutcome) {
