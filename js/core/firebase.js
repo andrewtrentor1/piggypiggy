@@ -248,13 +248,13 @@ function savePlayers() {
         });
 }
 
-// Test Firebase connection
-function testFirebaseConnection() {
+// Test Firebase connection (silent by default, pass showAlert=true for alerts)
+function testFirebaseConnection(showAlert = false) {
     console.log('🔥 Testing Firebase connection...');
     
     if (!window.firebaseDB) {
         console.error('❌ Firebase database not available!');
-        alert('❌ Firebase not initialized! Check firebase-config.js');
+        if (showAlert) alert('❌ Firebase not initialized! Check firebase-config.js');
         return;
     }
     
@@ -274,20 +274,21 @@ function testFirebaseConnection() {
                 .then((snapshot) => {
                     if (snapshot.exists()) {
                         console.log('✅ Firebase read test successful!', snapshot.val());
-                        alert('✅ Firebase connection working perfectly!');
+                        console.log('✅ Firebase connection working perfectly!');
+                        if (showAlert) alert('✅ Firebase connection working perfectly!');
                     } else {
                         console.error('❌ Firebase read test failed - no data');
-                        alert('❌ Firebase read test failed');
+                        if (showAlert) alert('❌ Firebase read test failed');
                     }
                 })
                 .catch((error) => {
                     console.error('❌ Firebase read test error:', error);
-                    alert('❌ Firebase read test failed: ' + error.message);
+                    if (showAlert) alert('❌ Firebase read test failed: ' + error.message);
                 });
         })
         .catch((error) => {
             console.error('❌ Firebase write test error:', error);
-            alert('❌ Firebase write test failed: ' + error.message);
+            if (showAlert) alert('❌ Firebase write test failed: ' + error.message);
         });
 }
 

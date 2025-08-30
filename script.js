@@ -10,8 +10,7 @@
 // Initialize Firebase when page loads
 setTimeout(() => {
     initializeFirebase();
-    // Test connection after initialization
-    setTimeout(testFirebaseConnection, 2000);
+    // Firebase test connection is available via window.testFirebaseConnection() for debugging
     // Initialize Alex's drink system after Firebase is ready
     setTimeout(() => {
         initializeAlexDrinkSystem();
