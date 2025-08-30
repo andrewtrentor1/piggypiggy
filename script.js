@@ -3850,27 +3850,37 @@ function animateSpinningWheel(finalOutcome) {
     const outcomeDisplay = document.getElementById('outcomeDisplay');
     const outcomeContent = document.getElementById('outcomeContent');
     
-    // Define wheel segments (7 segments, each 51.43 degrees)
+    // Define wheel segments - angles match the CENTER of each segment
+    // Each segment is 360/7 = 51.43 degrees wide
+    const segmentWidth = 360 / 7;
     const wheelSegments = [
-        { type: 'drink', angle: 25.7, label: '🍺 TAKE DRINKS', color: '#FF6B6B' },
-        { type: 'win', angle: 77.1, label: '🎉 WIN POINTS', color: '#4ECDC4' },
-        { type: 'lose', angle: 128.5, label: '😈 LOSE POINTS', color: '#FFD93D' },
-        { type: 'give_drinks', angle: 180, label: '🍺⚡ DRINK POWER', color: '#6BCF7F' },
-        { type: 'mulligan', angle: 231.4, label: '⛳ MULLIGAN', color: '#FF8C42' },
-        { type: 'reverse_mulligan', angle: 282.8, label: '🔄 REVERSE MULLIGAN', color: '#A8E6CF' },
-        { type: 'danger', angle: 334.2, label: '💀 DANGER ZONE', color: '#FF69B4' }
+        { type: 'drink', angle: 0 * segmentWidth + segmentWidth/2, label: '🍺 TAKE DRINKS', color: '#FF6B6B' },
+        { type: 'win', angle: 1 * segmentWidth + segmentWidth/2, label: '🎉 WIN POINTS', color: '#4ECDC4' },
+        { type: 'lose', angle: 2 * segmentWidth + segmentWidth/2, label: '😈 LOSE POINTS', color: '#FFD93D' },
+        { type: 'give_drinks', angle: 3 * segmentWidth + segmentWidth/2, label: '🍺⚡ DRINK POWER', color: '#6BCF7F' },
+        { type: 'mulligan', angle: 4 * segmentWidth + segmentWidth/2, label: '⛳ MULLIGAN', color: '#FF8C42' },
+        { type: 'reverse_mulligan', angle: 5 * segmentWidth + segmentWidth/2, label: '🔄 REVERSE MULLIGAN', color: '#A8E6CF' },
+        { type: 'danger', angle: 6 * segmentWidth + segmentWidth/2, label: '💀 DANGER ZONE', color: '#FF69B4' }
     ];
     
     // Find target segment
     const targetSegment = wheelSegments.find(segment => segment.type === finalOutcome.type) || wheelSegments[0];
     console.log('🎡 Target segment:', targetSegment);
     
-    // Calculate spin amount
+    // Calculate spin amount - need to account for pointer position
     const baseSpins = 5 + Math.random() * 3; // 5-8 full rotations
-    const finalAngle = 360 - targetSegment.angle; // Point to the target (pointer is at right)
+    
+    // The pointer is at 0 degrees (3 o'clock position)
+    // We need to rotate the wheel so the target segment is at the pointer
+    // Since we're rotating the wheel (not the pointer), we need to bring the segment TO the pointer
+    const targetAngleFromPointer = targetSegment.angle;
+    const finalAngle = 360 - targetAngleFromPointer; // Rotate wheel so segment aligns with pointer
     const totalRotation = (baseSpins * 360) + finalAngle;
     
-    console.log('🎡 Spinning wheel:', baseSpins.toFixed(1), 'rotations, final angle:', finalAngle, 'total:', totalRotation);
+    console.log('🎡 Target segment angle:', targetSegment.angle, 'degrees');
+    console.log('🎡 Final angle needed:', finalAngle, 'degrees'); 
+    console.log('🎡 Total rotation:', totalRotation, 'degrees');
+    console.log('🎡 Base spins:', baseSpins.toFixed(1));
     
     // Apply the spin with CSS transition
     pigWheel.style.transform = `rotate(${totalRotation}deg)`;
@@ -3905,6 +3915,8 @@ function animateSpinningWheel(finalOutcome) {
     // Wait for spin to complete, then show result
     setTimeout(() => {
         console.log('🎡 Wheel spin completed!');
+        console.log('🎡 Final wheel rotation:', totalRotation % 360, 'degrees');
+        console.log('🎡 Should be pointing at:', targetSegment.type, 'at angle', targetSegment.angle);
         
         // Stop music
         stopHogwashMusic();
