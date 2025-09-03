@@ -1391,23 +1391,94 @@ function clearBypassLogin() {
 // Make it available globally for console debugging
 window.clearBypassLogin = clearBypassLogin;
 
-// Jukebox functionality placeholder
+// Jukebox functionality with audio playback
+let currentAudio = null;
+let isPlaying = false;
+
 function playJukeboxMusic() {
-    console.log('🎵 Jukebox button clicked! Ready for MP3 integration.');
+    console.log('🎵 Jukebox button clicked! Playing Adele - Hello');
     
-    // Show a temporary message until MP3 is uploaded
+    try {
+        // Stop any currently playing audio
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
+        
+        // Create new audio instance
+        currentAudio = new Audio('Adele - Hello.mp3');
+        
+        // Set volume to a reasonable level
+        currentAudio.volume = 0.7;
+        
+        // Play the audio
+        currentAudio.play().then(() => {
+            isPlaying = true;
+            console.log('🎵 Audio started playing successfully');
+            showJukeboxModal();
+        }).catch((error) => {
+            console.error('❌ Audio playback failed:', error);
+            showJukeboxErrorModal();
+        });
+        
+        // Handle when audio ends
+        currentAudio.addEventListener('ended', () => {
+            isPlaying = false;
+            console.log('🎵 Audio playback completed');
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creating audio:', error);
+        showJukeboxErrorModal();
+    }
+}
+
+function showJukeboxModal() {
     const jukeboxModal = document.createElement('div');
+    jukeboxModal.id = 'jukeboxModal';
     jukeboxModal.className = 'modal';
     jukeboxModal.style.display = 'flex';
     jukeboxModal.innerHTML = `
-        <div class="modal-content" style="background: linear-gradient(135deg, #9370DB, #DDA0DD); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px;">
-            <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 JUKEBOX 🎵</h2>
-            <div style="font-size: 4rem; margin: 20px 0;">📻</div>
-            <p style="font-size: 1.3em; margin: 20px 0;">
-                🎶 The jukebox is ready to rock! 🎶
+        <div class="modal-content" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px;">
+            <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 NOW PLAYING 🎵</h2>
+            <div style="font-size: 4rem; margin: 20px 0; animation: spin 4s linear infinite;">🎶</div>
+            <p style="font-size: 1.5em; margin: 20px 0; font-weight: bold;">
+                Adele - Hello
             </p>
             <p style="font-size: 1em; margin: 20px 0; opacity: 0.9;">
-                Upload your MP3 track to get the party started!
+                🎤 Pumping up the pig vibes! 🐷
+            </p>
+            <div style="margin: 20px 0;">
+                <button onclick="pauseJukeboxMusic()" class="transfer-btn" style="background: linear-gradient(45deg, #FFA500, #FF8C00); color: white; margin: 5px;">
+                    ⏸️ PAUSE
+                </button>
+                <button onclick="stopJukeboxMusic()" class="transfer-btn" style="background: linear-gradient(45deg, #dc3545, #c82333); color: white; margin: 5px;">
+                    ⏹️ STOP
+                </button>
+            </div>
+            <button class="transfer-btn" onclick="closeJukeboxModal()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #333; font-weight: bold;">
+                🎵 CLOSE JUKEBOX 🎵
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(jukeboxModal);
+}
+
+function showJukeboxErrorModal() {
+    const jukeboxModal = document.createElement('div');
+    jukeboxModal.id = 'jukeboxModal';
+    jukeboxModal.className = 'modal';
+    jukeboxModal.style.display = 'flex';
+    jukeboxModal.innerHTML = `
+        <div class="modal-content" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px;">
+            <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 JUKEBOX ERROR 🎵</h2>
+            <div style="font-size: 4rem; margin: 20px 0;">❌</div>
+            <p style="font-size: 1.3em; margin: 20px 0;">
+                🎶 Audio file not found or failed to load! 🎶
+            </p>
+            <p style="font-size: 1em; margin: 20px 0; opacity: 0.9;">
+                Make sure "Adele - Hello.mp3" is in the root directory.
             </p>
             <button class="transfer-btn" onclick="closeJukeboxModal()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #333; font-weight: bold;">
                 🎵 CLOSE JUKEBOX 🎵
@@ -1416,6 +1487,49 @@ function playJukeboxMusic() {
     `;
     
     document.body.appendChild(jukeboxModal);
+}
+
+function pauseJukeboxMusic() {
+    if (currentAudio && isPlaying) {
+        currentAudio.pause();
+        isPlaying = false;
+        console.log('🎵 Audio paused');
+        
+        // Update button to show resume
+        const pauseBtn = document.querySelector('button[onclick="pauseJukeboxMusic()"]');
+        if (pauseBtn) {
+            pauseBtn.innerHTML = '▶️ RESUME';
+            pauseBtn.setAttribute('onclick', 'resumeJukeboxMusic()');
+        }
+    }
+}
+
+function resumeJukeboxMusic() {
+    if (currentAudio && !isPlaying) {
+        currentAudio.play().then(() => {
+            isPlaying = true;
+            console.log('🎵 Audio resumed');
+            
+            // Update button to show pause
+            const resumeBtn = document.querySelector('button[onclick="resumeJukeboxMusic()"]');
+            if (resumeBtn) {
+                resumeBtn.innerHTML = '⏸️ PAUSE';
+                resumeBtn.setAttribute('onclick', 'pauseJukeboxMusic()');
+            }
+        }).catch((error) => {
+            console.error('❌ Resume failed:', error);
+        });
+    }
+}
+
+function stopJukeboxMusic() {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        isPlaying = false;
+        console.log('🎵 Audio stopped');
+        closeJukeboxModal();
+    }
 }
 
 function closeJukeboxModal() {

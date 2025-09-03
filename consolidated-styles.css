@@ -1039,6 +1039,11 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
     }
 }
 
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .wheel-spinning #wheelPointer {
     animation: pointerBounce 0.3s infinite;
 }
