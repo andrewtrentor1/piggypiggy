@@ -1411,6 +1411,9 @@ function playJukeboxMusic() {
         // Set volume to a reasonable level
         currentAudio.volume = 0.7;
         
+        // Set start time to 5 seconds (when the music actually starts)
+        currentAudio.currentTime = 5;
+        
         // Play the audio
         currentAudio.play().then(() => {
             isPlaying = true;

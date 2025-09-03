@@ -223,6 +223,8 @@
     </style>
 </head>
 <body>
+    <div class="beer-bubbles" id="bubbles"></div>
+    
     <div class="container">
         <header class="header">
             <div class="pig-emoji">🏆</div>
@@ -1644,5 +1646,32 @@
         </div>
         <button class="status-logout" onclick="quickLogout()">Logout</button>
     </div>
+    <script>
+        // Initialize bubbles (reduced frequency)
+        function createBubbles() {
+            const bubblesContainer = document.getElementById('bubbles');
+            if (!bubblesContainer) return;
+            
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    bubble.style.left = Math.random() * 100 + '%';
+                    bubble.style.width = bubble.style.height = Math.random() * 10 + 10 + 'px';
+                    bubble.style.animationDelay = Math.random() * 8 + 's';
+                    bubble.style.animationDuration = (Math.random() * 4 + 6) + 's';
+                    bubblesContainer.appendChild(bubble);
+                    
+                    setTimeout(() => {
+                        bubble.remove();
+                    }, 10000);
+                }, i * 500);
+            }
+        }
+
+        // Create bubbles continuously (less frequent)
+        setInterval(createBubbles, 5000);
+        createBubbles();
+    </script>
 </body>
 </html>
