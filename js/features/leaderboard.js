@@ -19,17 +19,16 @@ function updateLeaderboard() {
         console.log('🏆 Players data not ready yet, keeping loading indicator');
         if (loadingIndicator) {
             loadingIndicator.style.display = 'block';
-            loadingIndicator.textContent = 'Loading Pig Points...';
         }
-        leaderboard.style.display = 'none';
+        leaderboardList.style.display = 'none';
         return;
     }
     
-    // Hide loading indicator and show leaderboard
+    // Hide loading indicator and show leaderboard list
     if (loadingIndicator) {
         loadingIndicator.style.display = 'none';
     }
-    leaderboard.style.display = 'block';
+    leaderboardList.style.display = 'block';
     
     // Separate GOD from regular players
     const regularPlayers = Object.entries(players).filter(player => player[0] !== 'GOD');
