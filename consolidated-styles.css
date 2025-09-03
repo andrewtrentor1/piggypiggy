@@ -97,12 +97,13 @@ body {
 
 /* Cards */
 .card {
-    background: rgba(255, 255, 255, 0.95);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 245, 0.9));
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 2px solid #DDD;
+    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.2);
+    border: 2px solid rgba(255, 105, 180, 0.3);
     margin-bottom: 20px;
+    backdrop-filter: blur(10px);
 }
 
 .card-title {
@@ -581,13 +582,14 @@ body {
    ACTIVITY FEED
    ============================================== */
 .activity-feed {
-    background: rgba(255, 255, 255, 0.95);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 245, 0.9));
     border-radius: 15px;
     padding: 25px;
     margin: 20px auto;
     max-width: 800px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.2);
     backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 105, 180, 0.3);
 }
 
 .activity-item {
