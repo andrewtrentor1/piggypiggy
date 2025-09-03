@@ -1173,7 +1173,9 @@ function bypassSMSForTesting() {
     
     // Check if password is correct
     if (enteredPassword !== 'IMAPIGOINK123') {
-        alert('🚫 INCORRECT PASSWORD!\n\nAccess denied. Contact the Ham Handler if you need the password.');
+        // Wrong password - SHAME!
+        closePlayerLoginModal(); // Close the player login modal first
+        document.getElementById('shameModal').style.display = 'flex';
         return;
     }
 

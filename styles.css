@@ -353,44 +353,30 @@ body {
     box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
 }
 
-/* Jukebox Button Styling */
+/* Jukebox Button Styling - Matching other button styles */
 .jukebox-btn {
-    background: linear-gradient(45deg, #9370DB, #DDA0DD, #BA55D3);
+    background: linear-gradient(45deg, #28a745, #20c997);
     border: none;
-    padding: 15px 30px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
     cursor: pointer;
     margin: 8px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(147, 112, 219, 0.3);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     color: white;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    animation: jukeboxGlow 3s ease-in-out infinite;
+    animation: pulse 2s infinite;
 }
 
 .jukebox-btn:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(147, 112, 219, 0.5);
-    background: linear-gradient(45deg, #8A2BE2, #9370DB, #DDA0DD);
-}
-
-.jukebox-btn:active {
-    transform: translateY(-1px) scale(1.02);
-    box-shadow: 0 4px 15px rgba(147, 112, 219, 0.4);
-}
-
-@keyframes jukeboxGlow {
-    0%, 100% { 
-        box-shadow: 0 4px 15px rgba(147, 112, 219, 0.3);
-    }
-    50% { 
-        box-shadow: 0 4px 25px rgba(147, 112, 219, 0.6), 0 0 30px rgba(147, 112, 219, 0.2);
-    }
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .hogwash-result {
@@ -866,12 +852,13 @@ body {
     
     /* Mobile jukebox button */
     .jukebox-btn {
-        padding: 12px 20px !important;
-        font-size: 1rem !important;
+        padding: 8px 16px !important;
+        font-size: 0.9rem !important;
     }
     
     .jukebox-btn img {
-        width: 20px !important;
-        height: 20px !important;
+        width: 18px !important;
+        height: 18px !important;
+        margin-right: 6px !important;
     }
 }
