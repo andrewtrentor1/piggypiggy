@@ -194,6 +194,11 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 3px;
+    min-height: 2.5rem;
+    line-height: 1.25;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .pig-emoji {

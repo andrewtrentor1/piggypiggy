@@ -66,13 +66,33 @@ function updateLeaderboard() {
         const powerUps = player[1].powerUps;
         const totalPowerUps = powerUps.mulligans + powerUps.reverseMulligans + powerUps.giveDrinks;
         
+        // Determine if this is the current player
+        const isCurrentPlayer = currentPlayer === player[0];
+        const isPig = !allSamePoints && player[1].points === minPoints;
+        const isChampion = !allSamePoints && player[1].points === maxPoints;
+        
+        // Create pig and champion labels
+        let pigLabel = '';
+        let championLabel = '';
+        
+        if (isPig) {
+            pigLabel = isCurrentPlayer ? '🐷 CURRENT PIG 🐷' : '🐷 THE PIG 🐷';
+        }
+        
+        if (isChampion) {
+            championLabel = isCurrentPlayer ? '👑CURRENT M.V.PIG👑' : '<span class="crown">👑</span>';
+        }
+        
+        // Only show insults if player is not pig or champion
+        const showInsult = !isPig && !isChampion;
+        
         li.innerHTML = `
             <div class="player-name">
-                ${!allSamePoints && player[1].points === maxPoints ? '<span class="crown">👑</span>' : ''}
-                ${!allSamePoints && player[1].points === minPoints ? '<span>🐷 THE PIG 🐷</span>' : ''}
+                ${championLabel}
                 <span>${player[0]}</span>
+                ${pigLabel}
                 <span class="poop-bag" onclick="showPowerUpModal('${player[0]}')" title="View ${player[0]}'s Power-Ups (${totalPowerUps} total)" style="cursor: pointer; font-size: 1em;">🎒</span>
-                <span class="pig-insult">${playerInsult}</span>
+                ${showInsult ? `<span class="pig-insult">${playerInsult}</span>` : ''}
             </div>
             <div class="points">
                 ${player[1].points} 🐷
