@@ -1389,6 +1389,40 @@ function clearBypassLogin() {
 // Make it available globally for console debugging
 window.clearBypassLogin = clearBypassLogin;
 
+// Jukebox functionality placeholder
+function playJukeboxMusic() {
+    console.log('🎵 Jukebox button clicked! Ready for MP3 integration.');
+    
+    // Show a temporary message until MP3 is uploaded
+    const jukeboxModal = document.createElement('div');
+    jukeboxModal.className = 'modal';
+    jukeboxModal.style.display = 'flex';
+    jukeboxModal.innerHTML = `
+        <div class="modal-content" style="background: linear-gradient(135deg, #9370DB, #DDA0DD); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px;">
+            <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 JUKEBOX 🎵</h2>
+            <div style="font-size: 4rem; margin: 20px 0;">📻</div>
+            <p style="font-size: 1.3em; margin: 20px 0;">
+                🎶 The jukebox is ready to rock! 🎶
+            </p>
+            <p style="font-size: 1em; margin: 20px 0; opacity: 0.9;">
+                Upload your MP3 track to get the party started!
+            </p>
+            <button class="transfer-btn" onclick="closeJukeboxModal()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #333; font-weight: bold;">
+                🎵 CLOSE JUKEBOX 🎵
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(jukeboxModal);
+}
+
+function closeJukeboxModal() {
+    const modal = document.querySelector('.modal:last-child');
+    if (modal) {
+        modal.remove();
+    }
+}
+
 // Make HOGWASH cooldown functions globally accessible
 window.closeHogwashCooldownModal = closeHogwashCooldownModal;
 
