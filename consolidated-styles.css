@@ -996,6 +996,18 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
     .player-name {
         font-size: 1.1rem;
     }
+    
+    /* Mobile jukebox button */
+    .jukebox-btn {
+        padding: 8px 16px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .jukebox-btn img {
+        width: 18px !important;
+        height: 18px !important;
+        margin-right: 6px !important;
+    }
 }
 
 /* ==============================================
@@ -1204,3 +1216,33 @@ input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:foc
 .error { color: #f44336; }
 .warning { color: #FF9800; }
 .info { color: #2196F3; }
+
+/* ==============================================
+   JUKEBOX BUTTON STYLING
+   ============================================== */
+.jukebox-btn {
+    background: linear-gradient(45deg, #28a745, #20c997) !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    margin: 8px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    color: white !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    animation: pulse 2s infinite !important;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
+}
+
+.jukebox-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    background: linear-gradient(45deg, #218838, #1e7e34) !important;
+}
