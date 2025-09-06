@@ -1,4 +1,4 @@
-// MBE Pig Points - Main JavaScript (Reduced) - CACHE BUST v2.0 JUKEBOX FIXED
+// MBE Pig Points - Main JavaScript (Reduced)
 // Global variables and configuration are now in js/core/config.js
 
 // Firebase functions are now in js/core/firebase.js
@@ -1394,73 +1394,9 @@ window.clearBypassLogin = clearBypassLogin;
 // Jukebox functionality with audio playback
 let currentAudio = null;
 let isPlaying = false;
-let currentSongIndex = 0;
-
-// Available songs in the jukebox - all your songs
-let jukeboxSongs = [
-    { title: "Adele - Hello", file: "music/Adele - Hello.mp3", startTime: 5 },
-    { title: "Alex MIA", file: "music/alex MIA.mp3", startTime: 0 },
-    { title: "Alex MIA (Alt)", file: "music/alex MIA (1).mp3", startTime: 0 },
-    { title: "Andrew V1", file: "music/Andrew v1.mp3", startTime: 0 },
-    { title: "Andrew V2", file: "music/Andrew V2.mp3", startTime: 0 },
-    { title: "Andrew V1 (Alt)", file: "music/Andrew_v1.mp3", startTime: 0 },
-    { title: "Brian + Superbed Surrender", file: "music/Brian + Superbed Surrender.mp3", startTime: 0 },
-    { title: "Brian V2", file: "music/brian v2.mp3", startTime: 0 },
-    { title: "Danger Zone Weekend V4", file: "music/Danger Zone Weekend v4.mp3", startTime: 0 },
-    { title: "Danger Zone Weekend V4 (Alt)", file: "music/Danger Zone Weekend v4 (1).mp3", startTime: 0 },
-    { title: "Evan V1", file: "music/evan V 1.mp3", startTime: 0 },
-    { title: "Ian V1", file: "music/Ian - v1.mp3", startTime: 0 },
-    { title: "Ian Song V2", file: "music/IAN song v2.mp3", startTime: 0 },
-    { title: "Ian Song V2 (Alt 1)", file: "music/IAN song v2 (1).mp3", startTime: 0 },
-    { title: "Ian Song V2 (Alt 2)", file: "music/IAN song v2 (2).mp3", startTime: 0 },
-    { title: "Ians Fault V3", file: "music/Ians Fault v.3.mp3", startTime: 0 },
-    { title: "Ians Fault", file: "music/Ians_fault.mp3", startTime: 0 },
-    { title: "MBE Blues", file: "music/M.B.E. Blues.mp3", startTime: 0 },
-    { title: "MBE Blues (Alt)", file: "music/M.B.E. Blues (1).mp3", startTime: 0 },
-    { title: "MBE Chorus", file: "music/MBE Chorus.mp3", startTime: 0 },
-    { title: "MBE Hyphee", file: "music/mbe HYPHEE.mp3", startTime: 0 },
-    { title: "MBE Sing Along", file: "music/MBE sing a long.mp3", startTime: 0 },
-    { title: "MBE Weekend Vibes", file: "music/MBE weekend Vibes.mp3", startTime: 0 },
-    { title: "MBE", file: "music/MBE.mp3", startTime: 0 },
-    { title: "Pop MBE", file: "music/Pop MBE.mp3", startTime: 0 },
-    { title: "Superbed", file: "music/SUPERBED.mp3", startTime: 0 },
-    { title: "Zack Zack", file: "music/Zack Zack.mp3", startTime: 0 }
-];
 
 function playJukeboxMusic() {
-    console.log('🎵 NEW JUKEBOX v2.0 - Starting playlist with all 27 songs!');
-    console.log('🎵 Number of songs available:', jukeboxSongs.length);
-    console.log('🎵 First few songs:', jukeboxSongs.slice(0, 5).map(s => s.title));
-    
-    if (jukeboxSongs.length === 0) {
-        console.log('❌ No songs found - showing no songs modal');
-        showNoSongsModal();
-        return;
-    }
-    
-    console.log('✅ All songs loaded! Starting playback...');
-    
-    // Start with first song if nothing is playing, or continue current song
-    if (!isPlaying) {
-        currentSongIndex = 0;
-        console.log('🎵 Starting with song:', jukeboxSongs[currentSongIndex]);
-        playSelectedSong(currentSongIndex);
-    } else {
-        // Just show the now playing modal if already playing
-        showJukeboxModal();
-    }
-}
-
-function playSelectedSong(songIndex) {
-    if (songIndex < 0 || songIndex >= jukeboxSongs.length) {
-        console.error('❌ Invalid song index:', songIndex);
-        return;
-    }
-    
-    const song = jukeboxSongs[songIndex];
-    currentSongIndex = songIndex;
-    
-    console.log(`🎵 Playing: ${song.title}`);
+    console.log('🎵 Jukebox button clicked! Playing Adele - Hello');
     
     try {
         // Stop any currently playing audio
@@ -1470,20 +1406,18 @@ function playSelectedSong(songIndex) {
         }
         
         // Create new audio instance
-        currentAudio = new Audio(song.file);
+        currentAudio = new Audio('Adele - Hello.mp3');
         
         // Set volume to a reasonable level
         currentAudio.volume = 0.7;
         
-        // Set start time if specified
-        if (song.startTime > 0) {
-            currentAudio.currentTime = song.startTime;
-        }
+        // Set start time to 5 seconds (when the music actually starts)
+        currentAudio.currentTime = 5;
         
         // Play the audio
         currentAudio.play().then(() => {
             isPlaying = true;
-            console.log(`🎵 Audio started playing successfully: ${song.title}`);
+            console.log('🎵 Audio started playing successfully');
             showJukeboxModal();
         }).catch((error) => {
             console.error('❌ Audio playback failed:', error);
@@ -1494,8 +1428,6 @@ function playSelectedSong(songIndex) {
         currentAudio.addEventListener('ended', () => {
             isPlaying = false;
             console.log('🎵 Audio playback completed');
-            // Auto-play next song if available
-            playNextSong();
         });
         
     } catch (error) {
@@ -1504,85 +1436,7 @@ function playSelectedSong(songIndex) {
     }
 }
 
-function playNextSong() {
-    const nextIndex = (currentSongIndex + 1) % jukeboxSongs.length;
-    playSelectedSong(nextIndex);
-}
-
-function playPreviousSong() {
-    const prevIndex = currentSongIndex === 0 ? jukeboxSongs.length - 1 : currentSongIndex - 1;
-    playSelectedSong(prevIndex);
-}
-
-function showNoSongsModal() {
-    const jukeboxModal = document.createElement('div');
-    jukeboxModal.id = 'jukeboxModal';
-    jukeboxModal.className = 'modal';
-    jukeboxModal.style.display = 'flex';
-    jukeboxModal.innerHTML = `
-        <div class="modal-content" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px; max-width: 500px;">
-            <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 NO SONGS FOUND 🎵</h2>
-            <div style="font-size: 3rem; margin: 20px 0;">😢</div>
-            <p style="font-size: 1.2em; margin: 20px 0; opacity: 0.9;">
-                No MP3 files found in the music folder!
-            </p>
-            <p style="font-size: 1em; margin: 20px 0; opacity: 0.8;">
-                Add MP3 files to the <strong>music/</strong> folder and try again.
-            </p>
-            <div style="margin: 20px 0;">
-                <button onclick="refreshJukeboxSongs()" class="transfer-btn" style="
-                    background: linear-gradient(45deg, #17a2b8, #138496); 
-                    color: white; 
-                    margin: 8px; 
-                    padding: 12px 20px;
-                    font-size: 1.1em;
-                ">
-                    🔄 REFRESH SONGS
-                </button>
-            </div>
-            <button class="transfer-btn" onclick="closeJukeboxModal()" style="background: linear-gradient(45deg, #666, #555); color: white; margin-top: 20px;">
-                ❌ CLOSE
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(jukeboxModal);
-}
-
-// Function to refresh the song list
-async function refreshJukeboxSongs() {
-    console.log('🔄 Refreshing jukebox songs...');
-    
-    // Show loading state
-    const modal = document.getElementById('jukeboxModal');
-    if (modal) {
-        modal.innerHTML = `
-            <div class="modal-content" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px; max-width: 500px;">
-                <h2 style="color: #FFD700; margin-bottom: 20px;">🔄 REFRESHING... 🔄</h2>
-                <div style="font-size: 3rem; margin: 20px 0; animation: spin 2s linear infinite;">🎶</div>
-                <p style="font-size: 1.2em; margin: 20px 0; opacity: 0.9;">
-                    Scanning for new songs...
-                </p>
-            </div>
-        `;
-    }
-    
-    // Songs are now hardcoded, no scanning needed
-    console.log('🔄 Songs are hardcoded - no refresh needed');
-    
-    // Close current modal and show appropriate response
-    closeJukeboxModal();
-    setTimeout(() => {
-        if (jukeboxSongs.length === 0) {
-            showNoSongsModal();
-        } else {
-            console.log(`🎵 Found ${jukeboxSongs.length} songs! Click jukebox to start playing.`);
-        }
-    }, 500);
-}
-
 function showJukeboxModal() {
-    const currentSong = jukeboxSongs[currentSongIndex];
     const jukeboxModal = document.createElement('div');
     jukeboxModal.id = 'jukeboxModal';
     jukeboxModal.className = 'modal';
@@ -1592,29 +1446,18 @@ function showJukeboxModal() {
             <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 NOW PLAYING 🎵</h2>
             <div style="font-size: 4rem; margin: 20px 0; animation: spin 4s linear infinite;">🎶</div>
             <p style="font-size: 1.5em; margin: 20px 0; font-weight: bold;">
-                ${currentSong.title}
+                Adele - Hello
             </p>
             <p style="font-size: 1em; margin: 20px 0; opacity: 0.9;">
                 🎤 Pumping up the pig vibes! 🐷
             </p>
             <div style="margin: 20px 0;">
-                <button onclick="playPreviousSong()" class="transfer-btn" style="background: linear-gradient(45deg, #6f42c1, #5a32a3); color: white; margin: 5px; font-size: 1.1em; padding: 10px 15px;">
-                    ⏮️ SKIP BACK
-                </button>
-                <button onclick="pauseJukeboxMusic()" class="transfer-btn" style="background: linear-gradient(45deg, #FFA500, #FF8C00); color: white; margin: 5px; font-size: 1.1em; padding: 10px 15px;">
+                <button onclick="pauseJukeboxMusic()" class="transfer-btn" style="background: linear-gradient(45deg, #FFA500, #FF8C00); color: white; margin: 5px;">
                     ⏸️ PAUSE
                 </button>
-                <button onclick="playNextSong()" class="transfer-btn" style="background: linear-gradient(45deg, #6f42c1, #5a32a3); color: white; margin: 5px; font-size: 1.1em; padding: 10px 15px;">
-                    ⏭️ SKIP FORWARD
-                </button>
-            </div>
-            <div style="margin: 20px 0;">
                 <button onclick="stopJukeboxMusic()" class="transfer-btn" style="background: linear-gradient(45deg, #dc3545, #c82333); color: white; margin: 5px;">
                     ⏹️ STOP
                 </button>
-            </div>
-            <div style="margin: 10px 0; font-size: 0.9em; opacity: 0.8;">
-                Playing ${currentSongIndex + 1} of ${jukeboxSongs.length} songs
             </div>
             <button class="transfer-btn" onclick="closeJukeboxModal()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #333; font-weight: bold;">
                 🎵 CLOSE JUKEBOX 🎵
@@ -1698,218 +1541,6 @@ function closeJukeboxModal() {
         modal.remove();
     }
 }
-
-// Function to dynamically add new songs to the jukebox
-function addSongToJukebox(title, filename, startTime = 0) {
-    const newSong = {
-        title: title,
-        file: `music/${filename}`,
-        startTime: startTime
-    };
-    
-    jukeboxSongs.push(newSong);
-    console.log(`🎵 Added new song to jukebox: ${title}`);
-    
-    // Save to localStorage for persistence
-    localStorage.setItem('jukeboxSongs', JSON.stringify(jukeboxSongs));
-}
-
-// Function to load songs from localStorage on page load
-function loadJukeboxSongs() {
-    const savedSongs = localStorage.getItem('jukeboxSongs');
-    if (savedSongs) {
-        try {
-            const parsedSongs = JSON.parse(savedSongs);
-            // Merge with default songs, avoiding duplicates
-            parsedSongs.forEach(savedSong => {
-                const exists = jukeboxSongs.some(song => song.file === savedSong.file);
-                if (!exists) {
-                    jukeboxSongs.push(savedSong);
-                }
-            });
-            console.log(`🎵 Loaded ${parsedSongs.length} songs from storage`);
-        } catch (e) {
-            console.error('❌ Error loading saved songs:', e);
-        }
-    }
-}
-
-// Removed automatic detection - songs are now hardcoded above
-
-// Detection functions removed - songs are now hardcoded
-
-// Initialize jukebox on page load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log(`🎵 Jukebox ready with ${jukeboxSongs.length} songs!`);
-    console.log('🎵 Songs loaded:', jukeboxSongs.map(s => s.title));
-    console.log('🎵 TO TEST: Run startMusicPlaylist() in console');
-});
-
-// NEW WORKING JUKEBOX FUNCTION - BYPASSES OLD ONE
-function startMusicPlaylist() {
-    console.log('🎵 NEW MUSIC PLAYLIST STARTED! All 27 songs loaded!');
-    console.log('🎵 Available songs:', jukeboxSongs.length);
-    console.log('🎵 Song list:', jukeboxSongs.map(s => s.title));
-    
-    if (jukeboxSongs.length === 0) {
-        alert('No songs found! Check music folder.');
-        return;
-    }
-    
-    // Stop any current audio
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-    }
-    
-    // Start with first song
-    currentSongIndex = 0;
-    const song = jukeboxSongs[currentSongIndex];
-    console.log('🎵 Playing:', song.title);
-    
-    currentAudio = new Audio(song.file);
-    currentAudio.volume = 0.7;
-    if (song.startTime > 0) {
-        currentAudio.currentTime = song.startTime;
-    }
-    
-    currentAudio.play().then(() => {
-        isPlaying = true;
-        console.log('✅ Music started successfully!');
-        showNewJukeboxModal();
-    }).catch((error) => {
-        console.error('❌ Playback failed:', error);
-        alert('Audio playback failed: ' + error.message);
-    });
-    
-    // Auto-advance to next song
-    currentAudio.addEventListener('ended', () => {
-        playNextSong();
-    });
-}
-
-function showNewJukeboxModal() {
-    const currentSong = jukeboxSongs[currentSongIndex];
-    const modal = document.createElement('div');
-    modal.id = 'newJukeboxModal';
-    modal.className = 'modal';
-    modal.style.display = 'flex';
-    modal.innerHTML = `
-        <div class="modal-content" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px;">
-            <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 NOW PLAYING 🎵</h2>
-            <div style="font-size: 4rem; margin: 20px 0; animation: spin 4s linear infinite;">🎶</div>
-            <p style="font-size: 1.5em; margin: 20px 0; font-weight: bold;">
-                ${currentSong.title}
-            </p>
-            <p style="font-size: 1em; margin: 20px 0; opacity: 0.9;">
-                🎤 All ${jukeboxSongs.length} songs loaded! 🐷
-            </p>
-            <div style="margin: 20px 0;">
-                <button onclick="skipBackward()" class="transfer-btn" style="background: linear-gradient(45deg, #6f42c1, #5a32a3); color: white; margin: 5px; font-size: 1.2em; padding: 12px 18px;">
-                    ⏮️ SKIP BACK
-                </button>
-                <button onclick="togglePlayPause()" class="transfer-btn" style="background: linear-gradient(45deg, #FFA500, #FF8C00); color: white; margin: 5px; font-size: 1.2em; padding: 12px 18px;">
-                    ⏸️ PAUSE
-                </button>
-                <button onclick="skipForward()" class="transfer-btn" style="background: linear-gradient(45deg, #6f42c1, #5a32a3); color: white; margin: 5px; font-size: 1.2em; padding: 12px 18px;">
-                    ⏭️ SKIP FORWARD
-                </button>
-            </div>
-            <div style="margin: 20px 0;">
-                <button onclick="stopMusic()" class="transfer-btn" style="background: linear-gradient(45deg, #dc3545, #c82333); color: white; margin: 5px;">
-                    ⏹️ STOP ALL MUSIC
-                </button>
-            </div>
-            <div style="margin: 10px 0; font-size: 0.9em; opacity: 0.8;">
-                Playing ${currentSongIndex + 1} of ${jukeboxSongs.length} songs
-            </div>
-            <button class="transfer-btn" onclick="closeNewJukeboxModal()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #333; font-weight: bold;">
-                🎵 CLOSE JUKEBOX 🎵
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-}
-
-function skipForward() {
-    currentSongIndex = (currentSongIndex + 1) % jukeboxSongs.length;
-    playCurrentSong();
-}
-
-function skipBackward() {
-    currentSongIndex = currentSongIndex === 0 ? jukeboxSongs.length - 1 : currentSongIndex - 1;
-    playCurrentSong();
-}
-
-function playCurrentSong() {
-    if (currentAudio) {
-        currentAudio.pause();
-    }
-    
-    const song = jukeboxSongs[currentSongIndex];
-    console.log('🎵 Now playing:', song.title);
-    
-    currentAudio = new Audio(song.file);
-    currentAudio.volume = 0.7;
-    if (song.startTime > 0) {
-        currentAudio.currentTime = song.startTime;
-    }
-    
-    currentAudio.play().then(() => {
-        isPlaying = true;
-        updateJukeboxDisplay();
-    });
-    
-    currentAudio.addEventListener('ended', () => {
-        skipForward();
-    });
-}
-
-function togglePlayPause() {
-    if (isPlaying) {
-        currentAudio.pause();
-        isPlaying = false;
-        document.querySelector('#newJukeboxModal button[onclick="togglePlayPause()"]').innerHTML = '▶️ PLAY';
-    } else {
-        currentAudio.play();
-        isPlaying = true;
-        document.querySelector('#newJukeboxModal button[onclick="togglePlayPause()"]').innerHTML = '⏸️ PAUSE';
-    }
-}
-
-function stopMusic() {
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        isPlaying = false;
-    }
-    closeNewJukeboxModal();
-}
-
-function closeNewJukeboxModal() {
-    const modal = document.getElementById('newJukeboxModal');
-    if (modal) modal.remove();
-}
-
-function updateJukeboxDisplay() {
-    const modal = document.getElementById('newJukeboxModal');
-    if (modal) {
-        closeNewJukeboxModal();
-        showNewJukeboxModal();
-    }
-}
-
-// Make functions globally accessible for console use
-window.addSongToJukebox = addSongToJukebox;
-window.loadJukeboxSongs = loadJukeboxSongs;
-window.scanMusicFolder = scanMusicFolder;
-window.refreshJukeboxSongs = refreshJukeboxSongs;
-window.startMusicPlaylist = startMusicPlaylist;
-window.skipForward = skipForward;
-window.skipBackward = skipBackward;
-window.togglePlayPause = togglePlayPause;
-window.stopMusic = stopMusic;
 
 // Make HOGWASH cooldown functions globally accessible
 window.closeHogwashCooldownModal = closeHogwashCooldownModal;
