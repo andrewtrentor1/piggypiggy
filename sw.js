@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v12-shadows';
+const CACHE_NAME = 'mbe-pig-points-v13-summons';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -13,6 +13,7 @@ const urlsToCache = [
   '/games.html',
   '/script.js',
   '/js/features/season.js',
+  '/js/features/push.js',
   '/consolidated-styles.css',
   '/mbe-theme.css',
   '/firebase-config.js',
@@ -121,92 +122,35 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Push notification event
+// Push notification event — bare push wakes us; we fetch the event
+// details from the piggy-push worker (see push-worker/index.js)
+const PUSH_WORKER = 'https://piggy-push.andrew-247.workers.dev';
+const PUSH_URLS = {
+  danger_zone: '/', season: '/', drinks: '/games.html', supervisor: '/games.html',
+  tribunal: '/games.html', oracle: '/games.html', organ: '/games.html', general: '/'
+};
+
 self.addEventListener('push', event => {
-  console.log('📱 Service Worker: Push notification received');
-  
-  let notificationData = {
-    title: 'MBE PIG POINTS',
-    body: 'New activity in the app!',
-    icon: '/icon-192x192.png',
-    badge: '/icon-72x72.png',
-    tag: 'mbe-notification',
-    requireInteraction: true,
-    actions: [
-      {
-        action: 'open',
-        title: 'Open App',
-        icon: '/icon-72x72.png'
-      },
-      {
-        action: 'dismiss',
-        title: 'Dismiss',
-        icon: '/icon-72x72.png'
-      }
-    ]
-  };
-  
-  // Parse push data if available
-  if (event.data) {
-    try {
-      const pushData = event.data.json();
-      notificationData = {
-        ...notificationData,
-        ...pushData
-      };
-    } catch (e) {
-      console.log('📱 Service Worker: Push data not JSON, using text');
-      notificationData.body = event.data.text();
-    }
-  }
-  
-  // Special handling for different notification types
-  if (notificationData.type === 'danger_zone') {
-    notificationData.title = '💀 DANGER ZONE 💀';
-    notificationData.body = `${notificationData.playerName || 'Someone'} triggered DANGER ZONE!`;
-    notificationData.icon = '/icon-192x192.png';
-    notificationData.badge = '/icon-72x72.png';
-    notificationData.tag = 'danger-zone';
-    notificationData.requireInteraction = true;
-    notificationData.vibrate = [200, 100, 200, 100, 200];
-    notificationData.data = { type: 'danger_zone', url: '/' };
-  } else if (notificationData.type === 'drink_assignment') {
-    notificationData.title = '🍺 DRINK ASSIGNMENT';
-    notificationData.body = `Alex assigned drinks! Check the app.`;
-    notificationData.icon = '/icon-192x192.png';
-    notificationData.badge = '/icon-72x72.png';
-    notificationData.tag = 'drink-assignment';
-    notificationData.vibrate = [100, 50, 100];
-    notificationData.data = { type: 'drink_assignment', url: '/' };
-  } else if (notificationData.type === 'hogwash') {
-    notificationData.title = '🐷 HOGWASH RESULT';
-    notificationData.body = `${notificationData.playerName || 'Someone'} just gambled! Check the results.`;
-    notificationData.icon = '/icon-192x192.png';
-    notificationData.badge = '/icon-72x72.png';
-    notificationData.tag = 'hogwash';
-    notificationData.vibrate = [150];
-    notificationData.data = { type: 'hogwash', url: '/' };
-  } else if (notificationData.type === 'drink_proof') {
-    notificationData.title = '📸 DRINK PROOF UPLOADED';
-    notificationData.body = `${notificationData.playerName || 'Someone'} uploaded drink proof! Check it out.`;
-    notificationData.icon = '/icon-192x192.png';
-    notificationData.badge = '/icon-72x72.png';
-    notificationData.tag = 'drink-proof';
-    notificationData.vibrate = [100, 50, 100, 50, 100];
-    notificationData.data = { type: 'drink_proof', url: '/activity.html' };
-  } else if (notificationData.type === 'proof_request') {
-    notificationData.title = '📢 PROOF REQUESTED';
-    notificationData.body = `Alex is requesting additional proof for your drinks!`;
-    notificationData.icon = '/icon-192x192.png';
-    notificationData.badge = '/icon-72x72.png';
-    notificationData.tag = 'proof-request';
-    notificationData.requireInteraction = true;
-    notificationData.vibrate = [200, 100, 200, 100, 200, 100, 200];
-    notificationData.data = { type: 'proof_request', url: '/' };
-  }
-  
+  console.log('📱 Service Worker: Push received, fetching latest event...');
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
+    fetch(PUSH_WORKER + '/latest')
+      .then(r => r.json())
+      .then(e => self.registration.showNotification(e.title || '🐷 THE ROYAL ORDER', {
+        body: e.body || '',
+        icon: '/icon-192x192.png',
+        badge: '/icon-72x72.png',
+        tag: 'mbe-' + (e.type || 'general'),
+        requireInteraction: e.type === 'danger_zone' || e.type === 'tribunal',
+        vibrate: e.type === 'danger_zone' ? [200, 100, 200, 100, 200] : [150, 75, 150],
+        data: { type: e.type, url: PUSH_URLS[e.type] || '/' }
+      }))
+      .catch(() => self.registration.showNotification('🐷 THE ROYAL ORDER', {
+        body: 'Something happened at the club. Investigate.',
+        icon: '/icon-192x192.png',
+        badge: '/icon-72x72.png',
+        tag: 'mbe-general',
+        data: { url: '/' }
+      }))
   );
 });
 

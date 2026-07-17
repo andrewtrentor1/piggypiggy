@@ -1,0 +1,8 @@
+name = "piggy-push"
+main = "index.js"
+compatibility_date = "2026-07-01"
+account_id = "2471f36b9fdd1320098a60627c7ab9d7"
+
+[[kv_namespaces]]
+binding = "SUBS"
+id = "139b2c3b02de4222a20012bc99039a70"

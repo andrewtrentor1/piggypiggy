@@ -290,6 +290,7 @@
                 timestamp: new Date().toISOString()
             });
 
+            if (window.mbeNotify) window.mbeNotify('season', '🎊 YEAR VII HAS CONVENED', 'The books are open. All members reset to 30 points. Year VI debts forgiven. In Lardo Veritas.');
             alert('🎊 YEAR VII IS OPEN.\n\nYear VI has been sealed in the vault. Everyone starts at 30 points.\n\nIn Lardo Veritas.');
         } catch (e) {
             console.error('❌ Year VII start failed:', e);
@@ -340,6 +341,7 @@
                         timestamp: new Date().toISOString(),
                         eventId: Date.now() + '_rdz'
                     });
+                    if (window.mbeNotify) window.mbeNotify('danger_zone', '💀 THE HOG STRIKES 💀', 'Unprompted. Unprovoked. DANGER ZONE for all members. Report to the dice.');
                     console.log('💀 THE HOG HAS STRUCK.');
                 }
             } catch (e) { /* transient errors are fine; next tick retries */ }

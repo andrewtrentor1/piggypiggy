@@ -1800,6 +1800,7 @@ function broadcastDangerZone(playerName) {
     window.firebaseSet(dangerZoneRef, dangerZoneData)
         .then(() => {
             console.log('🚨 DANGER ZONE broadcast sent successfully!');
+            if (window.mbeNotify) window.mbeNotify('danger_zone', '💀 DANGER ZONE 💀', playerName + ' has summoned the dice. Report to the table IMMEDIATELY.');
         })
         .catch((error) => {
             console.error('❌ DANGER ZONE broadcast failed:', error);
@@ -2976,7 +2977,9 @@ function assignAlexDrinks() {
         }
         
         addActivity('drink_assignment', '🍺', activityMessage);
-        
+
+        if (window.mbeNotify) window.mbeNotify('drinks', '🍺 DRINKS ASSIGNED', activityMessage.slice(0, 150));
+
         // Broadcast drink assignment with message
         broadcastDrinkAssignment(assignments, totalDrinks, alexMessage);
         
@@ -3704,7 +3707,9 @@ function assignPowerUpDrinks() {
         
         // Log activity
         addActivity('drink_assignment', '🍺', `${currentPlayer} assigned ${drinkText} to ${targetPlayer} (Power-Up)`);
-        
+
+        if (window.mbeNotify) window.mbeNotify('drinks', '🍺 DRINKS ASSIGNED', `${currentPlayer} assigned ${drinkText} to ${targetPlayer}. The debt clock is running.`, currentPlayer);
+
         // Broadcast drink assignment globally (same as Alex's system)
         broadcastPowerUpDrinkAssignment(assignments, drinkAmount, currentPlayer);
         

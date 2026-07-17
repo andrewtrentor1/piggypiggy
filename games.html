@@ -47,6 +47,7 @@
         window.updateProfile = updateProfile;
         window.onAuthStateChanged = onAuthStateChanged;
     </script>
+    <script src="js/features/push.js"></script>
 </head>
 <body>
     <div class="beer-bubbles" id="bubbles"></div>
@@ -98,6 +99,7 @@
                 <h2 class="card-title">🎟️ MEMBERSHIP CHECK</h2>
                 <div id="identityStatus" class="pp-note" style="text-align:center;">Presenting credentials...</div>
                 <div class="pp-chiprow" id="identityChips" style="justify-content:center; display:none;"></div>
+                <div id="pushSetup" style="margin-top: 10px;"></div>
             </div>
 
             <!-- THE TRIBUNAL -->
@@ -382,6 +384,7 @@
                 createdAt: new Date().toISOString(), status: 'voting', votes: {}
             });
             await logAct('admin', '⚖️', '⚖️ COURT IS IN SESSION: ' + me + ' accuses ' + selAccused + ' of "' + crime + '" — all members report for jury duty!');
+            if (window.mbeNotify) window.mbeNotify('tribunal', '⚖️ JURY SUMMONS', me + ' accuses ' + selAccused + ' of "' + crime + '". Vote now.', me);
             selAccused = null; selCrime = null; $('crimeCustom').value = '';
             renderCrimeUI();
         };
@@ -438,8 +441,10 @@
             await window.firebaseUpdate(R('tribunal/cases/' + id), { status: 'closed', verdict, sentence, closedAt: new Date().toISOString() });
             if (verdict === 'guilty') {
                 await logAct('admin', '⚖️', '⚖️ VERDICT: ' + c.accused + ' found GUILTY of "' + c.crime + '" (' + g + '-' + i + '). SENTENCE: ' + sentence);
+                if (window.mbeNotify) window.mbeNotify('tribunal', '⚖️ GUILTY', c.accused + ' convicted of "' + c.crime + '". Sentence: ' + sentence);
             } else {
                 await logAct('admin', '⚖️', '⚖️ VERDICT: ' + c.accused + ' found INNOCENT of "' + c.crime + '" (' + i + '-' + g + '). The court apologizes for nothing.');
+                if (window.mbeNotify) window.mbeNotify('tribunal', '⚖️ INNOCENT', c.accused + ' walks free on "' + c.crime + '". The court apologizes for nothing.');
             }
         }
 
@@ -473,6 +478,7 @@
                 createdAt: new Date().toISOString(), status: 'open', picks: {}
             });
             await logAct('admin', '🔮', '🔮 THE ORACLE ASKS: "' + q + '" — ' + stake + ' pts riding. Lock your picks in The Parlour!');
+            if (window.mbeNotify) window.mbeNotify('oracle', '🔮 THE ORACLE ASKS', '"' + q + '" — ' + stake + ' pts riding. Lock your pick.', me);
             $('oracleQ').value = ''; $('oracleOpts').value = '';
         };
 
@@ -919,6 +925,7 @@
                 id, debtor: me, eventId, drinks, claimedAt: new Date().toISOString(), status: 'pending'
             });
             await logAct('drink_acknowledgment', '🍺', '🍺 ' + me + ' claims ' + drinks + ' drink' + (drinks > 1 ? 's' : '') + ' DRUNK — an ACCOUNTABILITY SUPERVISOR is summoned to certify.');
+            if (window.mbeNotify) window.mbeNotify('supervisor', '⚖️ SUPERVISOR NEEDED', me + ' claims ' + drinks + ' drink' + (drinks > 1 ? 's' : '') + ' drunk. Certify or reject at the desk.', me);
         };
 
         window.certifyClaim = async function (id) {
@@ -937,6 +944,7 @@
             });
             await window.firebaseUpdate(R('drinkClearances/' + id), { status: 'certified', witness: me, certifiedAt: new Date().toISOString() });
             await logAct('drink_acknowledgment', '⚖️', '⚖️ ' + me + ', acting as ACCOUNTABILITY SUPERVISOR, certifies that ' + c.debtor + ' has drunk their debts. ' + c.drinks + ' 🍺 cleared from the ledger.');
+            if (window.mbeNotify) window.mbeNotify('supervisor', '✅ DEBT CERTIFIED', me + ' certifies ' + c.debtor + "'s " + c.drinks + ' drinks. The ledger is satisfied.', me);
         };
 
         window.rejectClaim = async function (id) {
@@ -946,6 +954,7 @@
             if (c.debtor === me) return;
             await window.firebaseUpdate(R('drinkClearances/' + id), { status: 'rejected', witness: me, rejectedAt: new Date().toISOString() });
             await logAct('drink_acknowledgment', '⚖️', '⚖️ ACCOUNTABILITY SUPERVISOR ' + me + ' REJECTS ' + c.debtor + '\'s clearance claim. The debt stands. The shame compounds.');
+            if (window.mbeNotify) window.mbeNotify('supervisor', '❌ CLAIM REJECTED', me + ' rejects ' + c.debtor + "'s clearance claim. The debt stands.", me);
         };
 
         // ================= SUPERLATIVES =================
