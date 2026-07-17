@@ -83,11 +83,43 @@
         renderCard();
     };
 
+    // ---------- top-of-page alarm banner (site-wide nag) ----------
+    function removeBanner() {
+        const b = document.getElementById('summonsBanner');
+        if (b) b.remove();
+    }
+
+    function renderBanner(state) {
+        if (state === 'enabled' || state === 'unsupported') { removeBanner(); return; }
+        if (sessionStorage.getItem('summonsBannerDismissed')) return;
+        let banner = document.getElementById('summonsBanner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'summonsBanner';
+            banner.className = 'summons-banner';
+            const host = document.querySelector('.container') || document.body;
+            host.insertBefore(banner, host.firstChild);
+        }
+        const msg = state === 'ios_needs_install'
+            ? '<strong>📲 THE SUMMONS IS NOT ARMED</strong><span>iPhone: needs Add to Home Screen — tap for instructions</span>'
+            : state === 'blocked'
+                ? '<strong>🚫 SUMMONS BLOCKED</strong><span>Notifications are blocked in browser settings — tap for help</span>'
+                : '<strong>🔕 THE SUMMONS IS NOT ARMED ON THIS DEVICE</strong><span>Danger Zones, jury duty &amp; drink debts will pass you by. TAP TO ARM.</span>';
+        banner.innerHTML = msg + '<button class="summons-dismiss" aria-label="dismiss">✕</button>';
+        banner.onclick = () => window.mbeEnablePush();
+        banner.querySelector('.summons-dismiss').onclick = (e) => {
+            e.stopPropagation();
+            sessionStorage.setItem('summonsBannerDismissed', '1');
+            removeBanner();
+        };
+    }
+
     // ---------- UI card (renders wherever #pushSetup exists) ----------
     async function renderCard() {
+        const state = await currentState();
+        renderBanner(state);
         const el = document.getElementById('pushSetup');
         if (!el) return;
-        const state = await currentState();
         if (state === 'enabled') {
             el.innerHTML = '<div style="text-align:center; font-size:0.8rem; color:#7fd494; padding:6px 0;">🔔 THE SUMMONS IS ACTIVE on this device</div>';
         } else if (state === 'unsupported') {
