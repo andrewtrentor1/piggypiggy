@@ -206,8 +206,18 @@
                     </span>
                 </summary>
                 <div class="parlour-body">
+                    <div class="pp-panel" id="myTabPanel" style="display:none;">
+                        <div class="pp-label">🧾 My Tab</div>
+                        <div id="myTabItems"></div>
+                        <div class="pp-note" style="margin-top:6px;">Drink a debt, then summon an <strong>Accountability Supervisor</strong> — any other member — to certify it. Uncertified claims don't clear.</div>
+                    </div>
+                    <div class="pp-panel" id="witnessDesk" style="display:none; border-color: var(--gold);">
+                        <div class="pp-label" style="color: var(--gold-bright);">⚖️ Supervisor's Desk — claims awaiting certification</div>
+                        <div id="witnessItems"></div>
+                    </div>
+                    <div class="pp-label">The Full Ledger</div>
                     <div id="debtLedger" class="pp-note" style="text-align:center;">Auditing the books...</div>
-                    <div class="pp-note" style="margin-top:8px;">A drink unacknowledged for 24 hours doubles. Acknowledge drinks from the Pig Points page to clear your name.</div>
+                    <div class="pp-note" style="margin-top:8px;">A drink unacknowledged for 24 hours doubles. The club remembers.</div>
                 </div>
             </details>
 
@@ -272,6 +282,7 @@
         let golfSessions = {};
         let tribunalCases = {};
         let oracleMarkets = {};
+        let clearances = {};
         let rdzOn = false;
 
         // ---------- tiny helpers ----------
@@ -302,8 +313,10 @@
             window.onAuthStateChanged(window.firebaseAuth, (user) => {
                 me = (user && user.displayName) || null;
                 renderIdentity();
+                renderDebts();
                 $('rulebookCard').style.display = isHam() ? '' : 'none';
             });
+            window.firebaseOnValue(R('drinkClearances'), (s) => { clearances = s.val() || {}; renderDebts(); });
             window.firebaseOnValue(R('players'), (s) => { players = s.val() || {}; });
             window.firebaseOnValue(R('activities'), (s) => { activities = s.val() || {}; renderDebts(); });
             window.firebaseOnValue(R('drinkAcknowledgments'), (s) => { acks = s.val() || {}; renderDebts(); });
@@ -647,23 +660,20 @@
             $('missionStatus').textContent = '💀 Caught. Drink.';
         };
 
-        // ================= DRINK DEBT LEDGER =================
-        function renderDebts() {
-            const el = $('debtLedger');
-            if (!el) return;
-            const owed = {};   // name -> [{drinks, ageMs, weighted}]
+        // ================= DRINK DEBT LEDGER + ACCOUNTABILITY SUPERVISION =================
+        function computeDebts() {
+            const owed = {};   // name -> [{eventId, drinks, assigner, ageMs, weighted, interest}]
             ROSTER.forEach((n) => { owed[n] = []; });
-            const ackCount = {}; // eventId -> count of acks by player
+            const ackCount = {};
             Object.values(acks || {}).forEach((a) => {
                 if (!a || !a.originalEventId) return;
-                const k = a.originalEventId + '|' + a.acknowledgedBy;
-                ackCount[k] = (ackCount[k] || 0) + 1;
+                ackCount[a.originalEventId + '|' + a.acknowledgedBy] = 1;
             });
             Object.values(activities || {}).forEach((a) => {
                 if (!a || a.type !== 'drink_assignment' || !a.message) return;
-                // formats: "X assigned N DRINK(S) to Y (Power-Up)" | "X assigned drinks: Y (N), Z (N) - "note""
                 let m;
                 const found = [];
+                const assigner = (a.message.match(/^(\w+) /) || [])[1] || '?';
                 if ((m = a.message.match(/assigned (\d+) DRINKS? to (\w+)/))) {
                     found.push([m[2], parseInt(m[1], 10)]);
                 } else if (a.message.includes('assigned drinks:')) {
@@ -672,13 +682,28 @@
                 }
                 found.forEach(([name, n]) => {
                     if (!owed[name]) return;
-                    const acked = ackCount[a.id + '|' + name] || 0;
-                    if (acked > 0) return; // settled
+                    if (ackCount[a.id + '|' + name]) return; // settled
                     const age = Date.now() - Date.parse(a.timestamp || 0);
                     const mult = age > 86400000 ? 2 : 1;
-                    owed[name].push({ drinks: n, ageMs: age, weighted: n * mult, interest: mult > 1 });
+                    owed[name].push({ eventId: a.id, drinks: n, assigner, ageMs: age, weighted: n * mult, interest: mult > 1 });
                 });
             });
+            return owed;
+        }
+
+        function ageLabel(ms) {
+            const h = Math.floor(ms / 3600000);
+            if (h < 1) return 'fresh';
+            if (h < 24) return h + 'h old';
+            return Math.floor(h / 24) + 'd old';
+        }
+
+        function renderDebts() {
+            const el = $('debtLedger');
+            if (!el) return;
+            const owed = computeDebts();
+
+            // --- full ledger ---
             const rows = ROSTER.map((n) => {
                 const tot = owed[n].reduce((s, d) => s + d.weighted, 0);
                 const hasInterest = owed[n].some((d) => d.interest);
@@ -690,7 +715,84 @@
                     '<div class="debt-row"><span>' + (i === 0 ? '👑🍺 ' : '') + '<strong>' + r.n + '</strong>' + (i === 0 ? ' <span class="pp-note">(Chief Deadbeat)</span>' : '') + '</span>' +
                     '<span style="display:flex; gap:8px; align-items:center;">' + (r.hasInterest ? '<span class="debt-interest">×2 INTEREST</span>' : '') + '<strong style="color:var(--rose-bright)">' + r.tot + ' 🍺</strong></span></div>').join('')
                 : '<div style="text-align:center;">📗 The books are clean. No outstanding drink debts. Suspiciously responsible.</div>';
+
+            // --- MY TAB ---
+            const myPanel = $('myTabPanel');
+            if (me && myPanel) {
+                myPanel.style.display = '';
+                const mine = owed[me] || [];
+                $('myTabItems').innerHTML = mine.length
+                    ? mine.map((d) => {
+                        const cl = clearances[d.eventId + '_' + me];
+                        const pending = cl && cl.status === 'pending';
+                        const rejected = cl && cl.status === 'rejected';
+                        return '<div class="debt-row"><span style="font-size:0.82rem;">' +
+                            '<strong>' + d.weighted + ' 🍺</strong> from ' + esc(d.assigner) +
+                            ' <span class="pp-note">(' + ageLabel(d.ageMs) + (d.interest ? ' · ×2' : '') + ')</span>' +
+                            (rejected ? ' <span style="color:#ff8a80; font-size:0.68rem;">CLAIM REJECTED — DRINK IT FOR REAL</span>' : '') +
+                            '</span>' +
+                            (pending
+                                ? '<span style="color:var(--gold-pale); font-size:0.7rem;">⏳ awaiting supervisor</span>'
+                                : '<button class="pp-chip" style="font-size:0.66rem;" onclick="claimDebt(\'' + d.eventId + '\',' + d.weighted + ')">🍺 I DRANK IT</button>') +
+                            '</div>';
+                    }).join('')
+                    : '<div class="pp-note" style="text-align:center; padding:6px 0;">Your tab is clean. The club is almost disappointed.</div>';
+            } else if (myPanel) {
+                myPanel.style.display = 'none';
+            }
+
+            // --- SUPERVISOR'S DESK: others' pending claims ---
+            const desk = $('witnessDesk');
+            if (!desk) return;
+            const pendingClaims = Object.values(clearances || {}).filter((c) => c && c.status === 'pending' && me && c.debtor !== me);
+            if (pendingClaims.length && me) {
+                desk.style.display = '';
+                $('witnessItems').innerHTML = pendingClaims.map((c) =>
+                    '<div class="debt-row"><span style="font-size:0.82rem;"><strong>' + esc(c.debtor) + '</strong> claims ' + c.drinks + ' 🍺 drunk</span>' +
+                    '<span style="display:flex; gap:6px;">' +
+                    '<button class="pp-chip sel" style="font-size:0.64rem;" onclick="certifyClaim(\'' + c.id + '\')">✅ CERTIFY</button>' +
+                    '<button class="pp-chip" style="font-size:0.64rem; border-color:rgba(255,110,90,0.5); color:#ff8a80;" onclick="rejectClaim(\'' + c.id + '\')">❌ LIES</button>' +
+                    '</span></div>').join('');
+            } else {
+                desk.style.display = 'none';
+            }
         }
+
+        window.claimDebt = async function (eventId, drinks) {
+            if (needMe()) return;
+            const id = eventId + '_' + me;
+            await window.firebaseSet(R('drinkClearances/' + id), {
+                id, debtor: me, eventId, drinks, claimedAt: new Date().toISOString(), status: 'pending'
+            });
+            await logAct('drink_acknowledgment', '🍺', '🍺 ' + me + ' claims ' + drinks + ' drink' + (drinks > 1 ? 's' : '') + ' DRUNK — an ACCOUNTABILITY SUPERVISOR is summoned to certify.');
+        };
+
+        window.certifyClaim = async function (id) {
+            if (needMe()) return;
+            const c = clearances[id];
+            if (!c || c.status !== 'pending') return;
+            if (c.debtor === me) return alert('You cannot supervise your own accountability. Nice try.');
+            // write an acknowledgment the whole system understands — the debt clears everywhere
+            const ackKey = c.eventId + '_' + Date.now();
+            await window.firebaseSet(R('drinkAcknowledgments/' + ackKey), {
+                acknowledged: true,
+                acknowledgedBy: c.debtor,
+                originalEventId: c.eventId,
+                witnessedBy: me,
+                timestamp: new Date().toISOString()
+            });
+            await window.firebaseUpdate(R('drinkClearances/' + id), { status: 'certified', witness: me, certifiedAt: new Date().toISOString() });
+            await logAct('drink_acknowledgment', '⚖️', '⚖️ ' + me + ', acting as ACCOUNTABILITY SUPERVISOR, certifies that ' + c.debtor + ' has drunk their debts. ' + c.drinks + ' 🍺 cleared from the ledger.');
+        };
+
+        window.rejectClaim = async function (id) {
+            if (needMe()) return;
+            const c = clearances[id];
+            if (!c || c.status !== 'pending') return;
+            if (c.debtor === me) return;
+            await window.firebaseUpdate(R('drinkClearances/' + id), { status: 'rejected', witness: me, rejectedAt: new Date().toISOString() });
+            await logAct('drink_acknowledgment', '⚖️', '⚖️ ACCOUNTABILITY SUPERVISOR ' + me + ' REJECTS ' + c.debtor + '\'s clearance claim. The debt stands. The shame compounds.');
+        };
 
         // ================= SUPERLATIVES =================
         window.convene = function () {

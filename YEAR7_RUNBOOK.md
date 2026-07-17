@@ -22,6 +22,7 @@ Replace everything with the **WEEKEND RULES** and hit Publish:
     "secretSwine": { ".write": true },
     "drinkAssignments": { ".write": true },
     "drinkAcknowledgments": { ".write": true },
+    "drinkClearances": { ".write": true },
     "drinkProofs": { ".write": true },
     "hogwashCooldowns": { ".write": true },
     "dangerZone": { ".write": true },
