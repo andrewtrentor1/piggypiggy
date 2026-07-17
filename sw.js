@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v1';
+const CACHE_NAME = 'mbe-pig-points-v2-clubhouse';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -10,6 +10,7 @@ const urlsToCache = [
   '/golf.html',
   '/script.js',
   '/consolidated-styles.css',
+  '/mbe-theme.css',
   '/firebase-config.js',
   '/danger-zone.mp3',
   '/manifest.json'

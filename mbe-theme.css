@@ -1,0 +1,762 @@
+/* ============================================================
+   MBE — THE ROYAL ORDER OF THE HOG
+   Year VII "Clubhouse" theme · Piggy Piggy site v2
+   Loaded LAST on every page; overrides consolidated-styles.css
+   and per-page inline styles. In Lardo Veritas.
+   ============================================================ */
+
+/* ---------- Design tokens ---------- */
+:root {
+    --felt-950: #050f0a;
+    --felt-900: #07150f;
+    --felt-800: #0b2318;
+    --felt-700: #113526;
+    --felt-600: #16452f;
+    --felt-line: rgba(212, 175, 55, 0.22);
+
+    --gold: #d4af37;
+    --gold-bright: #f2d67c;
+    --gold-pale: #e9cf8f;
+    --gold-deep: #8c6d1f;
+
+    --cream: #f4e9cf;
+    --cream-dim: #c9bc9c;
+    --cream-faint: #9a9077;
+
+    --rose: #ff4fa3;
+    --rose-bright: #ff7dbb;
+    --rose-deep: #c2186b;
+
+    --mud: #6b4a2b;
+    --mud-deep: #3e2a17;
+
+    --danger: #ff3b30;
+    --ok: #4caf50;
+
+    --font-display: 'Fraunces', 'Playfair Display', Georgia, serif;
+    --font-ui: 'Outfit', 'Trebuchet MS', sans-serif;
+
+    --nav-h: 64px;
+    --radius: 14px;
+    --plaque-grad: linear-gradient(160deg, #17402c 0%, #0e2c1e 55%, #123626 100%);
+    --gold-grad: linear-gradient(160deg, #f2d67c 0%, #d4af37 45%, #a8842a 80%, #d4af37 100%);
+    color-scheme: dark;
+}
+
+/* ---------- Base / page felt ---------- */
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    background:
+        radial-gradient(120% 90% at 50% -10%, rgba(212,175,55,0.10) 0%, rgba(212,175,55,0) 55%),
+        radial-gradient(140% 120% at 50% 115%, rgba(255,79,163,0.07) 0%, rgba(255,79,163,0) 50%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0 2px, rgba(0,0,0,0) 2px 6px),
+        linear-gradient(180deg, var(--felt-800) 0%, var(--felt-900) 45%, var(--felt-950) 100%) !important;
+    background-attachment: fixed !important;
+    color: var(--cream) !important;
+    font-family: var(--font-ui) !important;
+    min-height: 100vh;
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 18px) !important;
+}
+
+::selection { background: var(--gold); color: var(--felt-900); }
+
+* { scrollbar-width: thin; scrollbar-color: var(--gold-deep) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--gold-deep); border-radius: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+.container {
+    max-width: 680px !important;
+    padding: 14px 14px 30px !important;
+    margin: 0 auto !important;
+}
+
+/* ---------- Champagne bubbles (were beer bubbles) ---------- */
+.beer-bubbles { opacity: 0.75; }
+.bubble {
+    background: radial-gradient(circle at 35% 30%, rgba(242,214,124,0.9), rgba(212,175,55,0.25) 60%, rgba(212,175,55,0) 75%) !important;
+    border: 1px solid rgba(242, 214, 124, 0.35) !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.25) !important;
+    max-width: 14px; max-height: 14px;
+}
+
+/* ---------- Header: the crest ---------- */
+.header {
+    text-align: center;
+    padding: 18px 10px 6px !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.mbe-crest { display: flex; justify-content: center; margin-bottom: 6px; }
+.mbe-crest svg {
+    width: 92px; height: 92px;
+    filter: drop-shadow(0 4px 14px rgba(212, 175, 55, 0.35));
+}
+
+.mbe-club-name {
+    font-family: var(--font-ui);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--gold-pale);
+    margin-bottom: 2px;
+    text-indent: 0.42em; /* balance letterspacing */
+}
+
+.title, .header h1 {
+    font-family: var(--font-display) !important;
+    font-weight: 800 !important;
+    font-size: clamp(1.9rem, 8vw, 2.7rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0.01em;
+    background: linear-gradient(175deg, #f7e3a4 0%, var(--gold) 45%, #a8842a 75%, var(--gold-bright) 100%);
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: var(--gold) !important;
+    text-shadow: none !important;
+    margin: 0 0 2px !important;
+    animation: none !important;
+}
+
+.subtitle {
+    font-family: var(--font-display) !important;
+    font-style: italic;
+    font-weight: 400 !important;
+    font-size: 0.95rem !important;
+    color: var(--cream-dim) !important;
+    margin: 0 !important;
+}
+
+.mbe-motto {
+    font-family: var(--font-ui);
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--cream-faint);
+    margin-top: 8px;
+    text-indent: 0.34em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.mbe-motto::before, .mbe-motto::after {
+    content: "";
+    height: 1px; width: 34px;
+    background: linear-gradient(90deg, transparent, var(--gold-deep));
+}
+.mbe-motto::after { background: linear-gradient(90deg, var(--gold-deep), transparent); }
+
+/* Tone down the giant flanking pig emojis into small mascots */
+.pig-emoji {
+    font-size: 1.4rem !important;
+    animation: none !important;
+    opacity: 0.9;
+    display: inline-block;
+}
+
+/* ---------- Navigation: pills on desktop, bottom bar on phones ---------- */
+.nav-tabs {
+    display: flex !important;
+    gap: 6px !important;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 14px !important;
+    background: none !important;
+    border: none !important;
+}
+
+.nav-btn, .nav-link, .nav-tab {
+    font-family: var(--font-ui) !important;
+    font-weight: 600 !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cream-dim) !important;
+    background: rgba(212, 175, 55, 0.06) !important;
+    border: 1px solid var(--felt-line) !important;
+    border-radius: 999px !important;
+    padding: 9px 14px !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+.nav-btn:hover, .nav-link:hover, .nav-tab:hover {
+    color: var(--gold-bright) !important;
+    border-color: var(--gold) !important;
+    background: rgba(212, 175, 55, 0.12) !important;
+    transform: none !important;
+}
+
+.nav-btn.active, .nav-link.active, .nav-tab.active {
+    background: var(--gold-grad) !important;
+    color: var(--felt-900) !important;
+    border-color: var(--gold-bright) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 12px rgba(212, 175, 55, 0.4) !important;
+}
+
+@media (max-width: 640px) {
+    .nav-tabs {
+        position: fixed !important;
+        left: 0; right: 0; bottom: 0;
+        z-index: 1200;
+        margin: 0 !important;
+        padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        gap: 4px !important;
+        flex-wrap: nowrap !important;
+        background: rgba(6, 17, 11, 0.92) !important;
+        -webkit-backdrop-filter: blur(14px);
+        backdrop-filter: blur(14px);
+        border-top: 1px solid var(--felt-line) !important;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.55);
+    }
+    .nav-tab {
+        flex: 1 1 0 !important;
+        text-align: center !important;
+        font-size: 0.56rem !important;
+        letter-spacing: 0.04em;
+        line-height: 1.5 !important;
+        padding: 7px 2px !important;
+        border-radius: 10px !important;
+        border-color: transparent !important;
+        background: none !important;
+        white-space: normal !important;
+    }
+    .nav-tab.active {
+        box-shadow: 0 2px 10px rgba(212, 175, 55, 0.45) !important;
+    }
+}
+
+/* ---------- Cards: club plaques ---------- */
+.card, .leaderboard, .bookkeeper-panel, .year-section, .session-card, .activity-feed {
+    background: var(--plaque-grad) !important;
+    border: 1px solid var(--felt-line) !important;
+    border-radius: var(--radius) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(242, 214, 124, 0.08),
+        0 10px 30px rgba(0, 0, 0, 0.45) !important;
+    color: var(--cream) !important;
+    position: relative;
+}
+
+.card, .leaderboard { padding: 20px 16px !important; margin-bottom: 16px !important; }
+
+/* gold pinstripe inner frame */
+.card::before, .leaderboard::before {
+    content: "";
+    position: absolute; inset: 6px;
+    border: 1px solid rgba(212, 175, 55, 0.14);
+    border-radius: calc(var(--radius) - 5px);
+    pointer-events: none;
+}
+
+.card-title, .leaderboard h1, .bookkeeper-panel h3 {
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+    font-size: 1.15rem !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gold-pale) !important;
+    text-align: center;
+    text-shadow: none !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+.card-title::before, .card-title::after {
+    content: "";
+    height: 1px;
+    flex: 0 1 40px;
+    background: linear-gradient(90deg, transparent, var(--gold-deep));
+}
+.card-title::after { background: linear-gradient(90deg, var(--gold-deep), transparent); }
+
+/* generic paragraph + helper copy inside cards */
+.card p, .leaderboard p, .modal-content p { color: var(--cream-dim); }
+
+/* Recolor hardcoded inline pinks/greys from old HTML without touching markup */
+[style*="color: #FF1493"] { color: var(--rose-bright) !important; }
+[style*="color: #9370DB"] { color: var(--gold-pale) !important; }
+[style*="color: #666"]    { color: var(--cream-dim) !important; }
+[style*="background: rgba(255, 215, 0, 0.1)"] {
+    background: rgba(212, 175, 55, 0.08) !important;
+    border: 1px solid var(--felt-line) !important;
+}
+
+#loadingIndicator { color: var(--gold-pale) !important; }
+
+/* ---------- Buttons: engraved brass ---------- */
+.login-btn, .god-btn, .transfer-btn, .action-btn, .player-login-btn,
+.session-btn, .add-year-btn, .filter-btn, .jukebox-btn, .hogwash-btn {
+    font-family: var(--font-ui) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(212, 175, 55, 0.5) !important;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+    text-shadow: none !important;
+    min-height: 46px;
+}
+
+.login-btn, .transfer-btn, .action-btn, .player-login-btn, .session-btn, .add-year-btn {
+    background: var(--gold-grad) !important;
+    color: var(--felt-900) !important;
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.28), inset 0 1px 0 rgba(255,255,255,0.35) !important;
+}
+.login-btn:hover, .transfer-btn:hover, .action-btn:hover, .player-login-btn:hover,
+.session-btn:hover, .add-year-btn:hover {
+    transform: translateY(-1px) !important;
+    filter: brightness(1.08);
+    box-shadow: 0 6px 22px rgba(212, 175, 55, 0.4), inset 0 1px 0 rgba(255,255,255,0.35) !important;
+}
+.login-btn:active, .transfer-btn:active, .action-btn:active, .player-login-btn:active { transform: translateY(1px) !important; }
+
+/* GOD gets ecclesiastical ivory */
+.god-btn {
+    background: linear-gradient(165deg, #fffdf4 0%, #f0e6c8 55%, #d9c893 100%) !important;
+    color: #5a4610 !important;
+    border-color: var(--gold-bright) !important;
+    box-shadow: 0 0 22px rgba(242, 214, 124, 0.35), inset 0 1px 0 #fff !important;
+}
+
+/* HOGWASH — the centerpiece: rose-gold shimmer */
+.hogwash-btn {
+    background: linear-gradient(120deg, var(--rose-deep) 0%, var(--rose) 30%, #ffb2d4 50%, var(--rose) 70%, var(--rose-deep) 100%) !important;
+    background-size: 250% 100% !important;
+    color: #fff !important;
+    border: 1px solid var(--rose-bright) !important;
+    font-family: var(--font-display) !important;
+    font-size: 1.25rem !important;
+    letter-spacing: 0.1em !important;
+    padding: 16px 34px !important;
+    border-radius: 999px !important;
+    box-shadow: 0 6px 26px rgba(255, 79, 163, 0.45), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+    animation: mbe-shimmer 3.2s linear infinite, mbe-hogpulse 2.4s ease-in-out infinite !important;
+}
+.hogwash-btn:hover { transform: scale(1.04) !important; }
+
+@keyframes mbe-shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 250% 50%; }
+}
+@keyframes mbe-hogpulse {
+    0%, 100% { box-shadow: 0 6px 26px rgba(255, 79, 163, 0.45), inset 0 1px 0 rgba(255,255,255,0.4); }
+    50% { box-shadow: 0 6px 38px rgba(255, 79, 163, 0.75), 0 0 30px rgba(212, 175, 55, 0.35), inset 0 1px 0 rgba(255,255,255,0.4); }
+}
+
+/* Jukebox: velvet lounge */
+.jukebox-btn {
+    background: linear-gradient(160deg, #3d1d55, #241238) !important;
+    color: var(--gold-pale) !important;
+    border-color: rgba(212, 175, 55, 0.4) !important;
+    box-shadow: 0 4px 18px rgba(61, 29, 85, 0.6) !important;
+}
+
+/* Reset / danger-ish admin buttons keep semantic red but refined */
+[style*="background: linear-gradient(45deg, #ff6b6b"],
+[style*="background: linear-gradient(45deg, #ff0000"] {
+    background: linear-gradient(160deg, #8e1b1b, #5d0f0f) !important;
+    color: #ffd7d0 !important;
+    border: 1px solid rgba(255, 99, 71, 0.5) !important;
+}
+[style*="background: linear-gradient(45deg, #9C27B0"] {
+    background: linear-gradient(160deg, #4a2360, #2c1440) !important;
+    color: #e6c9ff !important;
+    border: 1px solid rgba(186, 104, 200, 0.5) !important;
+}
+[style*="background: linear-gradient(45deg, #666"] {
+    background: var(--felt-600) !important;
+    color: var(--cream-dim) !important;
+    border: 1px solid var(--felt-line) !important;
+}
+[style*="background: linear-gradient(45deg, #4CAF50"] {
+    background: linear-gradient(160deg, #1d5c33, #113a20) !important;
+    color: #cdeed7 !important;
+    border: 1px solid rgba(76, 175, 80, 0.45) !important;
+}
+
+/* Filter chips (activity page) */
+.filter-btn {
+    background: rgba(212, 175, 55, 0.07) !important;
+    color: var(--cream-dim) !important;
+    border: 1px solid var(--felt-line) !important;
+    border-radius: 999px !important;
+    min-height: 38px;
+    font-size: 0.72rem !important;
+}
+.filter-btn.active {
+    background: var(--gold-grad) !important;
+    color: var(--felt-900) !important;
+    border-color: var(--gold-bright) !important;
+}
+
+/* ---------- Leaderboard: the trophy room ---------- */
+#leaderboardList { display: flex; flex-direction: column; gap: 10px; }
+
+.player {
+    background: linear-gradient(160deg, rgba(212,175,55,0.10), rgba(212,175,55,0.03)) !important;
+    border: 1px solid var(--felt-line) !important;
+    border-radius: 12px !important;
+    padding: 13px 14px !important;
+    margin: 0 !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--cream) !important;
+    box-shadow: inset 0 1px 0 rgba(242, 214, 124, 0.07) !important;
+    transition: transform 0.15s ease !important;
+    position: relative;
+    overflow: hidden;
+}
+.player:hover { transform: translateX(3px) !important; background: linear-gradient(160deg, rgba(212,175,55,0.16), rgba(212,175,55,0.05)) !important; }
+
+.player-name {
+    font-family: var(--font-display) !important;
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    color: var(--cream) !important;
+    display: flex; align-items: center; gap: 8px;
+    text-shadow: none !important;
+}
+
+.points, .player-score {
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.2rem !important;
+    color: var(--gold-bright) !important;
+    text-shadow: none !important;
+    display: flex; align-items: center; gap: 6px;
+}
+
+.pig-insult {
+    font-family: var(--font-display) !important;
+    font-style: italic;
+    font-weight: 400 !important;
+    font-size: 0.72rem !important;
+    color: var(--rose-bright) !important;
+    letter-spacing: 0.01em;
+}
+
+/* The reigning champion: gold plaque + shimmer sweep */
+.player.leader {
+    background: linear-gradient(160deg, rgba(242,214,124,0.28), rgba(212,175,55,0.10)) !important;
+    border: 1px solid var(--gold) !important;
+    box-shadow: 0 0 24px rgba(212, 175, 55, 0.25), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+}
+.player.leader::after {
+    content: "";
+    position: absolute; top: 0; bottom: 0; width: 60px;
+    background: linear-gradient(100deg, transparent, rgba(255, 253, 240, 0.22), transparent);
+    animation: mbe-sweep 3.6s ease-in-out infinite;
+}
+@keyframes mbe-sweep {
+    0%, 55% { left: -80px; }
+    85%, 100% { left: 110%; }
+}
+.player.leader .player-name { color: var(--gold-bright) !important; }
+
+/* The PIG: wallowing in mud, gently wobbling in shame */
+.player.pig {
+    background: linear-gradient(160deg, rgba(107, 74, 43, 0.55), rgba(62, 42, 23, 0.65)) !important;
+    border: 1px dashed rgba(255, 79, 163, 0.45) !important;
+    animation: mbe-wallow 4s ease-in-out infinite !important;
+}
+.player.pig::after {
+    content: "🐽";
+    position: absolute;
+    right: -6px; bottom: -14px;
+    font-size: 3.2rem;
+    opacity: 0.14;
+    transform: rotate(-18deg);
+    pointer-events: none;
+}
+.player.pig .player-name { color: #e8b8d2 !important; }
+.player.pig .points { color: var(--rose-bright) !important; }
+@keyframes mbe-wallow {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-0.5deg); }
+    75% { transform: rotate(0.5deg); }
+}
+
+/* GOD: celestial ledger row */
+.player.god-player {
+    background: linear-gradient(160deg, rgba(244, 233, 207, 0.10), rgba(244, 233, 207, 0.03)) !important;
+    border: 1px solid rgba(244, 233, 207, 0.3) !important;
+}
+.player.god-player .player-name { color: #fdf6df !important; letter-spacing: 0.05em; }
+.player.god-player .points { color: #fdf6df !important; }
+
+.edit-score-btn {
+    background: rgba(212, 175, 55, 0.15) !important;
+    border: 1px solid var(--felt-line) !important;
+    border-radius: 8px !important;
+    color: var(--gold-pale) !important;
+}
+
+/* ---------- Modals: private card room ---------- */
+.modal { background: rgba(4, 10, 7, 0.82) !important; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+
+.modal-content {
+    background: var(--plaque-grad) !important;
+    border: 1px solid var(--gold-deep) !important;
+    border-radius: 18px !important;
+    color: var(--cream) !important;
+    box-shadow: 0 0 0 1px rgba(242, 214, 124, 0.1), 0 30px 80px rgba(0, 0, 0, 0.7) !important;
+    max-height: 88vh;
+    overflow-y: auto;
+}
+
+.modal-content h2, .modal-content h3 {
+    font-family: var(--font-display) !important;
+    color: var(--gold-pale) !important;
+    letter-spacing: 0.04em;
+    text-shadow: none !important;
+}
+
+.close {
+    color: var(--cream-dim) !important;
+    background: rgba(212, 175, 55, 0.1) !important;
+    border-radius: 50% !important;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1 !important;
+}
+.close:hover { color: var(--gold-bright) !important; background: rgba(212, 175, 55, 0.2) !important; }
+
+/* ---------- Forms ---------- */
+.form-group label {
+    font-family: var(--font-ui) !important;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: var(--gold-pale) !important;
+}
+
+input[type="text"], input[type="number"], input[type="tel"], textarea, select {
+    background: rgba(5, 15, 10, 0.7) !important;
+    border: 1px solid var(--felt-line) !important;
+    border-radius: 10px !important;
+    color: var(--cream) !important;
+    font-family: var(--font-ui) !important;
+    padding: 12px 14px !important;
+    font-size: 16px !important; /* prevents iOS zoom-on-focus */
+    min-height: 46px;
+}
+input:focus, textarea:focus, select:focus {
+    outline: none !important;
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.22) !important;
+}
+select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4af37' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 14px center !important;
+    padding-right: 36px !important;
+}
+
+/* ---------- Member badge (was bottom status bar) → pinned to TOP ---------- */
+.status-bar {
+    top: 0 !important;
+    bottom: auto !important;
+    background: rgba(6, 17, 11, 0.9) !important;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--felt-line) !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45) !important;
+    color: var(--cream) !important;
+    font-family: var(--font-ui) !important;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 8px !important;
+    font-size: 0.8rem !important;
+}
+.status-player { color: var(--gold-pale) !important; font-weight: 700 !important; letter-spacing: 0.06em; }
+.status-points { color: var(--cream) !important; }
+.status-logout {
+    background: rgba(212, 175, 55, 0.14) !important;
+    border: 1px solid var(--felt-line) !important;
+    color: var(--gold-pale) !important;
+    border-radius: 999px !important;
+    padding: 5px 12px !important;
+    font-size: 0.7rem !important;
+}
+body:has(.status-bar.visible) .container { padding-top: 46px; }
+
+/* Floating toast: sit above the bottom nav */
+.floating-status {
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px) !important;
+    background: rgba(17, 53, 38, 0.95) !important;
+    border: 1px solid var(--gold-deep) !important;
+    color: var(--gold-pale) !important;
+    font-family: var(--font-ui) !important;
+}
+
+/* ---------- Activity feed: the club ledger ---------- */
+.activity-feed { padding: 6px 10px !important; }
+
+.activity-item {
+    background: rgba(5, 15, 10, 0.45) !important;
+    border: 1px solid rgba(212, 175, 55, 0.1) !important;
+    border-left: 3px solid var(--gold-deep) !important;
+    border-radius: 10px !important;
+    margin: 8px 0 !important;
+    padding: 11px 13px !important;
+    color: var(--cream) !important;
+}
+.activity-item:hover { background: rgba(212, 175, 55, 0.07) !important; transform: none !important; }
+.activity-item.hogwash  { border-left-color: var(--rose) !important; }
+.activity-item.transfer { border-left-color: var(--gold) !important; }
+.activity-item.admin    { border-left-color: var(--cream-faint) !important; }
+
+.activity-time, .activity-date {
+    font-family: var(--font-ui) !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cream-faint) !important;
+}
+.activity-text { color: var(--cream) !important; font-size: 0.88rem !important; }
+
+/* ---------- Golf: the course ledger ---------- */
+.session-card { padding: 16px !important; margin-bottom: 14px !important; }
+.session-card:hover { border-color: var(--gold) !important; transform: translateY(-2px) !important; }
+
+.session-title {
+    font-family: var(--font-display) !important;
+    color: var(--gold-pale) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em;
+}
+
+.team-info { color: var(--cream-dim) !important; }
+.team-players-prominent { color: var(--cream) !important; font-weight: 600 !important; }
+.team-score { color: var(--gold-bright) !important; font-family: var(--font-display) !important; font-weight: 700 !important; }
+
+.scorecard-container { border-radius: 12px; overflow-x: auto; }
+.scorecard-table {
+    background: rgba(5, 15, 10, 0.55) !important;
+    border: 1px solid var(--felt-line) !important;
+    border-radius: 12px;
+    color: var(--cream) !important;
+}
+.scorecard-table th, .scorecard-table td {
+    border-color: rgba(212, 175, 55, 0.14) !important;
+    color: var(--cream) !important;
+    font-family: var(--font-ui) !important;
+}
+.scorecard-table th, .scorecard-table .hole-header {
+    background: rgba(212, 175, 55, 0.12) !important;
+    color: var(--gold-pale) !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.scorecard-table .total-col {
+    background: rgba(212, 175, 55, 0.16) !important;
+    color: var(--gold-bright) !important;
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+}
+
+.hole-label { color: var(--gold-pale) !important; }
+.ctp-flag { filter: grayscale(0.4) brightness(1.1); }
+.ctp-flag.won { filter: none; text-shadow: 0 0 12px rgba(212, 175, 55, 0.8) !important; }
+
+/* ---------- History: the trophy cabinet ---------- */
+.year-section { padding: 18px 16px !important; margin-bottom: 16px !important; }
+
+.year-header {
+    font-family: var(--font-display) !important;
+    color: var(--gold-pale) !important;
+    background: none !important;
+    text-shadow: none !important;
+    letter-spacing: 0.05em;
+}
+
+.winner-card, .mvp-card, .pig-card, .stat-card {
+    border-radius: 12px !important;
+    border: 1px solid var(--felt-line) !important;
+    color: var(--cream) !important;
+}
+
+.mvp-card {
+    background: linear-gradient(160deg, rgba(242, 214, 124, 0.2), rgba(212, 175, 55, 0.06)) !important;
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 22px rgba(212, 175, 55, 0.18) !important;
+}
+.pig-card {
+    background: linear-gradient(160deg, rgba(107, 74, 43, 0.5), rgba(62, 42, 23, 0.6)) !important;
+    border: 1px dashed rgba(255, 79, 163, 0.4) !important;
+}
+
+.winner-title {
+    font-family: var(--font-ui) !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.24em !important;
+    text-transform: uppercase !important;
+    color: var(--cream-faint) !important;
+}
+.winner-name {
+    font-family: var(--font-display) !important;
+    font-weight: 800 !important;
+    color: var(--gold-bright) !important;
+    text-shadow: none !important;
+}
+.pig-card .winner-name { color: var(--rose-bright) !important; }
+
+.stat-card { background: rgba(5, 15, 10, 0.45) !important; }
+.stat-number {
+    font-family: var(--font-display) !important;
+    font-weight: 800 !important;
+    color: var(--gold-bright) !important;
+}
+.stat-label {
+    font-size: 0.6rem !important;
+    letter-spacing: 0.18em !important;
+    text-transform: uppercase !important;
+    color: var(--cream-faint) !important;
+}
+
+/* ---------- Danger Zone stays apocalyptic (it has earned it) ---------- */
+#dangerZoneAlert .modal-content {
+    border: 2px solid var(--danger) !important;
+    box-shadow: 0 0 60px rgba(255, 59, 48, 0.55) !important;
+}
+
+/* ---------- Slots / wheel polish ---------- */
+.slot-reel {
+    border: 1px solid var(--gold-deep) !important;
+    border-radius: 12px !important;
+    background: rgba(5, 15, 10, 0.7) !important;
+}
+.slot-option.winner {
+    background: var(--gold-grad) !important;
+    color: var(--felt-900) !important;
+}
+
+/* ---------- Misc semantic colors ---------- */
+.success { color: #7fd494 !important; }
+.error   { color: #ff8a80 !important; }
+.warning { color: var(--gold-bright) !important; }
+.info    { color: var(--cream-dim) !important; }
+
+/* ---------- Accessibility & motion ---------- */
+:focus-visible { outline: 2px solid var(--gold) !important; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
