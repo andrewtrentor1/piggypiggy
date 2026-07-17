@@ -3471,69 +3471,112 @@ function closeHogwashResult() {
 function showPowerUpModal(playerName) {
     const modal = document.getElementById('powerUpModal');
     const playerData = players[playerName];
-    
+
     if (!playerData) {
         console.error('Player not found:', playerName);
         return;
     }
-    
+
     const powerUps = playerData.powerUps;
-    document.getElementById('powerUpPlayerName').textContent = playerName;
-    
-    // Build power-up display
+    const isOwner = isPlayerLoggedIn && currentPlayer === playerName;
+    document.getElementById('powerUpPlayerName').textContent = playerName.toUpperCase();
+
+    const itemCard = (emoji, name, count, desc, actionHTML) => `
+        <div class="power-up-item" style="margin: 10px 0; padding: 12px 14px; background: rgba(5,15,10,0.5); border: 1px solid rgba(212,175,55,0.22); border-radius: 12px; text-align: left; display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.9em;">${emoji}</span>
+            <span style="flex: 1;">
+                <strong style="font-family: 'Fraunces', Georgia, serif; color: #e9cf8f; letter-spacing: 0.04em;">${name}</strong>
+                <span style="color: #f2d67c; font-weight: 700;"> ×${count}</span>
+                <div style="font-size: 0.78em; color: #9a9077; font-style: italic; margin-top: 3px;">${desc}</div>
+            </span>
+            ${actionHTML || ''}
+        </div>`;
+    const invokeBtn = (fn, label) => isOwner
+        ? `<button class="transfer-btn" onclick="${fn}" style="min-height: 38px; padding: 8px 14px; font-size: 0.72em; white-space: nowrap;">${label}</button>`
+        : '';
+
     let powerUpHTML = '';
-    
     if (powerUps.mulligans > 0) {
-        powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; border-left: 4px solid #4CAF50;">
-            <span style="font-size: 1.5em;">⛳</span> <strong>Mulligans:</strong> ${powerUps.mulligans}
-            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">Use on golf course for a do-over shot</div>
-        </div>`;
+        powerUpHTML += itemCard('⛳', 'MULLIGAN', powerUps.mulligans,
+            'Rewrite history — one of your own shots never happened.',
+            invokeBtn(`invokePowerup('mulligans')`, '⛳ INVOKE'));
     }
-    
     if (powerUps.reverseMulligans > 0) {
-        powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(156, 39, 176, 0.1); border-radius: 8px; border-left: 4px solid #9C27B0;">
-            <span style="font-size: 1.5em;">🔄</span> <strong>Reverse Mulligans:</strong> ${powerUps.reverseMulligans}
-            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">Force someone else to re-do their shot</div>
-        </div>`;
+        powerUpHTML += itemCard('🪞', 'REVERSE MULLIGAN', powerUps.reverseMulligans,
+            "Unmake an enemy's finest shot. They re-hit. You watch.",
+            invokeBtn(`invokePowerup('reverseMulligans')`, '🪞 INVOKE'));
     }
-    
     if (powerUps.giveDrinks > 0) {
-        powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(255, 149, 0, 0.1); border-radius: 8px; border-left: 4px solid #ff9500;">
-            <span style="font-size: 1.5em;">🍺</span> <strong>Drink Giver:</strong> ${powerUps.giveDrinks} drinks to assign
-            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">Assign drinks to other players</div>
-        </div>`;
+        powerUpHTML += itemCard('🍺', 'DRINKS TO POUR', powerUps.giveDrinks,
+            'Bestow drinks upon your enemies. Or friends. Same thing.',
+            invokeBtn(`showDrinkAssignmentModal()`, '🍺 POUR'));
     }
-    
-    // Special item for Ian - the poop (inside joke, no function)
     if (playerName.toLowerCase() === 'ian') {
-        powerUpHTML += `<div class="power-up-item" style="margin: 10px 0; padding: 10px; background: rgba(139, 69, 19, 0.1); border-radius: 8px; border-left: 4px solid #8B4513;">
-            <span style="font-size: 1.5em;">💩</span> <strong>POOP:</strong> 1
-            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">A mysterious item with no known purpose...</div>
-        </div>`;
+        powerUpHTML += itemCard('💩', 'HEIRLOOM POOP', 1,
+            'Appraised value: priceless. Function: none. Provenance: disputed.', '');
     }
-    
+
     if (powerUpHTML === '') {
-        powerUpHTML = `<div style="color: #666; font-style: italic; padding: 20px;">
-            <span style="font-size: 2em;">🐷</span><br>
-            This pig's bag is empty!<br>
-            <small>Try using HOGWASH to earn some power-ups!</small>
+        const emptyLines = [
+            'Nothing but lint and broken dreams.',
+            'The satchel echoes. Embarrassing.',
+            'Contains one (1) IOU from the Pig Gods, unsigned.',
+            'A moth flies out. It, too, is disappointed.'
+        ];
+        powerUpHTML = `<div style="color: #9a9077; font-style: italic; padding: 20px; font-family: 'Fraunces', Georgia, serif;">
+            <span style="font-size: 2em;">🎒</span><br>
+            ${emptyLines[Math.floor(Math.random() * emptyLines.length)]}<br>
+            <small style="font-family: 'Outfit', sans-serif;">Consult the FATES to acquire possessions.</small>
         </div>`;
     }
-    
+
     document.getElementById('powerUpContent').innerHTML = powerUpHTML;
-    
-    // Show action buttons if this is the current player and they have usable powers
+
+    // Non-owners get to be nosy — and get logged for it
     let actionsHTML = '';
-    if (isPlayerLoggedIn && currentPlayer === playerName && powerUps.giveDrinks > 0) {
-        actionsHTML = `<button class="hogwash-btn" onclick="showDrinkAssignmentModal()" style="margin: 5px;">
-            🍺 ASSIGN DRINKS 🍺
+    if (!isOwner && isPlayerLoggedIn && currentPlayer) {
+        actionsHTML = `<button class="transfer-btn" onclick="rummageSatchel('${playerName}')" style="background: rgba(212,175,55,0.12); color: #c9bc9c; border: 1px solid rgba(212,175,55,0.3);">
+            👀 RUMMAGE SHAMELESSLY
         </button>`;
     }
-    
     document.getElementById('powerUpActions').innerHTML = actionsHTML;
-    
+
     modal.style.display = 'flex';
 }
+
+// Use a mulligan / reverse mulligan from your own satchel, on the record
+function invokePowerup(type) {
+    const playerName = currentPlayer;
+    if (!isPlayerLoggedIn || !playerName) return alert('🚫 Log in first.');
+    if (!players[playerName] || (players[playerName].powerUps[type] || 0) < 1) return alert('🚫 You have none left.');
+
+    if (type === 'mulligans') {
+        const hole = prompt('⛳ INVOKE A MULLIGAN\n\nWhich hole is being rewritten? (1-9)');
+        if (!hole) return;
+        players[playerName].powerUps.mulligans -= 1;
+        savePlayers();
+        addActivity('admin', '⛳', `⛳ ${playerName} INVOKES A MULLIGAN on hole ${hole} — the shot never happened. History has been rewritten.`);
+        alert('⛳ The shot never happened. Play on.');
+    } else {
+        const victim = prompt('🪞 INVOKE THE CRUEL MIRROR\n\nWhose shot is being UNMADE? (name)');
+        if (!victim) return;
+        const hole = prompt(`🪞 And on which hole does ${victim}'s beautiful shot cease to exist? (1-9)`);
+        if (!hole) return;
+        players[playerName].powerUps.reverseMulligans -= 1;
+        savePlayers();
+        addActivity('admin', '🪞', `🪞 ${playerName} invokes a REVERSE MULLIGAN — ${victim}'s shot on hole ${hole} is hereby UNMADE. Re-hit, peasant.`);
+        alert(`🪞 ${victim} must re-hit. Savor this.`);
+    }
+    updateLeaderboard();
+    showPowerUpModal(playerName); // refresh the satchel view
+}
+window.invokePowerup = invokePowerup;
+
+function rummageSatchel(ownerName) {
+    addActivity('admin', '👀', `👀 ${currentPlayer} was caught rummaging through ${ownerName}'s satchel. Nothing was taken. Dignity was lost.`);
+    alert(`👀 You rummage through ${ownerName}'s satchel.\n\nThe club has been notified of your behavior.`);
+}
+window.rummageSatchel = rummageSatchel;
 
 function closePowerUpModal() {
     document.getElementById('powerUpModal').style.display = 'none';

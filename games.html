@@ -201,8 +201,8 @@
                 <summary>
                     <span class="parlour-emoji">💸</span>
                     <span>
-                        <div class="parlour-name">DRINK DEBT LEDGER</div>
-                        <div class="parlour-tag">Unpaid drinks accrue interest. The club remembers.</div>
+                        <div class="parlour-name">DRINK DEBT LEDGER <span id="debtBadge" style="color: var(--rose-bright); font-size: 0.8em;"></span></div>
+                        <div class="parlour-tag">Debts double hourly (clock sleeps 10PM–9AM). 24-gulp mercy ceiling.</div>
                     </span>
                 </summary>
                 <div class="parlour-body">
@@ -217,7 +217,7 @@
                     </div>
                     <div class="pp-label">The Full Ledger</div>
                     <div id="debtLedger" class="pp-note" style="text-align:center;">Auditing the books...</div>
-                    <div class="pp-note" style="margin-top:8px;">A drink unacknowledged for 24 hours doubles. The club remembers.</div>
+                    <div class="pp-note" style="margin-top:8px;">Interest: every debt DOUBLES per awake hour — the clock runs 9AM–10PM and sleeps overnight. The House mercifully caps any tab at 24 gulps. Drink promptly.</div>
                 </div>
             </details>
 
@@ -661,8 +661,30 @@
         };
 
         // ================= DRINK DEBT LEDGER + ACCOUNTABILITY SUPERVISION =================
+        // Interest rules: a debt DOUBLES every 60 awake-minutes. The interest
+        // clock sleeps 10PM-9AM (even debt collectors rest). MERCY RULE: no
+        // tab may exceed 24 gulps at any time.
+        const GULP_CEILING = 24;
+
+        function awakeMinutes(startMs) {
+            // minutes elapsed between start and now that fall inside 9:00-22:00 local
+            let total = 0;
+            const start = new Date(startMs);
+            const now = new Date();
+            const day = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+            while (day <= now) {
+                const wStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 9, 0, 0).getTime();
+                const wEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 22, 0, 0).getTime();
+                const s = Math.max(wStart, startMs);
+                const e = Math.min(wEnd, now.getTime());
+                if (e > s) total += (e - s) / 60000;
+                day.setDate(day.getDate() + 1);
+            }
+            return Math.floor(total);
+        }
+
         function computeDebts() {
-            const owed = {};   // name -> [{eventId, drinks, assigner, ageMs, weighted, interest}]
+            const owed = {};   // name -> [{eventId, drinks, assigner, awakeMin, mult, weighted}]
             ROSTER.forEach((n) => { owed[n] = []; });
             const ackCount = {};
             Object.values(acks || {}).forEach((a) => {
@@ -683,19 +705,31 @@
                 found.forEach(([name, n]) => {
                     if (!owed[name]) return;
                     if (ackCount[a.id + '|' + name]) return; // settled
-                    const age = Date.now() - Date.parse(a.timestamp || 0);
-                    const mult = age > 86400000 ? 2 : 1;
-                    owed[name].push({ eventId: a.id, drinks: n, assigner, ageMs: age, weighted: n * mult, interest: mult > 1 });
+                    const mins = awakeMinutes(Date.parse(a.timestamp || 0));
+                    const mult = Math.pow(2, Math.floor(mins / 60));
+                    const weighted = Math.min(n * mult, GULP_CEILING);
+                    owed[name].push({ eventId: a.id, drinks: n, assigner, awakeMin: mins, mult, weighted, interest: mult > 1 });
                 });
+            });
+            // MERCY RULE: cap each member's total tab at the gulp ceiling
+            ROSTER.forEach((n) => {
+                let total = owed[n].reduce((s, d) => s + d.weighted, 0);
+                owed[n].ceilinged = total > GULP_CEILING;
+                if (owed[n].ceilinged) {
+                    // trim newest-first until under the ceiling; the oldest sins count fullest
+                    const items = owed[n].slice().sort((a, b) => b.awakeMin - a.awakeMin);
+                    let budget = GULP_CEILING;
+                    items.forEach((d) => { d.weighted = Math.max(0, Math.min(d.weighted, budget)); budget -= d.weighted; });
+                }
             });
             return owed;
         }
 
-        function ageLabel(ms) {
-            const h = Math.floor(ms / 3600000);
-            if (h < 1) return 'fresh';
-            if (h < 24) return h + 'h old';
-            return Math.floor(h / 24) + 'd old';
+        function ageLabel(d) {
+            const h = Math.floor(d.awakeMin / 60);
+            const label = h < 1 ? d.awakeMin + 'm awake' : h < 48 ? h + 'h awake' : Math.floor(h / 13) + 'd awake';
+            const multLabel = !isFinite(d.mult) || d.mult > 64 ? '×∞' : '×' + d.mult;
+            return label + (d.mult > 1 ? ' · ' + multLabel : '');
         }
 
         function renderDebts() {
@@ -718,17 +752,26 @@
 
             // --- MY TAB ---
             const myPanel = $('myTabPanel');
+            const badge = $('debtBadge');
             if (me && myPanel) {
                 myPanel.style.display = '';
                 const mine = owed[me] || [];
-                $('myTabItems').innerHTML = mine.length
+                const myTotal = mine.reduce((s, d) => s + d.weighted, 0);
+                if (badge) badge.textContent = myTotal > 0 ? '· you owe ' + myTotal + ' 🍺' : '';
+                // surface the card the first time we find debts on your tab
+                if (myTotal > 0 && !window._debtCardAutoOpened) {
+                    window._debtCardAutoOpened = true;
+                    $('debtCard').open = true;
+                }
+                $('myTabItems').innerHTML = (mine.ceilinged ? '<div class="pp-note" style="text-align:center; color:var(--rose-bright);">🛑 DEBT CEILING REACHED — the House caps all tabs at ' + GULP_CEILING + ' gulps. You have peaked.</div>' : '') +
+                    (mine.length
                     ? mine.map((d) => {
                         const cl = clearances[d.eventId + '_' + me];
                         const pending = cl && cl.status === 'pending';
                         const rejected = cl && cl.status === 'rejected';
                         return '<div class="debt-row"><span style="font-size:0.82rem;">' +
                             '<strong>' + d.weighted + ' 🍺</strong> from ' + esc(d.assigner) +
-                            ' <span class="pp-note">(' + ageLabel(d.ageMs) + (d.interest ? ' · ×2' : '') + ')</span>' +
+                            ' <span class="pp-note">(' + ageLabel(d) + ')</span>' +
                             (rejected ? ' <span style="color:#ff8a80; font-size:0.68rem;">CLAIM REJECTED — DRINK IT FOR REAL</span>' : '') +
                             '</span>' +
                             (pending
@@ -736,9 +779,11 @@
                                 : '<button class="pp-chip" style="font-size:0.66rem;" onclick="claimDebt(\'' + d.eventId + '\',' + d.weighted + ')">🍺 I DRANK IT</button>') +
                             '</div>';
                     }).join('')
-                    : '<div class="pp-note" style="text-align:center; padding:6px 0;">Your tab is clean. The club is almost disappointed.</div>';
+                    : '<div class="pp-note" style="text-align:center; padding:6px 0;">Your tab is clean. The club is almost disappointed.</div>');
             } else if (myPanel) {
-                myPanel.style.display = 'none';
+                myPanel.style.display = '';
+                if (badge) badge.textContent = '';
+                $('myTabItems').innerHTML = '<div class="pp-note" style="text-align:center; padding:6px 0;">🎟️ Identify yourself at the top of the page to open your tab.</div>';
             }
 
             // --- SUPERVISOR'S DESK: others' pending claims ---
