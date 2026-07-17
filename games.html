@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎪 THE PARLOUR - MBE Games</title>
+    <meta name="description" content="The Parlour — games of skill, chance, and character assassination for the Royal Order of the Hog">
+    <meta name="theme-color" content="#0b2318">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="consolidated-styles.css">
+
+    <!-- Year VII Clubhouse Theme -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Outfit:wght@400..800&display=swap">
+    <link rel="stylesheet" href="mbe-theme.css">
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, update, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAp-3U1m7fw9DQ6KmtGx5e1jmYofMdAYM",
+            authDomain: "mbepiggy.firebaseapp.com",
+            databaseURL: "https://mbepiggy-default-rtdb.firebaseio.com",
+            projectId: "mbepiggy",
+            storageBucket: "mbepiggy.firebasestorage.app",
+            messagingSenderId: "638797749409",
+            appId: "1:638797749409:web:1ec0514b592c2b489f64e0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+        setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+        window.firebaseDB = database;
+        window.firebaseAuth = auth;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseUpdate = update;
+        window.firebaseOnValue = onValue;
+        window.firebaseGet = get;
+        window.signInAnonymously = signInAnonymously;
+        window.updateProfile = updateProfile;
+        window.onAuthStateChanged = onAuthStateChanged;
+    </script>
+</head>
+<body>
+    <div class="beer-bubbles" id="bubbles"></div>
+
+    <div class="container">
+        <header class="header">
+            <div class="mbe-crest" aria-hidden="true">
+                <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+                    <circle cx="60" cy="60" r="56" stroke="#d4af37" stroke-width="2.5"/>
+                    <circle cx="60" cy="60" r="50" stroke="#d4af37" stroke-width="0.75" opacity="0.6"/>
+                    <g fill="#d4af37" opacity="0.85">
+                        <circle cx="18" cy="78" r="1.5"/><circle cx="22" cy="86" r="1.5"/><circle cx="28" cy="93" r="1.5"/>
+                        <circle cx="102" cy="78" r="1.5"/><circle cx="98" cy="86" r="1.5"/><circle cx="92" cy="93" r="1.5"/>
+                    </g>
+                    <rect x="44" y="14" width="32" height="22" rx="2" fill="#0b2318" stroke="#d4af37" stroke-width="2"/>
+                    <rect x="36" y="34" width="48" height="5" rx="2.5" fill="#0b2318" stroke="#d4af37" stroke-width="2"/>
+                    <rect x="44" y="28" width="32" height="5" fill="#d4af37" opacity="0.9"/>
+                    <path d="M38 52 Q32 42 42 44 Q46 46 44 54" fill="#0b2318" stroke="#d4af37" stroke-width="2"/>
+                    <path d="M82 52 Q88 42 78 44 Q74 46 76 54" fill="#0b2318" stroke="#d4af37" stroke-width="2"/>
+                    <circle cx="60" cy="66" r="24" fill="#0b2318" stroke="#d4af37" stroke-width="2.5"/>
+                    <circle cx="51" cy="60" r="2.5" fill="#f2d67c"/>
+                    <circle cx="69" cy="60" r="2.5" fill="#f2d67c"/>
+                    <circle cx="69" cy="60" r="7.5" stroke="#f2d67c" stroke-width="1.75"/>
+                    <path d="M76 63 Q82 72 78 82" stroke="#f2d67c" stroke-width="1.25" fill="none"/>
+                    <ellipse cx="60" cy="73" rx="10" ry="7" fill="#0b2318" stroke="#d4af37" stroke-width="2"/>
+                    <circle cx="56.5" cy="73" r="1.6" fill="#d4af37"/>
+                    <circle cx="63.5" cy="73" r="1.6" fill="#d4af37"/>
+                    <path d="M52 92 L60 95 L68 92 L68 100 L60 97 L52 100 Z" fill="#d4af37"/>
+                </svg>
+            </div>
+            <div class="mbe-club-name">The Royal Order of the Hog</div>
+            <h1 class="title">THE PARLOUR</h1>
+            <p class="subtitle">Games of Skill, Chance &amp; Character Assassination</p>
+            <div class="mbe-motto">In Lardo Veritas &middot; Est. MMXX &middot; Anno VII</div>
+
+            <div class="nav-tabs">
+                <a href="index.html" class="nav-tab">🏆 PIG POINTS</a>
+                <a href="golf.html" class="nav-tab">🏌️ GOLF</a>
+                <a href="games.html" class="nav-tab active">🎪 PARLOUR</a>
+                <a href="activity.html" class="nav-tab">📜 FEED</a>
+                <a href="history.html" class="nav-tab">🏛️ FAME</a>
+            </div>
+        </header>
+
+        <div class="main-content">
+
+            <!-- Identity -->
+            <div class="card" id="identityCard">
+                <h2 class="card-title">🎟️ MEMBERSHIP CHECK</h2>
+                <div id="identityStatus" class="pp-note" style="text-align:center;">Presenting credentials...</div>
+                <div class="pp-chiprow" id="identityChips" style="justify-content:center; display:none;"></div>
+            </div>
+
+            <!-- THE TRIBUNAL -->
+            <details class="card parlour-card" id="tribunalCard">
+                <summary>
+                    <span class="parlour-emoji">⚖️</span>
+                    <span>
+                        <div class="parlour-name">THE TRIBUNAL</div>
+                        <div class="parlour-tag">Justice, served ice cold, by majority rule</div>
+                    </span>
+                </summary>
+                <div class="parlour-body" id="tribunalBody">
+                    <div id="tribunalLive"></div>
+                    <div class="pp-panel">
+                        <div class="pp-label">File Charges</div>
+                        <div class="pp-label" style="margin-top:2px;">The Accused</div>
+                        <div class="pp-chiprow" id="accusedChips"></div>
+                        <div class="pp-label">The Crime</div>
+                        <div class="pp-chiprow" id="crimeChips"></div>
+                        <input type="text" id="crimeCustom" placeholder="...or describe the crime in your own words" style="width:100%;">
+                        <button class="transfer-btn pp-big-btn" onclick="fileCharges()">⚖️ FILE CHARGES</button>
+                        <div class="pp-note">Charges summon every member's phone to vote. Guilty verdicts spin the Sentence Wheel. All verdicts are entered into the permanent record.</div>
+                    </div>
+                    <div id="tribunalHistory"></div>
+                </div>
+            </details>
+
+            <!-- ORACLE OF LARD -->
+            <details class="card parlour-card" id="oracleCard">
+                <summary>
+                    <span class="parlour-emoji">🔮</span>
+                    <span>
+                        <div class="parlour-name">ORACLE OF LARD</div>
+                        <div class="parlour-tag">A prediction market for degenerates</div>
+                    </span>
+                </summary>
+                <div class="parlour-body">
+                    <div id="oracleOpen"></div>
+                    <div class="pp-panel">
+                        <div class="pp-label">Open a Market</div>
+                        <div class="pp-chiprow" id="oracleTemplates"></div>
+                        <input type="text" id="oracleQ" placeholder="The question (e.g. Who 3-putts first today?)" style="width:100%; margin-bottom:8px;">
+                        <input type="text" id="oracleOpts" placeholder="Options, comma separated (e.g. Andrew, Evan, Nobody)" style="width:100%; margin-bottom:8px;">
+                        <div class="pp-label">Stake (points, paid by/to GOD)</div>
+                        <select id="oracleStake" style="width:100%;">
+                            <option value="1">1 point</option>
+                            <option value="2" selected>2 points</option>
+                            <option value="3">3 points</option>
+                            <option value="5">5 points</option>
+                        </select>
+                        <button class="transfer-btn pp-big-btn" onclick="createMarket()">🔮 OPEN MARKET</button>
+                        <div class="pp-note">Everyone locks a pick. When truth reveals itself, the market's creator (or the Ham Handler) settles it: right pickers win the stake from GOD, wrong pickers pay it.</div>
+                    </div>
+                    <div id="oracleSettled"></div>
+                </div>
+            </details>
+
+            <!-- PIG ROULETTE -->
+            <details class="card parlour-card" id="rouletteCard">
+                <summary>
+                    <span class="parlour-emoji">🐷</span>
+                    <span>
+                        <div class="parlour-name">PIG ROULETTE</div>
+                        <div class="parlour-tag">Six pigs. One squeals. Loser drinks.</div>
+                    </span>
+                </summary>
+                <div class="parlour-body">
+                    <div class="pp-note" style="text-align:center;">Tap a pig to claim it (tap again to cycle owners). Then pull the trigger.</div>
+                    <div class="pig-grid" id="pigGrid"></div>
+                    <button class="hogwash-btn pp-big-btn" onclick="spinRoulette()" id="rouletteBtn" style="font-size:1rem !important;">🔫 PULL THE TRIGGER</button>
+                    <div id="rouletteResult" class="pp-verdict"></div>
+                </div>
+            </details>
+
+            <!-- SECRET SWINE -->
+            <details class="card parlour-card" id="swineCard">
+                <summary>
+                    <span class="parlour-emoji">🕵️</span>
+                    <span>
+                        <div class="parlour-name">SECRET SWINE</div>
+                        <div class="parlour-tag">Your daily covert mission. Tell no one.</div>
+                    </span>
+                </summary>
+                <div class="parlour-body">
+                    <button class="transfer-btn pp-big-btn" onclick="revealMission()">🕵️ REVEAL TODAY'S MISSION</button>
+                    <div class="pp-panel" id="missionPanel" style="display:none;">
+                        <div class="pp-label">Your mission, should you choose to accept it</div>
+                        <div id="missionText" style="font-family: var(--font-display); font-size: 1.05rem; font-style: italic; margin: 8px 0;"></div>
+                        <div class="pp-vote-row">
+                            <button class="pp-innocent" onclick="missionDone()" style="border-radius:12px; min-height:46px; font-weight:700;">✅ ACCOMPLISHED (+3)</button>
+                            <button class="pp-guilty" onclick="missionCaught()" style="border-radius:12px; min-height:46px; font-weight:700;">💀 I GOT CAUGHT</button>
+                        </div>
+                        <div class="pp-note">Accomplished = +3 points from GOD, announced to the feed (subject to Tribunal challenge if you're lying). Caught = you drink, and the feed knows.</div>
+                    </div>
+                    <div id="missionStatus" class="pp-note" style="text-align:center;"></div>
+                </div>
+            </details>
+
+            <!-- DRINK DEBT LEDGER -->
+            <details class="card parlour-card" id="debtCard">
+                <summary>
+                    <span class="parlour-emoji">💸</span>
+                    <span>
+                        <div class="parlour-name">DRINK DEBT LEDGER</div>
+                        <div class="parlour-tag">Unpaid drinks accrue interest. The club remembers.</div>
+                    </span>
+                </summary>
+                <div class="parlour-body">
+                    <div id="debtLedger" class="pp-note" style="text-align:center;">Auditing the books...</div>
+                    <div class="pp-note" style="margin-top:8px;">A drink unacknowledged for 24 hours doubles. Acknowledge drinks from the Pig Points page to clear your name.</div>
+                </div>
+            </details>
+
+            <!-- WEEKEND SUPERLATIVES -->
+            <details class="card parlour-card" id="awardsCard">
+                <summary>
+                    <span class="parlour-emoji">🎖️</span>
+                    <span>
+                        <div class="parlour-name">SUPERLATIVES</div>
+                        <div class="parlour-tag">The awards nobody asked for</div>
+                    </span>
+                </summary>
+                <div class="parlour-body">
+                    <button class="transfer-btn pp-big-btn" onclick="convene()">🎖️ CONVENE THE AWARDS CEREMONY</button>
+                    <div id="awardsList"></div>
+                </div>
+            </details>
+
+            <!-- RULEBOOK ENGINE (Ham Handler) -->
+            <details class="card parlour-card" id="rulebookCard" style="display:none;">
+                <summary>
+                    <span class="parlour-emoji">📖</span>
+                    <span>
+                        <div class="parlour-name">RULEBOOK ENGINE</div>
+                        <div class="parlour-tag">Ham Handler only — auto-settle a round per the sacred rules</div>
+                    </span>
+                </summary>
+                <div class="parlour-body">
+                    <div class="pp-label">Golf Session</div>
+                    <select id="rbSession" style="width:100%;"></select>
+                    <div class="pp-label">Day (payout table)</div>
+                    <select id="rbDay" style="width:100%;">
+                        <option value="1">Day 1 — 1st +15 / 2nd −5 / 3rd −10</option>
+                        <option value="2">Day 2 — 1st +25 / 2nd −10 / 3rd −15</option>
+                    </select>
+                    <div class="pp-label">Par per hole (1–9)</div>
+                    <div id="rbPars" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+                    <button class="transfer-btn pp-big-btn" onclick="rbCompute()">📖 COMPUTE THE RECKONING</button>
+                    <div id="rbPreview"></div>
+                    <hr style="border-color: rgba(212,175,55,0.2); margin: 16px 0;">
+                    <div class="pp-label">💀 Random Danger Zone</div>
+                    <div class="pp-vote-row">
+                        <button class="pp-chip" id="rdzToggle" onclick="toggleRDZ()">...</button>
+                        <button class="pp-chip rose sel" onclick="testStrike()">⚡ TEST STRIKE NOW</button>
+                    </div>
+                    <div class="pp-note">When armed, the Hog strikes ALL phones at one random moment per day (10am–10pm). Test Strike fires immediately on every open device.</div>
+                </div>
+            </details>
+
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+        const ROSTER = ['Andrew', 'Evan', 'Ian', 'Zack', 'Brian', 'Alex'];
+        const $ = (id) => document.getElementById(id);
+        let me = null;
+        let players = {};
+        let activities = {};
+        let acks = {};
+        let golfSessions = {};
+        let tribunalCases = {};
+        let oracleMarkets = {};
+        let rdzOn = false;
+
+        // ---------- tiny helpers ----------
+        const db = () => window.firebaseDB;
+        const R = (p) => window.firebaseRef(db(), p);
+        const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+        function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return Math.abs(h); }
+        function todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+        function newId() { return Date.now() + '_' + Math.floor(Math.random() * 10000); }
+        async function logAct(type, emoji, message) {
+            const id = newId();
+            await window.firebaseSet(R('activities/' + id), { id, type, emoji, message, timestamp: new Date().toISOString() });
+        }
+        async function addPoints(name, delta) {
+            const snap = await window.firebaseGet(R('players/' + name + '/points'));
+            await window.firebaseSet(R('players/' + name + '/points'), (snap.val() || 0) + delta);
+        }
+        const isHam = () => me === 'Evan' || localStorage.getItem('bookkeeperLoggedIn') === 'true';
+
+        // ---------- boot ----------
+        let tries = 0;
+        const boot = setInterval(() => {
+            if (window.firebaseDB && window.firebaseOnValue) { clearInterval(boot); init(); }
+            else if (++tries > 100) { clearInterval(boot); $('identityStatus').textContent = 'Firebase failed to arrive. Refresh?'; }
+        }, 250);
+
+        function init() {
+            window.onAuthStateChanged(window.firebaseAuth, (user) => {
+                me = (user && user.displayName) || null;
+                renderIdentity();
+                $('rulebookCard').style.display = isHam() ? '' : 'none';
+            });
+            window.firebaseOnValue(R('players'), (s) => { players = s.val() || {}; });
+            window.firebaseOnValue(R('activities'), (s) => { activities = s.val() || {}; renderDebts(); });
+            window.firebaseOnValue(R('drinkAcknowledgments'), (s) => { acks = s.val() || {}; renderDebts(); });
+            window.firebaseOnValue(R('golfSessions'), (s) => { golfSessions = s.val() || {}; renderRbSessions(); });
+            window.firebaseOnValue(R('tribunal/cases'), (s) => { tribunalCases = s.val() || {}; renderTribunal(); });
+            window.firebaseOnValue(R('oracle/markets'), (s) => { oracleMarkets = s.val() || {}; renderOracle(); });
+            window.firebaseOnValue(R('settings/randomDangerZone'), (s) => { rdzOn = s.val() === true; renderRDZ(); });
+            window.firebaseOnValue(R('dangerZone'), (s) => { const v = s.val(); if (v && v.timestamp) maybeScream(v); });
+            renderCrimeUI();
+            renderPigs();
+            renderOracleTemplates();
+        }
+
+        // ---------- identity ----------
+        function renderIdentity() {
+            const st = $('identityStatus'), chips = $('identityChips');
+            if (me) {
+                st.innerHTML = 'Recognized: <strong style="color:var(--gold-bright)">' + esc(me) + '</strong> &middot; <span style="text-decoration:underline; cursor:pointer;" onclick="ppSwitch()">not you?</span>';
+                chips.style.display = 'none';
+            } else {
+                st.textContent = 'Identify yourself to play. Who are you?';
+                chips.style.display = '';
+                chips.innerHTML = ROSTER.map((n) => '<button class="pp-chip" onclick="ppIdentify(\'' + n + '\')">' + n + '</button>').join('');
+            }
+        }
+        window.ppIdentify = async function (name) {
+            try {
+                const cred = await window.signInAnonymously(window.firebaseAuth);
+                await window.updateProfile(cred.user, { displayName: name, photoURL: 'bypass-' + name.toLowerCase() });
+                me = name;
+                renderIdentity();
+                $('rulebookCard').style.display = isHam() ? '' : 'none';
+            } catch (e) { alert('Login failed: ' + e.message); }
+        };
+        window.ppSwitch = function () { me = null; renderIdentity(); };
+        function needMe() { if (!me) { alert('Identify yourself first (top of page).'); return true; } return false; }
+
+        // ================= THE TRIBUNAL =================
+        const CRIMES = ['Slow play', 'Phone on the tee box', 'Suspicious scorekeeping', 'Excessive celebration', 'Cowardice', 'Sandbagging', 'Crimes against fashion', 'Snack hoarding', 'Fake practice swing (3+)', 'Disrespecting the Hog', 'Weak drink acknowledgment', 'General hubris'];
+        const SENTENCES = ['🍺 Take 2 drinks', '🍺 Finish your drink', '💸 Pay 3 points to your accuser', '💸 Pay 2 points to GOD', '🎩 Speak in a British accent for one full hole', '🦵 Tee off from your knees next hole', '🎤 Compose and perform a haiku about your shame', '🧢 Wear your hat backwards until further notice', '🐷 Oink loudly before every shot on the next hole', '💃 One (1) celebratory dance, mandatory, now', '🤐 Total silence for one hole (violations = 1 drink each)', '👞 Putt one-handed on the next green', '🍺 Assign-a-drink: the court awards your accuser one drink to give', '📸 Pose for a shameful commemorative photo, archived forever'];
+        let selAccused = null, selCrime = null;
+
+        function renderCrimeUI() {
+            $('accusedChips').innerHTML = ROSTER.map((n) => '<button class="pp-chip' + (selAccused === n ? ' sel rose' : '') + '" onclick="ppAcc(\'' + n + '\')">' + n + '</button>').join('');
+            $('crimeChips').innerHTML = CRIMES.map((c, i) => '<button class="pp-chip' + (selCrime === i ? ' sel' : '') + '" onclick="ppCrime(' + i + ')">' + c + '</button>').join('');
+        }
+        window.ppAcc = (n) => { selAccused = n; renderCrimeUI(); };
+        window.ppCrime = (i) => { selCrime = i; $('crimeCustom').value = ''; renderCrimeUI(); };
+
+        window.fileCharges = async function () {
+            if (needMe()) return;
+            const custom = $('crimeCustom').value.trim();
+            const crime = custom || (selCrime !== null ? CRIMES[selCrime] : null);
+            if (!selAccused) return alert('Select the accused.');
+            if (!crime) return alert('Select or describe the crime.');
+            if (selAccused === me && !confirm('You are accusing YOURSELF. The court respects the honesty. Proceed?')) return;
+            const open = Object.values(tribunalCases).find((c) => c.status === 'voting');
+            if (open) return alert('The court is already in session (one case at a time).');
+            const id = newId();
+            await window.firebaseSet(R('tribunal/cases/' + id), {
+                id, accuser: me, accused: selAccused, crime,
+                createdAt: new Date().toISOString(), status: 'voting', votes: {}
+            });
+            await logAct('admin', '⚖️', '⚖️ COURT IS IN SESSION: ' + me + ' accuses ' + selAccused + ' of "' + crime + '" — all members report for jury duty!');
+            selAccused = null; selCrime = null; $('crimeCustom').value = '';
+            renderCrimeUI();
+        };
+
+        function renderTribunal() {
+            const live = $('tribunalLive');
+            const cases = Object.values(tribunalCases).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            const open = cases.find((c) => c.status === 'voting');
+            if (open) {
+                $('tribunalCard').open = true;
+                const votes = open.votes || {};
+                const g = Object.values(votes).filter((v) => v === 'guilty').length;
+                const i = Object.values(votes).filter((v) => v === 'innocent').length;
+                const myVote = me ? votes[me] : null;
+                live.innerHTML =
+                    '<div class="pp-panel" style="border-color: var(--rose);">' +
+                    '<div class="pp-label" style="color:var(--rose-bright);">⚡ Case in session</div>' +
+                    '<div style="font-family:var(--font-display); font-size:1.05rem; margin:6px 0;"><strong>' + esc(open.accuser) + '</strong> v. <strong>' + esc(open.accused) + '</strong></div>' +
+                    '<div class="pp-note">Charge: &ldquo;' + esc(open.crime) + '&rdquo;</div>' +
+                    '<div class="pp-tally"><span style="color:#ff8a80;">GUILTY ' + g + '</span><span style="color:#7fd494;">INNOCENT ' + i + '</span><span style="color:var(--cream-faint);">' + Object.keys(votes).length + '/6 voted</span></div>' +
+                    '<div class="pp-vote-row">' +
+                    '<button class="pp-guilty" onclick="ppVote(\'' + open.id + '\',\'guilty\')" style="border-radius:12px; min-height:48px; font-weight:700;' + (myVote === 'guilty' ? ' outline:2px solid #ff8a80;' : '') + '">👎 GUILTY</button>' +
+                    '<button class="pp-innocent" onclick="ppVote(\'' + open.id + '\',\'innocent\')" style="border-radius:12px; min-height:48px; font-weight:700;' + (myVote === 'innocent' ? ' outline:2px solid #7fd494;' : '') + '">👍 INNOCENT</button>' +
+                    '</div>' +
+                    ((me === open.accuser || isHam()) ? '<button class="pp-chip" style="width:100%;" onclick="ppCloseCase(\'' + open.id + '\')">🔨 CLOSE VOTING &amp; RENDER VERDICT</button>' : '<div class="pp-note" style="text-align:center;">Verdict renders when all 6 vote, or when the accuser bangs the gavel.</div>') +
+                    '</div>';
+            } else {
+                live.innerHTML = '';
+            }
+            const closed = cases.filter((c) => c.status === 'closed').slice(0, 5);
+            $('tribunalHistory').innerHTML = closed.length
+                ? '<div class="pp-label">Court Record</div>' + closed.map((c) =>
+                    '<div class="debt-row"><span style="font-size:0.8rem;">' + esc(c.accused) + ' — ' + esc(c.crime) + '</span><span style="font-size:0.75rem; color:' + (c.verdict === 'guilty' ? '#ff8a80' : '#7fd494') + ';">' + (c.verdict === 'guilty' ? 'GUILTY · ' + esc(c.sentence || '') : 'INNOCENT') + '</span></div>').join('')
+                : '';
+        }
+
+        window.ppVote = async function (id, v) {
+            if (needMe()) return;
+            await window.firebaseSet(R('tribunal/cases/' + id + '/votes/' + me), v);
+            const snap = await window.firebaseGet(R('tribunal/cases/' + id + '/votes'));
+            if (Object.keys(snap.val() || {}).length >= 6) closeCase(id);
+        };
+        window.ppCloseCase = (id) => closeCase(id);
+
+        async function closeCase(id) {
+            const snap = await window.firebaseGet(R('tribunal/cases/' + id));
+            const c = snap.val();
+            if (!c || c.status !== 'voting') return;
+            const votes = Object.values(c.votes || {});
+            const g = votes.filter((v) => v === 'guilty').length;
+            const i = votes.filter((v) => v === 'innocent').length;
+            const verdict = g > i ? 'guilty' : 'innocent';
+            const sentence = verdict === 'guilty' ? SENTENCES[hash(id) % SENTENCES.length] : null;
+            await window.firebaseUpdate(R('tribunal/cases/' + id), { status: 'closed', verdict, sentence, closedAt: new Date().toISOString() });
+            if (verdict === 'guilty') {
+                await logAct('admin', '⚖️', '⚖️ VERDICT: ' + c.accused + ' found GUILTY of "' + c.crime + '" (' + g + '-' + i + '). SENTENCE: ' + sentence);
+            } else {
+                await logAct('admin', '⚖️', '⚖️ VERDICT: ' + c.accused + ' found INNOCENT of "' + c.crime + '" (' + i + '-' + g + '). The court apologizes for nothing.');
+            }
+        }
+
+        // ================= ORACLE OF LARD =================
+        const ORACLE_TEMPLATES = [
+            { q: 'Who wins hole 1?', o: ROSTER.join(', ') },
+            { q: 'Who 3-putts first today?', o: ROSTER.join(', ') },
+            { q: 'Does Brian lose a ball today?', o: 'Yes, No' },
+            { q: 'First to swear on the course?', o: ROSTER.join(', ') },
+            { q: 'Total drinks assigned today: over/under 6.5?', o: 'Over, Under' },
+            { q: 'Who triggers the next DANGER ZONE?', o: ROSTER.join(', ') },
+            { q: 'Anyone birdie today?', o: 'Yes, No' }
+        ];
+        function renderOracleTemplates() {
+            $('oracleTemplates').innerHTML = ORACLE_TEMPLATES.map((t, i) =>
+                '<button class="pp-chip" onclick="ppTmpl(' + i + ')" style="font-size:0.68rem;">' + esc(t.q) + '</button>').join('');
+        }
+        window.ppTmpl = (i) => { $('oracleQ').value = ORACLE_TEMPLATES[i].q; $('oracleOpts').value = ORACLE_TEMPLATES[i].o; };
+
+        window.createMarket = async function () {
+            if (needMe()) return;
+            const q = $('oracleQ').value.trim();
+            const opts = $('oracleOpts').value.split(',').map((s) => s.trim()).filter(Boolean);
+            const stake = parseInt($('oracleStake').value, 10) || 2;
+            if (!q) return alert('Ask a question.');
+            if (opts.length < 2) return alert('Need at least 2 options.');
+            if (opts.length > 8) return alert('Max 8 options.');
+            const id = newId();
+            await window.firebaseSet(R('oracle/markets/' + id), {
+                id, question: q, options: opts, stake, creator: me,
+                createdAt: new Date().toISOString(), status: 'open', picks: {}
+            });
+            await logAct('admin', '🔮', '🔮 THE ORACLE ASKS: "' + q + '" — ' + stake + ' pts riding. Lock your picks in The Parlour!');
+            $('oracleQ').value = ''; $('oracleOpts').value = '';
+        };
+
+        function renderOracle() {
+            const markets = Object.values(oracleMarkets).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            const open = markets.filter((m) => m.status === 'open');
+            $('oracleOpen').innerHTML = open.length ? open.map((m) => {
+                const picks = m.picks || {};
+                const mine = me ? picks[m.creator ? me : me] : null;
+                const myPick = me ? picks[me] : null;
+                const canSettle = me && (me === m.creator || isHam());
+                return '<div class="pp-panel">' +
+                    '<div style="font-family:var(--font-display); font-size:1rem;">' + esc(m.question) + '</div>' +
+                    '<div class="pp-note">' + m.stake + ' pts &middot; opened by ' + esc(m.creator) + ' &middot; ' + Object.keys(picks).length + ' picks in</div>' +
+                    '<div class="pp-chiprow">' + m.options.map((o, i) =>
+                        '<button class="pp-chip' + (myPick === i ? ' sel' : '') + '" onclick="ppPick(\'' + m.id + '\',' + i + ')">' + esc(o) + '</button>').join('') + '</div>' +
+                    (canSettle ? '<div class="pp-label">Settle — tap the truth:</div><div class="pp-chiprow">' + m.options.map((o, i) =>
+                        '<button class="pp-chip rose" onclick="ppSettle(\'' + m.id + '\',' + i + ')" style="font-size:0.68rem;">✓ ' + esc(o) + '</button>').join('') + '</div>' : '') +
+                    '</div>';
+            }).join('') : '<div class="pp-note" style="text-align:center; margin:8px 0;">No open markets. The Oracle awaits a question.</div>';
+
+            const settled = markets.filter((m) => m.status === 'settled').slice(0, 4);
+            $('oracleSettled').innerHTML = settled.length
+                ? '<div class="pp-label">Recently settled</div>' + settled.map((m) =>
+                    '<div class="debt-row"><span style="font-size:0.78rem;">' + esc(m.question) + '</span><span style="font-size:0.75rem; color:var(--gold-bright);">' + esc(m.options[m.winnerIdx] || '?') + '</span></div>').join('')
+                : '';
+        }
+
+        window.ppPick = async function (id, idx) {
+            if (needMe()) return;
+            const m = oracleMarkets[id];
+            if (!m || m.status !== 'open') return;
+            await window.firebaseSet(R('oracle/markets/' + id + '/picks/' + me), idx);
+        };
+
+        window.ppSettle = async function (id, winnerIdx) {
+            const m = oracleMarkets[id];
+            if (!m || m.status !== 'open') return;
+            if (!confirm('Settle "' + m.question + '" as: ' + m.options[winnerIdx] + '?\n\nRight picks +' + m.stake + ' from GOD, wrong picks −' + m.stake + ' to GOD.')) return;
+            const picks = m.picks || {};
+            let summary = [];
+            for (const [name, idx] of Object.entries(picks)) {
+                const won = idx === winnerIdx;
+                await addPoints(name, won ? m.stake : -m.stake);
+                await addPoints('GOD', won ? -m.stake : m.stake);
+                summary.push(name + (won ? ' +' : ' −') + m.stake);
+            }
+            await window.firebaseUpdate(R('oracle/markets/' + id), { status: 'settled', winnerIdx, settledBy: me, settledAt: new Date().toISOString() });
+            await logAct('admin', '🔮', '🔮 ORACLE SETTLED: "' + m.question + '" → ' + m.options[winnerIdx] + '. ' + (summary.length ? summary.join(', ') : 'No picks were placed. Cowards.'));
+        };
+
+        // ================= PIG ROULETTE =================
+        let pigOwners = [null, null, null, null, null, null];
+        let spinning = false;
+        function renderPigs(scanIdx, doomedIdx) {
+            $('pigGrid').innerHTML = pigOwners.map((owner, i) => {
+                const cls = 'pig-cell' + (i === scanIdx ? ' scan' : '') + (i === doomedIdx ? ' doomed' : '');
+                return '<div class="' + cls + '" onclick="ppClaim(' + i + ')"><span>' + (i === doomedIdx ? '💥' : '🐷') + '</span><span class="pc-owner">' + (owner || '&nbsp;') + '</span></div>';
+            }).join('');
+        }
+        window.ppClaim = function (i) {
+            if (spinning) return;
+            const cur = pigOwners[i];
+            const idx = cur === null ? -1 : ROSTER.indexOf(cur);
+            pigOwners[i] = idx + 1 >= ROSTER.length ? null : ROSTER[idx + 1];
+            $('rouletteResult').textContent = '';
+            renderPigs();
+        };
+        function squeal() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const t = ctx.currentTime;
+                const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+                o1.type = 'sawtooth'; o2.type = 'square';
+                o1.frequency.setValueAtTime(420, t); o1.frequency.exponentialRampToValueAtTime(1350, t + 0.18);
+                o1.frequency.exponentialRampToValueAtTime(500, t + 0.4); o1.frequency.exponentialRampToValueAtTime(1500, t + 0.55);
+                o1.frequency.exponentialRampToValueAtTime(280, t + 0.85);
+                o2.frequency.setValueAtTime(840, t); o2.frequency.exponentialRampToValueAtTime(2700, t + 0.2);
+                o2.frequency.exponentialRampToValueAtTime(560, t + 0.5); o2.frequency.exponentialRampToValueAtTime(300, t + 0.85);
+                g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.05);
+                g.gain.setValueAtTime(0.5, t + 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+                o1.connect(g); o2.connect(g); g.connect(ctx.destination);
+                o1.start(t); o2.start(t); o1.stop(t + 1); o2.stop(t + 1);
+            } catch (e) { /* silence is acceptable, cowardly, but acceptable */ }
+        }
+        window.spinRoulette = function () {
+            if (spinning) return;
+            spinning = true;
+            $('rouletteResult').textContent = '';
+            const doomed = Math.floor(Math.random() * 6);
+            let i = 0, laps = 18 + doomed;
+            const tick = () => {
+                renderPigs(i % 6);
+                if (i >= laps) {
+                    renderPigs(-1, doomed);
+                    squeal();
+                    const owner = pigOwners[doomed];
+                    $('rouletteResult').innerHTML = owner
+                        ? '🐷 PIG #' + (doomed + 1) + ' SQUEALS! <span style="color:var(--rose-bright)">' + esc(owner) + ' DRINKS!</span>'
+                        : '🐷 PIG #' + (doomed + 1) + ' SQUEALS! (Unclaimed. The Hog spares you all... this time.)';
+                    if (owner) logAct('hogwash', '🐷', '🐷 PIG ROULETTE: pig #' + (doomed + 1) + ' squealed — ' + owner + ' drinks!');
+                    spinning = false;
+                    return;
+                }
+                i++;
+                setTimeout(tick, 40 + Math.pow(i / laps, 2.5) * 260);
+            };
+            tick();
+        };
+
+        // ================= SECRET SWINE =================
+        const MISSIONS = [
+            'Say the word "moist" 5 times in conversation without being called out',
+            'Get PLAYER to compliment your golf swing, unprompted',
+            'Convince someone the pro was "just here yesterday"',
+            'Use the phrase "back in my prime" three separate times',
+            'Refer to your putter as "Excalibur" all day and defend it',
+            'Get a stranger to say "oink" (any context counts)',
+            'Hum the Danger Zone song until someone else starts humming it',
+            'Balance a tee behind your ear for 3 consecutive holes',
+            'Call PLAYER "coach" for an entire round without explanation',
+            'Fake a phone call and loudly negotiate a "sponsorship deal"',
+            'Get someone to accept an imaginary high five (hand never touches)',
+            'Describe your last shot in golf-announcer whisper, unprompted, twice',
+            'Work "as the prophecy foretold" into 2 conversations',
+            'Get PLAYER to hold your drink for more than 60 seconds',
+            'Introduce yourself to a stranger using a fake name with total confidence',
+            'Order or make a drink "for the Hog" and pour a splash out ceremonially',
+            'Get the group to agree to a photo, then ruin it subtly',
+            'Refer to the golf cart exclusively as "the chariot" all day',
+            'Compliment PLAYER\'s outfit so sincerely it becomes uncomfortable',
+            'Quote an inspirational poster ("teamwork makes the dream work") 3 times',
+            'Get someone else to carry your bag for at least one hole',
+            'Announce "the wind has changed" ominously before someone\'s shot, twice',
+            'Convince PLAYER that you read about this course in a magazine',
+            'Use only nautical terms on one full hole (aye, starboard, ahoy)',
+            'Get a fist bump from every member in under 2 minutes',
+            'Claim your ball is "custom weighted" and let no one inspect it',
+            'Sing at least one full chorus of any song during someone\'s backswing... from 50+ feet away (safety first)',
+            'End three sentences with "...but that\'s just how I was raised"',
+            'Get PLAYER to agree that you have "the best short game" out loud',
+            'Do one full slow-motion celebration walk after any shot, committed',
+            'Ask "but is it REALLY a par 3?" like a conspiracy theorist, twice',
+            'Refer to yourself in the third person for one full hole',
+            'Get someone to trade you literally anything for a single golf tee',
+            'Address the beverage cart (or cooler) with a formal bow every time',
+            'Whisper "the Hog is pleased" after anyone\'s good shot, 3 times',
+            'Invent a fake golf rule and get at least one person to follow it'
+        ];
+        function myMission() {
+            const day = todayKey();
+            const meIdx = Math.max(0, ROSTER.indexOf(me));
+            const idx = (hash(day) + meIdx * 7) % MISSIONS.length;
+            let m = MISSIONS[idx];
+            const others = ROSTER.filter((n) => n !== me);
+            m = m.replace('PLAYER', others[hash(day + me) % others.length]);
+            return m;
+        }
+        window.revealMission = async function () {
+            if (needMe()) return;
+            const snap = await window.firebaseGet(R('secretSwine/' + todayKey() + '/' + me));
+            const done = snap.val();
+            $('missionPanel').style.display = '';
+            $('missionText').textContent = '"' + myMission() + '"';
+            $('missionStatus').textContent = done === 'done' ? '✅ Already claimed today. Tomorrow brings new shadows.'
+                : done === 'caught' ? '💀 You were caught today. Drink your shame.' : '';
+        };
+        window.missionDone = async function () {
+            if (needMe()) return;
+            const key = 'secretSwine/' + todayKey() + '/' + me;
+            const snap = await window.firebaseGet(R(key));
+            if (snap.val()) return alert('Already resolved today.');
+            await window.firebaseSet(R(key), 'done');
+            await addPoints(me, 3);
+            await addPoints('GOD', -3);
+            await logAct('admin', '🕵️', '🕵️ SECRET SWINE: ' + me + ' claims mission accomplished — "' + myMission() + '" (+3 pts). Tribunal challenges welcome.');
+            $('missionStatus').textContent = '✅ +3 points. The shadows salute you.';
+        };
+        window.missionCaught = async function () {
+            if (needMe()) return;
+            const key = 'secretSwine/' + todayKey() + '/' + me;
+            const snap = await window.firebaseGet(R(key));
+            if (snap.val()) return alert('Already resolved today.');
+            await window.firebaseSet(R(key), 'caught');
+            await logAct('admin', '🕵️', '🕵️ SECRET SWINE: ' + me + ' was CAUGHT mid-mission. The penalty is one (1) drink, effective immediately.');
+            $('missionStatus').textContent = '💀 Caught. Drink.';
+        };
+
+        // ================= DRINK DEBT LEDGER =================
+        function renderDebts() {
+            const el = $('debtLedger');
+            if (!el) return;
+            const owed = {};   // name -> [{drinks, ageMs, weighted}]
+            ROSTER.forEach((n) => { owed[n] = []; });
+            const ackCount = {}; // eventId -> count of acks by player
+            Object.values(acks || {}).forEach((a) => {
+                if (!a || !a.originalEventId) return;
+                const k = a.originalEventId + '|' + a.acknowledgedBy;
+                ackCount[k] = (ackCount[k] || 0) + 1;
+            });
+            Object.values(activities || {}).forEach((a) => {
+                if (!a || a.type !== 'drink_assignment' || !a.message) return;
+                // formats: "X assigned N DRINK(S) to Y (Power-Up)" | "X assigned drinks: Y (N), Z (N) - "note""
+                let m;
+                const found = [];
+                if ((m = a.message.match(/assigned (\d+) DRINKS? to (\w+)/))) {
+                    found.push([m[2], parseInt(m[1], 10)]);
+                } else if (a.message.includes('assigned drinks:')) {
+                    const re = /(\w+) \((\d+)\)/g; let mm;
+                    while ((mm = re.exec(a.message))) found.push([mm[1], parseInt(mm[2], 10)]);
+                }
+                found.forEach(([name, n]) => {
+                    if (!owed[name]) return;
+                    const acked = ackCount[a.id + '|' + name] || 0;
+                    if (acked > 0) return; // settled
+                    const age = Date.now() - Date.parse(a.timestamp || 0);
+                    const mult = age > 86400000 ? 2 : 1;
+                    owed[name].push({ drinks: n, ageMs: age, weighted: n * mult, interest: mult > 1 });
+                });
+            });
+            const rows = ROSTER.map((n) => {
+                const tot = owed[n].reduce((s, d) => s + d.weighted, 0);
+                const hasInterest = owed[n].some((d) => d.interest);
+                return { n, tot, hasInterest };
+            }).sort((a, b) => b.tot - a.tot);
+            const anyDebt = rows.some((r) => r.tot > 0);
+            el.innerHTML = anyDebt
+                ? rows.filter((r) => r.tot > 0).map((r, i) =>
+                    '<div class="debt-row"><span>' + (i === 0 ? '👑🍺 ' : '') + '<strong>' + r.n + '</strong>' + (i === 0 ? ' <span class="pp-note">(Chief Deadbeat)</span>' : '') + '</span>' +
+                    '<span style="display:flex; gap:8px; align-items:center;">' + (r.hasInterest ? '<span class="debt-interest">×2 INTEREST</span>' : '') + '<strong style="color:var(--rose-bright)">' + r.tot + ' 🍺</strong></span></div>').join('')
+                : '<div style="text-align:center;">📗 The books are clean. No outstanding drink debts. Suspiciously responsible.</div>';
+        }
+
+        // ================= SUPERLATIVES =================
+        window.convene = function () {
+            const acts = Object.values(activities || {}).filter(Boolean);
+            const count = (fn) => {
+                const c = {};
+                acts.forEach((a) => { const n = fn(a); if (n && ROSTER.includes(n)) c[n] = (c[n] || 0) + 1; });
+                const top = Object.entries(c).sort((x, y) => y[1] - x[1])[0];
+                return top || null;
+            };
+            const sum = (fn) => {
+                const c = {};
+                acts.forEach((a) => { const r = fn(a); if (r && ROSTER.includes(r[0])) c[r[0]] = (c[r[0]] || 0) + r[1]; });
+                const top = Object.entries(c).sort((x, y) => y[1] - x[1])[0];
+                return top || null;
+            };
+            const awards = [];
+            const push = (t, top, unit) => { if (top) awards.push({ t, w: top[0], s: top[1] + ' ' + unit }); };
+            push('The Gambler — most HOGWASH rolls', count((a) => a.type === 'hogwash' && (a.message.match(/^(\w+) (?:loses|wins)/) || [])[1]), 'rolls');
+            push('GOD\'s Least Favorite — most points lost to GOD', sum((a) => { const m = a.message && a.message.match(/^(\w+) loses (\d+) points to GOD/); return m ? [m[1], +m[2]] : null; }), 'pts donated');
+            push('Divine Darling — most points won from GOD', sum((a) => { const m = a.message && a.message.match(/^(\w+) wins (\d+) points from GOD/); return m ? [m[1], +m[2]] : null; }), 'pts blessed');
+            push('The Bartender — most drinks assigned', sum((a) => { if (a.type !== 'drink_assignment') return null; const m = a.message.match(/^(\w+) assigned/); if (!m) return null; let tot = 0, mm; const re = /\((\d+)\)/g; while ((mm = re.exec(a.message))) tot += +mm[1]; const m2 = a.message.match(/assigned (\d+) DRINKS? to/); if (m2) tot = +m2[1]; return [m[1], tot || 1]; }), 'drinks poured');
+            push('The Sponge — most drinks received', sum((a) => { if (a.type !== 'drink_assignment') return null; const m = a.message.match(/assigned (\d+) DRINKS? to (\w+)/); if (m) return [m[2], +m[1]]; return null; }), 'drinks absorbed');
+            push('Danger Magnet — most DANGER ZONEs triggered', count((a) => (a.message && a.message.match(/^(\w+) triggered the DANGER ZONE/) || [])[1]), 'apocalypses');
+            push('The Convict — most GUILTY verdicts', count((a) => (a.message && a.message.match(/VERDICT: (\w+) found GUILTY/) || [])[1]), 'convictions');
+            push('The Operative — most secret missions completed', count((a) => (a.message && a.message.match(/SECRET SWINE: (\w+) claims/) || [])[1]), 'missions');
+            $('awardsList').innerHTML = awards.length
+                ? awards.map((a) => '<div class="award-card"><div class="award-title">' + esc(a.t) + '</div><div class="award-winner">' + esc(a.w) + '</div><div class="award-stat">' + esc(a.s) + '</div></div>').join('')
+                : '<div class="pp-note" style="text-align:center; margin:10px 0;">The ledger is too fresh for awards. Go make some history.</div>';
+        };
+
+        // ================= RULEBOOK ENGINE =================
+        function renderRbSessions() {
+            const sel = $('rbSession');
+            if (!sel) return;
+            const entries = Object.values(golfSessions).sort((a, b) => (b.created || '').localeCompare(a.created || ''));
+            sel.innerHTML = entries.length
+                ? entries.map((s) => '<option value="' + s.id + '">' + esc(s.title || s.id) + (s.rulebookSettled ? ' ✅ (settled)' : '') + '</option>').join('')
+                : '<option value="">No golf sessions yet</option>';
+            const pars = $('rbPars');
+            if (pars && !pars.children.length) {
+                pars.innerHTML = Array.from({ length: 9 }, (_, i) =>
+                    '<input type="number" id="rbPar' + (i + 1) + '" value="3" min="3" max="5" style="width:48px; text-align:center; padding:8px 2px !important; min-height:40px;" title="Hole ' + (i + 1) + '">').join('');
+            }
+        }
+
+        function teamScores(t) {
+            // scores may be array [null,4,3...] or object {1:4, 2:3}
+            const out = {};
+            if (!t || !t.scores) return out;
+            if (Array.isArray(t.scores)) t.scores.forEach((v, i) => { if (i >= 1 && v != null) out[i] = +v; });
+            else Object.entries(t.scores).forEach(([h, v]) => { if (v != null) out[+h] = +v; });
+            return out;
+        }
+
+        let rbTransfers = null;
+        window.rbCompute = function () {
+            const s = golfSessions[$('rbSession').value];
+            if (!s) return alert('Pick a session.');
+            if (s.rulebookSettled && !confirm('This session was already settled by the Rulebook Engine on ' + s.rulebookSettled + '. Settle AGAIN (double payout)?')) return;
+            const day = $('rbDay').value;
+            const pars = Array.from({ length: 9 }, (_, i) => parseInt($('rbPar' + (i + 1)).value, 10) || 3);
+            const teams = (s.teams || []).filter((t) => t && t.players && t.players.length);
+            if (!teams.length) return alert('Session has no teams.');
+
+            const delta = {}; // name -> pts
+            const lines = [];
+            const add = (name, d, why) => { delta[name] = (delta[name] || 0) + d; };
+
+            // per-hole: winners, birdies/eagles vs par, double-bogey levies
+            for (let h = 1; h <= 9; h++) {
+                const par = pars[h - 1];
+                const played = teams.map((t) => ({ t, sc: teamScores(t)[h] })).filter((x) => x.sc != null);
+                if (played.length < 2) continue;
+                const best = Math.min(...played.map((x) => x.sc));
+                const winners = played.filter((x) => x.sc === best);
+                const holeWinner = winners.length === 1 ? winners[0].t : null;
+                played.forEach(({ t, sc }) => {
+                    if (sc === par - 1) {
+                        t.players.forEach((p) => { add(p, 1); add('GOD', -1); });
+                        lines.push('H' + h + ': 🐦 birdie by ' + t.players.join('/') + ' — GOD pays 1 each');
+                    } else if (sc <= par - 2) {
+                        t.players.forEach((p) => { add(p, 2); add('GOD', -2); });
+                        lines.push('H' + h + ': 🦅 EAGLE by ' + t.players.join('/') + ' — GOD pays 2 each');
+                    }
+                    if (sc >= par + 2 && holeWinner && holeWinner !== t) {
+                        t.players.forEach((p) => holeWinner.players.forEach((w) => { add(p, -1); add(w, 1); }));
+                        lines.push('H' + h + ': 💩 double+ by ' + t.players.join('/') + ' — pays 1 to each winner (' + holeWinner.players.join('/') + ')');
+                    }
+                });
+            }
+
+            // round placement
+            const totals = teams.map((t) => {
+                const sc = teamScores(t);
+                const holes = Object.keys(sc).length;
+                return { t, total: Object.values(sc).reduce((a, b) => a + b, 0), holes };
+            }).filter((x) => x.holes >= 5).sort((a, b) => a.total - b.total);
+            const table = day === '2' ? [25, -10, -15] : [15, -5, -10];
+            totals.forEach((x, i) => {
+                if (i > 2) return;
+                x.t.players.forEach((p) => add(p, table[i]));
+                lines.push('Round ' + (i + 1) + getOrdinal(i) + ': ' + x.t.players.join('/') + ' (' + x.total + ') → ' + (table[i] > 0 ? '+' : '') + table[i] + ' each');
+            });
+            function getOrdinal(i) { return ['st', 'nd', 'rd'][i] || 'th'; }
+            // placement points come from/to GOD to keep the ledger balanced
+            const placementNet = totals.slice(0, 3).reduce((s2, x, i) => s2 + table[i] * x.t.players.length, 0);
+            add('GOD', -placementNet);
+
+            rbTransfers = { sessionId: s.id, title: s.title, delta, lines };
+            $('rbPreview').innerHTML =
+                '<div class="pp-panel"><div class="pp-label">The Reckoning — ' + esc(s.title || s.id) + '</div>' +
+                '<div style="font-size:0.78rem; color:var(--cream-dim); margin:6px 0;">' + lines.map(esc).join('<br>') + '</div>' +
+                '<div class="pp-label">Net changes</div>' +
+                Object.entries(delta).sort((a, b) => b[1] - a[1]).map(([n, d]) =>
+                    '<div class="debt-row"><span>' + esc(n) + '</span><strong style="color:' + (d >= 0 ? 'var(--gold-bright)' : '#ff8a80') + '">' + (d > 0 ? '+' : '') + d + '</strong></div>').join('') +
+                '<button class="transfer-btn pp-big-btn" onclick="rbCommit()">⚖️ COMMIT TO THE LEDGER</button>' +
+                '<div class="pp-note">Review carefully — this writes real points and logs to the feed.</div></div>';
+        };
+
+        window.rbCommit = async function () {
+            if (!rbTransfers) return;
+            if (!isHam()) return alert('Only the Ham Handler may commit the Reckoning.');
+            if (!confirm('Commit ' + Object.keys(rbTransfers.delta).length + ' point changes to the live ledger?')) return;
+            for (const [name, d] of Object.entries(rbTransfers.delta)) {
+                if (d !== 0) await addPoints(name, d);
+            }
+            await window.firebaseSet(R('golfSessions/' + rbTransfers.sessionId + '/rulebookSettled'), new Date().toISOString());
+            await logAct('admin', '📖', '📖 RULEBOOK ENGINE settled "' + (rbTransfers.title || rbTransfers.sessionId) + '": ' +
+                Object.entries(rbTransfers.delta).filter(([, d]) => d !== 0).map(([n, d]) => n + ' ' + (d > 0 ? '+' : '') + d).join(', '));
+            alert('⚖️ The Reckoning is written. ' + Object.keys(rbTransfers.delta).length + ' balances updated.');
+            $('rbPreview').innerHTML = '';
+            rbTransfers = null;
+        };
+
+        // ================= RANDOM DANGER ZONE controls + alert =================
+        function renderRDZ() {
+            const b = $('rdzToggle');
+            if (b) {
+                b.textContent = rdzOn ? '💀 ARMED — tap to disarm' : '⭕ DISARMED — tap to arm';
+                b.className = 'pp-chip' + (rdzOn ? ' sel rose' : '');
+            }
+        }
+        window.toggleRDZ = async function () {
+            if (!isHam()) return alert('Only the Ham Handler controls the Hog.');
+            await window.firebaseSet(R('settings/randomDangerZone'), !rdzOn);
+        };
+        window.testStrike = async function () {
+            if (!isHam()) return alert('Only the Ham Handler controls the Hog.');
+            if (!confirm('Fire a DANGER ZONE on every open device RIGHT NOW?')) return;
+            await window.firebaseSet(R('dangerZone'), { playerName: 'THE HOG ITSELF', timestamp: new Date().toISOString(), eventId: newId() });
+        };
+
+        let lastScream = null;
+        function maybeScream(v) {
+            if (lastScream === v.timestamp) return;
+            const age = Date.now() - Date.parse(v.timestamp);
+            if (age > 60000) { lastScream = v.timestamp; return; } // stale
+            lastScream = v.timestamp;
+            const audio = new Audio('danger-zone.mp3');
+            audio.play().catch(() => {});
+            const m = document.createElement('div');
+            m.className = 'modal';
+            m.style.display = 'flex';
+            m.style.zIndex = '999999';
+            m.innerHTML = '<div class="modal-content" style="background: linear-gradient(45deg, #ff0000, #ff4500, #ff0000) !important; border: 4px solid #ff0000 !important; text-align:center; color:#fff;">' +
+                '<h1 style="font-size:3rem; color:#fff !important; font-family:var(--font-display);">🚨 DANGER ZONE 🚨</h1>' +
+                '<h2 style="color:#fff !important;">' + esc(v.playerName) + ' HAS SUMMONED THE DICE</h2>' +
+                '<p style="color:#ffd9d3; font-size:1rem;">Report to the dice. All of you. Now.</p>' +
+                '<button onclick="this.closest(\'.modal\').remove()" style="padding:14px 30px; font-size:1.1rem; border-radius:12px; border:none; background:#fff; color:#a00; font-weight:800; cursor:pointer;">ACKNOWLEDGE DOOM</button></div>';
+            document.body.appendChild(m);
+        }
+
+        // bubbles (reuse the shared look)
+        function bubbles() {
+            const c = $('bubbles');
+            if (!c) return;
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    const b = document.createElement('div');
+                    b.className = 'bubble';
+                    b.style.left = Math.random() * 100 + '%';
+                    b.style.width = b.style.height = (Math.random() * 12 + 6) + 'px';
+                    b.style.animationDelay = Math.random() * 8 + 's';
+                    b.style.animationDuration = (Math.random() * 4 + 6) + 's';
+                    c.appendChild(b);
+                    setTimeout(() => b.remove(), 10000);
+                }, i * 700);
+            }
+        }
+        setInterval(bubbles, 5000);
+        bubbles();
+    })();
+    </script>
+</body>
+</html>

@@ -65,9 +65,10 @@
             <!-- Navigation Links -->
             <div class="nav-tabs">
                 <a href="index.html" class="nav-tab active">🏆 PIG POINTS</a>
-                <a href="golf.html" class="nav-tab">🏌️ GOLF SESSIONS</a>
-                <a href="activity.html" class="nav-tab">📜 ACTIVITY FEED</a>
-                <a href="history.html" class="nav-tab">🏆 HALL OF FAME</a>
+                <a href="golf.html" class="nav-tab">🏌️ GOLF</a>
+                <a href="games.html" class="nav-tab">🎪 PARLOUR</a>
+                <a href="activity.html" class="nav-tab">📜 FEED</a>
+                <a href="history.html" class="nav-tab">🏛️ FAME</a>
             </div>
         </header>
         
@@ -75,6 +76,9 @@
             <!-- Leaderboard card - always visible -->
             <div class="leaderboard" id="leaderboard">
                 <h2 class="card-title" style="margin-top: 0; margin-bottom: 25px;">🏆 LEADERBOARD 🏆</h2>
+
+                <!-- Season status: Year VI final / Year VII countdown (rendered by season.js) -->
+                <div id="seasonBanner" class="season-banner"></div>
                 
                 <!-- Loading indicator inside leaderboard -->
                 <div id="loadingIndicator" style="text-align: center; padding: 40px; color: #FF1493;">
@@ -123,6 +127,14 @@
                 </div>
                 
                 <div id="bookkeeperControlsContent">
+                    <!-- YEAR VII ceremony -->
+                <div class="login-section" style="margin-bottom: 20px; padding: 15px; border: 1px solid rgba(212,175,55,0.4); border-radius: 12px;">
+                    <h4 style="color: #d4af37; margin: 0 0 10px 0;">🗓️ SEASON CEREMONY 🗓️</h4>
+                    <button class="transfer-btn" id="startYear7Btn" onclick="startYearSeven()" style="width: 100%;">🎊 COMMENCE YEAR VII 🎊</button>
+                    <p style="font-size: 0.8em; color: #666; margin: 10px 0 0 0;">
+                        Archives ALL of Year VI to the permanent vault (points, golf rounds, activity feed), resets everyone to 30 points per the Rulebook, and opens the Year VII books. Requires the sacred oath. Nothing is deleted.
+                    </p>
+                </div>
                     <!-- God Points and Reset buttons -->
                 <div class="login-section" style="margin-bottom: 20px;">
                     <button class="god-btn" onclick="pigPointsFromGod()">✨ PIG POINTS FROM GOD ✨</button>
@@ -909,6 +921,7 @@
     
     <!-- Main JavaScript (reduced) -->
     <script src="script.js"></script>
+    <script src="js/features/season.js"></script>
 </body>
 </html>
 <!-- Force deployment 08/27/2025 11:04:43 -->

@@ -574,13 +574,15 @@
             <h1 class="title">MBE GOLF SESSIONS</h1>
             <p class="subtitle">Male Bonding Extravaganza Golf</p>
             <div class="mbe-motto">In Lardo Veritas &middot; Est. MMXX &middot; Anno VII</div>
+            <div id="seasonBanner" class="season-banner" style="margin-top: 12px;"></div>
             
             <!-- Navigation Links -->
             <div class="nav-tabs">
                 <a href="index.html" class="nav-tab">🏆 PIG POINTS</a>
-                <a href="golf.html" class="nav-tab active">🏌️ GOLF SESSIONS</a>
-                <a href="activity.html" class="nav-tab">📜 ACTIVITY FEED</a>
-                <a href="history.html" class="nav-tab">🏆 HALL OF FAME</a>
+                <a href="golf.html" class="nav-tab active">🏌️ GOLF</a>
+                <a href="games.html" class="nav-tab">🎪 PARLOUR</a>
+                <a href="activity.html" class="nav-tab">📜 FEED</a>
+                <a href="history.html" class="nav-tab">🏛️ FAME</a>
             </div>
         </header>
         
@@ -756,7 +758,7 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, set, onValue, update, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Firebase configuration
@@ -791,8 +793,10 @@
         window.firebaseSet = set;
         window.firebaseUpdate = update;
         window.firebaseOnValue = onValue;
+        window.firebaseGet = get;
         window.onAuthStateChanged = onAuthStateChanged;
     </script>
+    <script src="js/features/season.js"></script>
     
     <script>
         // Golf sessions data
