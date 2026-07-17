@@ -338,30 +338,197 @@ body {
     box-shadow: 0 0 22px rgba(242, 214, 124, 0.35), inset 0 1px 0 #fff !important;
 }
 
-/* HOGWASH — the centerpiece: rose-gold shimmer */
+/* HOGWASH — the centerpiece: a gilded invitation to ruin */
 .hogwash-btn {
-    background: linear-gradient(120deg, var(--rose-deep) 0%, var(--rose) 30%, #ffb2d4 50%, var(--rose) 70%, var(--rose-deep) 100%) !important;
-    background-size: 250% 100% !important;
-    color: #fff !important;
-    border: 1px solid var(--rose-bright) !important;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(170deg, #123626 0%, #07150f 70%) !important;
+    color: var(--gold-bright) !important;
+    border: 1px solid var(--gold) !important;
+    outline: 1px solid rgba(212, 175, 55, 0.35);
+    outline-offset: 3px;
     font-family: var(--font-display) !important;
-    font-size: 1.25rem !important;
-    letter-spacing: 0.1em !important;
-    padding: 16px 34px !important;
-    border-radius: 999px !important;
-    box-shadow: 0 6px 26px rgba(255, 79, 163, 0.45), inset 0 1px 0 rgba(255,255,255,0.4) !important;
-    animation: mbe-shimmer 3.2s linear infinite, mbe-hogpulse 2.4s ease-in-out infinite !important;
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.16em !important;
+    padding: 16px 38px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5), 0 0 22px rgba(212, 175, 55, 0.18), inset 0 1px 0 rgba(242, 214, 124, 0.2) !important;
+    animation: mbe-hogpulse 3s ease-in-out infinite !important;
 }
-.hogwash-btn:hover { transform: scale(1.04) !important; }
-
+.hogwash-btn::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0; width: 55px;
+    background: linear-gradient(100deg, transparent, rgba(242, 214, 124, 0.28), transparent);
+    animation: mbe-sheen 3.4s ease-in-out infinite;
+    pointer-events: none;
+}
+.hogwash-btn:hover { transform: translateY(-1px) scale(1.02) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.55), 0 0 30px rgba(212, 175, 55, 0.35), inset 0 1px 0 rgba(242, 214, 124, 0.25) !important; }
+@keyframes mbe-sheen {
+    0%, 55% { left: -70px; }
+    90%, 100% { left: 110%; }
+}
 @keyframes mbe-shimmer {
     0% { background-position: 0% 50%; }
     100% { background-position: 250% 50%; }
 }
 @keyframes mbe-hogpulse {
-    0%, 100% { box-shadow: 0 5px 20px rgba(255, 79, 163, 0.38), inset 0 1px 0 rgba(255,255,255,0.35); }
-    50% { box-shadow: 0 6px 28px rgba(255, 79, 163, 0.55), 0 0 18px rgba(212, 175, 55, 0.22), inset 0 1px 0 rgba(255,255,255,0.35); }
+    0%, 100% { box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5), 0 0 16px rgba(212, 175, 55, 0.14), inset 0 1px 0 rgba(242, 214, 124, 0.2); }
+    50% { box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5), 0 0 30px rgba(212, 175, 55, 0.32), inset 0 1px 0 rgba(242, 214, 124, 0.2); }
 }
+
+/* ---------- THE FATES: the card ritual ---------- */
+.fate-stage {
+    position: relative;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0 4px;
+}
+.fate-instruction {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--gold-pale);
+    text-align: center;
+    margin-bottom: 16px;
+    animation: pulse 2.5s infinite;
+}
+.fate-fan {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    perspective: 900px;
+}
+.fate-card {
+    width: 74px;
+    height: 116px;
+    margin: 0 -8px;
+    border-radius: 9px;
+    cursor: pointer;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.3, 0.9, 0.4, 1.1), opacity 0.4s ease, margin 0.4s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.fate-fan .fate-card:nth-child(1) { transform: rotate(-14deg) translateY(12px); }
+.fate-fan .fate-card:nth-child(2) { transform: rotate(-7deg) translateY(3px); }
+.fate-fan .fate-card:nth-child(3) { transform: rotate(0deg); }
+.fate-fan .fate-card:nth-child(4) { transform: rotate(7deg) translateY(3px); }
+.fate-fan .fate-card:nth-child(5) { transform: rotate(14deg) translateY(12px); }
+.fate-fan .fate-card:hover { transform: translateY(-10px) scale(1.06); z-index: 5; }
+
+.fate-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 9px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.fate-back {
+    background:
+        radial-gradient(circle at 50% 50%, rgba(212,175,55,0.22) 0%, rgba(212,175,55,0) 60%),
+        repeating-linear-gradient(45deg, rgba(212,175,55,0.08) 0 3px, rgba(0,0,0,0) 3px 9px),
+        linear-gradient(160deg, #17402c, #0a1f15);
+    border: 1px solid var(--gold);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.5), inset 0 0 0 3px rgba(212,175,55,0.15);
+}
+.fate-back::after {
+    content: "🐷";
+    font-size: 1.5rem;
+    filter: sepia(1) saturate(3) hue-rotate(-15deg) brightness(1.1);
+    opacity: 0.85;
+}
+.fate-front {
+    transform: rotateY(180deg);
+    background: linear-gradient(165deg, #1a4530 0%, #0c2418 65%, #123626 100%);
+    border: 1px solid var(--gold-bright);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 0 3px rgba(212,175,55,0.25);
+    padding: 6px;
+    text-align: center;
+}
+.fate-numeral {
+    font-family: var(--font-display);
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    margin-bottom: 2px;
+}
+.fate-emblem { font-size: 2rem; line-height: 1.2; }
+.fate-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: var(--gold-bright);
+    text-transform: uppercase;
+    margin-top: 3px;
+    line-height: 1.25;
+}
+
+/* chosen card ascends and flips */
+.fate-card.chosen {
+    position: absolute !important;
+    left: 50%; top: 44%;
+    margin: 0;
+    z-index: 20;
+    width: 150px; height: 235px;
+    transform: translate(-50%, -50%) rotateY(0deg) !important;
+    transition: all 0.55s cubic-bezier(0.3, 0.8, 0.3, 1.05);
+}
+.fate-card.chosen.flipped { transform: translate(-50%, -50%) rotateY(180deg) !important; }
+.fate-card.chosen .fate-numeral { font-size: 0.8rem; }
+.fate-card.chosen .fate-emblem { font-size: 4rem; }
+.fate-card.chosen .fate-title { font-size: 1rem; margin-top: 8px; }
+.fate-card.chosen .fate-flavor {
+    display: block;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 0.68rem;
+    color: var(--cream-dim);
+    margin-top: 8px;
+    padding: 0 8px;
+    line-height: 1.45;
+}
+.fate-flavor { display: none; }
+.fate-card.dismissed { opacity: 0; transform: translateY(60px) rotate(20deg) scale(0.7) !important; pointer-events: none; }
+
+/* outcome-specific card faces */
+.fate-front.fate-death {
+    background: linear-gradient(165deg, #3d0b0b 0%, #1a0404 70%);
+    border-color: #ff3b30;
+    box-shadow: 0 0 40px rgba(255, 59, 48, 0.6), inset 0 0 0 3px rgba(255, 59, 48, 0.3);
+}
+.fate-front.fate-death .fate-title, .fate-front.fate-death .fate-numeral { color: #ff8a80; }
+.fate-front.fate-hog {
+    background: linear-gradient(165deg, #4a3608 0%, #2a1e04 60%, #56420f 100%);
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 50px rgba(242, 214, 124, 0.7), inset 0 0 0 3px rgba(242, 214, 124, 0.4);
+    animation: mbe-hogpulse 1.2s ease-in-out infinite;
+}
+.fate-front.fate-tempt {
+    background: linear-gradient(165deg, #33104a 0%, #170624 70%);
+    border-color: #ba68c8;
+    box-shadow: 0 0 34px rgba(186, 104, 200, 0.5), inset 0 0 0 3px rgba(186, 104, 200, 0.3);
+}
+.fate-front.fate-tempt .fate-title { color: #e6c9ff; }
+
+@keyframes fate-shake {
+    0%, 100% { transform: translate(-50%, -50%) rotateY(180deg); }
+    20% { transform: translate(-52%, -49%) rotateY(180deg) rotate(-2deg); }
+    40% { transform: translate(-48%, -51%) rotateY(180deg) rotate(2deg); }
+    60% { transform: translate(-51%, -49%) rotateY(180deg) rotate(-1.5deg); }
+    80% { transform: translate(-49%, -51%) rotateY(180deg) rotate(1.5deg); }
+}
+.fate-card.chosen.flipped.doom { animation: fate-shake 0.5s ease-in-out 3; }
 
 /* Jukebox: velvet lounge */
 .jukebox-btn {

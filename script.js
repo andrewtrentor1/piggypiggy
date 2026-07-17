@@ -3753,8 +3753,9 @@ function showHogwashSlot(playerName) {
     modal.style.display = 'flex';
     modal.classList.add('slot-machine-ready');
     console.log('🎰 Slot modal should now be visible');
-    
-    document.getElementById('slotPlayerName').textContent = `🐷💩 GET FUCKED BY THE SLOP, PIG ${playerName}! 💩🐷`;
+
+    document.getElementById('slotPlayerName').textContent = `THE FATES AWAIT, ${playerName.toUpperCase()}`;
+    renderFateStage();
     
     // Add exciting animation to spin button
     const spinBtn = document.getElementById('spinSlotBtn');
@@ -3806,15 +3807,17 @@ function closeHogwashWheel() {
 function initializeHogwashSlot() {
     slotReel = document.getElementById('slotReel');
     
-    // Define slot outcomes with proper weights and display info
+    // THE FATES deck — weights out of 40
     slotOutcomes = [
-        { type: 'drink', label: '🍺 TAKE DRINKS', color: '#ff6b6b', weight: 4 },
-        { type: 'win', label: '🎉 WIN POINTS', color: '#2ed573', weight: 4 },
-        { type: 'lose', label: '😈 LOSE POINTS', color: '#ff3838', weight: 4 },
-        { type: 'give_drinks', label: '🍺⚡ DRINK POWER', color: '#ff9500', weight: 4 },
-        { type: 'danger', label: '💀 DANGER ZONE', color: '#ff4757', weight: 2 },
-        { type: 'mulligan', label: '⛳ MULLIGAN', color: '#4CAF50', weight: 1 },
-        { type: 'reverse_mulligan', label: '🔄 REVERSE MULLIGAN', color: '#9C27B0', weight: 1 }
+        { type: 'drink', label: '🍺 THE CHALICE', color: '#ff6b6b', weight: 7 },
+        { type: 'win', label: '💰 THE GILDED SOW', color: '#2ed573', weight: 7 },
+        { type: 'lose', label: '💸 THE TITHE', color: '#ff3838', weight: 7 },
+        { type: 'give_drinks', label: '🍻 THE TAPMASTER', color: '#ff9500', weight: 7 },
+        { type: 'danger', label: '💀 DEATH', color: '#ff4757', weight: 4 },
+        { type: 'double', label: '😈 THE TEMPTATION', color: '#ba68c8', weight: 3 },
+        { type: 'mulligan', label: '⛳ THE SECOND DAWN', color: '#4CAF50', weight: 2 },
+        { type: 'reverse_mulligan', label: '🪞 THE CRUEL MIRROR', color: '#9C27B0', weight: 2 },
+        { type: 'jackpot', label: '🐗 THE HOG ITSELF', color: '#f2d67c', weight: 1 }
     ];
     
     // Initialize wheel system (create canvas if it doesn't exist)
@@ -4240,9 +4243,87 @@ function resetSlotMachine() {
     console.log('🎁 Mystery box reset complete');
 }
 
+// ============================================================
+// THE FATES — gilded card ritual (replaces the slot machine)
+// The chosen card is pure theater; calculateHogwashOutcome()
+// still decides, executeHogwashOutcome() still applies.
+// ============================================================
+const FATE_CARDS = {
+    drink:            { numeral: 'II',   emblem: '🍺', title: 'The Chalice',     flavor: 'Drink deep — the trough is generous tonight.', cls: '' },
+    win:              { numeral: 'III',  emblem: '💰', title: 'The Gilded Sow',  flavor: 'Fortune fattens the bold.', cls: '' },
+    lose:             { numeral: 'IV',   emblem: '💸', title: 'The Tithe',       flavor: 'The House always collects.', cls: '' },
+    give_drinks:      { numeral: 'V',    emblem: '🍻', title: 'The Tapmaster',   flavor: 'Power flows from your keg.', cls: '' },
+    mulligan:         { numeral: 'VI',   emblem: '⛳', title: 'The Second Dawn', flavor: 'One shot, born again.', cls: '' },
+    reverse_mulligan: { numeral: 'VII',  emblem: '🪞', title: 'The Cruel Mirror', flavor: 'Their finest shot — unmade.', cls: '' },
+    double:           { numeral: 'VIII', emblem: '😈', title: 'The Temptation',  flavor: 'Greed is a ladder. Climb, or step off.', cls: 'fate-tempt' },
+    danger:           { numeral: 'XIII', emblem: '💀', title: 'DEATH',           flavor: 'The dice hunger. ALL SHALL ROLL.', cls: 'fate-death' },
+    jackpot:          { numeral: 'I',    emblem: '🐗', title: 'THE HOG ITSELF',  flavor: 'The Sovereign Beast smiles upon you.', cls: 'fate-hog' }
+};
+
+function renderFateStage() {
+    const fan = document.getElementById('fateFan');
+    const instruction = document.getElementById('fateInstruction');
+    if (!fan) return;
+    isSlotSpinning = false;
+    instruction.textContent = 'The Pig Gods have dealt. Choose your fate.';
+    fan.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+        const card = document.createElement('div');
+        card.className = 'fate-card';
+        card.innerHTML = '<div class="fate-face fate-back"></div>' +
+            '<div class="fate-face fate-front"><div class="fate-numeral"></div><div class="fate-emblem"></div><div class="fate-title"></div><div class="fate-flavor"></div></div>';
+        card.addEventListener('click', () => drawFate(card));
+        fan.appendChild(card);
+    }
+    const closeBtn = document.getElementById('closeBoxBtn');
+    if (closeBtn) closeBtn.style.display = 'none';
+}
+
+function drawFate(cardEl) {
+    if (isSlotSpinning) return;
+    isSlotSpinning = true;
+    console.log('🃏 A fate is drawn...');
+
+    playHogwashMusic();
+    const finalOutcome = calculateHogwashOutcome();
+    console.log('🃏 The fates decree:', finalOutcome.type);
+    const spec = FATE_CARDS[finalOutcome.type] || FATE_CARDS.lose;
+
+    // dress the chosen card's hidden face
+    const front = cardEl.querySelector('.fate-front');
+    front.classList.add(...(spec.cls ? [spec.cls] : []));
+    front.querySelector('.fate-numeral').textContent = spec.numeral;
+    front.querySelector('.fate-emblem').textContent = spec.emblem;
+    front.querySelector('.fate-title').textContent = spec.title;
+    front.querySelector('.fate-flavor').textContent = '"' + spec.flavor + '"';
+
+    const instruction = document.getElementById('fateInstruction');
+    instruction.textContent = 'The card rises...';
+
+    // dismiss the others, raise the chosen
+    document.querySelectorAll('#fateFan .fate-card').forEach((c) => {
+        if (c !== cardEl) c.classList.add('dismissed');
+    });
+    cardEl.classList.add('chosen');
+
+    // flip after the ascent
+    setTimeout(() => {
+        cardEl.classList.add('flipped');
+        if (finalOutcome.type === 'danger') cardEl.classList.add('doom');
+        instruction.textContent = spec.title === 'DEATH' ? 'Oh no.' : ' ';
+    }, 750);
+
+    // let the reveal breathe, then execute the outcome
+    setTimeout(() => {
+        stopHogwashMusic();
+        executeHogwashOutcome(finalOutcome);
+        isSlotSpinning = false;
+    }, 3000);
+}
+
 function spinPigSlots() {
     console.log('🎰 spinPigSlots called!');
-    
+
     if (isSlotSpinning) {
         console.log('🎰 Slots are already spinning, ignoring click');
         return;
@@ -5623,7 +5704,7 @@ function executeHogwashOutcome(selectedOutcome) {
             break;
             
         case 'win':
-            const winPoints = Math.floor(Math.random() * 4) + 1;
+            const winPoints = Math.floor(Math.random() * 5) + 2;
             players[playerName].points += winPoints;
             players['GOD'].points -= winPoints;
             savePlayers();
@@ -5636,7 +5717,7 @@ function executeHogwashOutcome(selectedOutcome) {
             break;
             
         case 'lose':
-            const losePoints = Math.floor(Math.random() * 5) + 1;
+            const losePoints = Math.floor(Math.random() * 5) + 2;
             players[playerName].points -= losePoints;
             players['GOD'].points += losePoints;
             savePlayers();
@@ -5681,6 +5762,42 @@ function executeHogwashOutcome(selectedOutcome) {
                 color: '#9C27B0'
             };
             break;
+
+        case 'jackpot':
+            players[playerName].points += 12;
+            players['GOD'].points -= 12;
+            players[playerName].powerUps.giveDrinks += 3;
+            savePlayers();
+            resultText = `🐗 THE HOG ITSELF appears! ${playerName} seizes 12 points from GOD and 3 DRINKS to bestow! ALL HAIL!`;
+            outcome = {
+                type: 'jackpot',
+                title: '🐗 THE HOG ITSELF 🐗',
+                color: '#f2d67c'
+            };
+            break;
+
+        case 'double': {
+            // THE TEMPTATION: the pig must choose — safe crumbs or the gamble
+            closeHogwashWheel();
+            document.getElementById('hogwashResultTitle').textContent = '😈 THE TEMPTATION 😈';
+            document.getElementById('hogwashResultContent').innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 12px;">😈</div>
+                <div style="font-family: 'Fraunces', Georgia, serif; font-style: italic; margin-bottom: 18px;">
+                    "${playerName}... take the crumbs and scurry, or wager it all on my coin?"
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="transfer-btn" onclick="resolveTemptation('safe')" style="min-width: 130px;">
+                        🐁 TAKE 2 &amp; SCURRY
+                    </button>
+                    <button class="transfer-btn" onclick="resolveTemptation('greed')" style="min-width: 130px; background: linear-gradient(160deg, #4a2360, #2c1440); color: #e6c9ff; border: 1px solid rgba(186,104,200,0.5);">
+                        😈 FLIP: +6 or −5
+                    </button>
+                </div>`;
+            const temptModal = document.querySelector('.hogwash-result');
+            if (temptModal) temptModal.style.background = '';
+            document.getElementById('hogwashResultModal').style.display = 'flex';
+            return; // resolution continues in resolveTemptation()
+        }
     }
     
     console.log('🎁 Final resultText created:', resultText);
@@ -5695,7 +5812,12 @@ function executeHogwashOutcome(selectedOutcome) {
         <div style="font-size: 2rem; margin-bottom: 20px;">🎰</div>
         <div style="color: ${outcome.color}; font-weight: bold;">${resultText}</div>
     `;
-    document.querySelector('.hogwash-result').style.background = `linear-gradient(135deg, ${outcome.color}, #764ba2)`;
+    const resultCard = document.querySelector('.hogwash-result');
+    if (resultCard) {
+        resultCard.style.background = '';
+        resultCard.style.boxShadow = `0 0 40px ${outcome.color}66, 0 30px 80px rgba(0,0,0,0.7)`;
+        resultCard.style.borderColor = outcome.color;
+    }
     
     document.getElementById('hogwashResultModal').style.display = 'flex';
 
@@ -5711,6 +5833,43 @@ function executeHogwashOutcome(selectedOutcome) {
     console.log('🎁 About to log activity with resultText:', resultText);
     addActivity('hogwash', '🎁', resultText);
 }
+
+// THE TEMPTATION resolution — the pig has chosen
+function resolveTemptation(choice) {
+    const playerName = selectedPlayerName;
+    let resultText, color;
+    if (choice === 'safe') {
+        players[playerName].points += 2;
+        players['GOD'].points -= 2;
+        color = '#4CAF50';
+        resultText = `${playerName} took the Temptation's crumbs and scurried away with 2 points. 🐁 Coward's gold is still gold.`;
+    } else {
+        const won = Math.random() < 0.5;
+        if (won) {
+            players[playerName].points += 6;
+            players['GOD'].points -= 6;
+            color = '#f2d67c';
+            resultText = `${playerName} FLIPPED THE DEVIL'S COIN and WON 6 points from GOD! 😈🎉 Greed pays... this time.`;
+        } else {
+            players[playerName].points -= 5;
+            players['GOD'].points += 5;
+            color = '#ff3838';
+            resultText = `${playerName} flipped the Devil's coin and LOST 5 points to GOD! 😈💸 The Temptation feasts.`;
+        }
+    }
+    savePlayers();
+    document.getElementById('hogwashResultTitle').textContent = '😈 THE TEMPTATION 😈';
+    document.getElementById('hogwashResultContent').innerHTML = `
+        <div style="font-size: 2rem; margin-bottom: 20px;">${choice === 'safe' ? '🐁' : '🪙'}</div>
+        <div style="color: ${color}; font-weight: bold;">${resultText}</div>
+    `;
+    const tCard = document.querySelector('.hogwash-result');
+    if (tCard) { tCard.style.boxShadow = `0 0 40px ${color}66, 0 30px 80px rgba(0,0,0,0.7)`; tCard.style.borderColor = color; }
+    updateLeaderboard();
+    if (isPlayerLoggedIn) updatePlayerUI();
+    addActivity('hogwash', '😈', resultText);
+}
+window.resolveTemptation = resolveTemptation;
 
 // HOGWASH Audio Functions
 function playHogwashMusic() {
@@ -6526,16 +6685,17 @@ window.uploadProof = uploadProof;
 
 // Insulting Pig Name System
 const pigInsults = [
-    'PIG FUCKER', 'BACON BREATH', 'SWINE SLUT', 'HOG WHORE', 'PORK CHOP',
-    'CLOVEN HOOVED BEAST', 'MUD WALLOWER', 'SLOP SUCKER', 'SNORTING SWINE',
-    'SQUEALING PIGLET', 'TRUFFLE SNIFFER', 'BARNYARD BITCH', 'OINKING OAFS',
-    'CURLY TAILED CUNT', 'PIGPEN PEASANT', 'SWILL SWALLOWER', 'HOOF HEARTED',
-    'BACON BITS', 'PORK BELLY', 'HAM HOCK', 'SAUSAGE SUCKER', 'CHOP CHASER',
-    'SNOUT SNORTER', 'TROUGH DIVER', 'SLOP SLURPER', 'MUD MUNCHER',
-    'PIGGY BACK RIDER', 'BOAR BORE', 'SOW SUCKER', 'PIGLET POKER',
-    'BACON BANDIT', 'PORK PIRATE', 'HAM HANDLER', 'SWINE SWIPER',
-    'OINKER OGLER', 'SNORTER SNEAK', 'SQUEALER SLEAZE', 'PIGGY PERV',
-    'HOOF HUGGER', 'TAIL TWISTER', 'SNOUT SNIFFER', 'TROUGH TRASHER'
+    'BARON VON BACONFAT', 'LORD OF THE STY', 'THE UNWASHED', 'DISGRACED SOMMELIER',
+    'MUD ARISTOCRAT', 'SIR SQUEALS-A-LOT', 'DUKE OF DOUBLE BOGEY', 'VISCOUNT SWILL',
+    'HIS ROTUNDITY', 'THE VELVET HOG', 'EARL OF LARD', 'AMBASSADOR OF FILTH',
+    'KEEPER OF THE SLOP', 'SLOP PIT SCHOLAR', 'TROUGH ECONOMIST', 'BACON LAUREATE',
+    'CHAIRHOG OF THE BOARD', 'MINISTER OF MUD', 'THE PORK PROPHET', 'SNOUT SAVANT',
+    'GRAND SWINE OF NOTHING', 'COUNT OINKULA', 'THE GLISTENING ONE', 'HAM SOMMELIER',
+    'FIRST SNOUT OF SHAME', 'HIS HOGLINESS', 'THE CRACKLING PRINCE', 'SULTAN OF SLOP',
+    'BOGEY BARONESS', 'THE TRUFFLED FOOL', 'ARCHDUKE OF OINK', 'PATRON SAINT OF SWILL',
+    'THE BRINED BARRISTER', 'CZAR OF THE STY', 'PROFESSOR PORKBELLY', 'THE DAMP GENTLEMAN',
+    'CURATOR OF FILTH', 'MARQUIS DE SLOP', 'THE HONORABLE HAM', 'SQUIRE OF SQUEAL',
+    'DEACON OF THE TROUGH', 'LORD SNIFFINGTON', 'THE PICKLED PEER', 'GENERAL HOGWASH'
 ];
 
 let playerInsults = {}; // Store current insults for each player

@@ -17,8 +17,8 @@
     <link rel="manifest" href="manifest.json">
     
     <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNSIgZmlsbD0iI0ZGNjlCNCIvPgo8IS0tIFBpZyBIZWFkIC0tPgo8Y2lyY2xlIGN4PSIxNiIgY3k9IjE0IiByPSI5IiBmaWxsPSIjRkZDNEM0Ii8+CjwhLS0gU25vdXQgLS0+CjxlbGxpcHNlIGN4PSIxNiIgY3k9IjE2IiByeD0iNCIgcnk9IjMiIGZpbGw9IiNGRkI2QjYiLz4KPCEtLSBOb3N0cmlscyAtLT4KPGVsbGlwc2UgY3g9IjE0LjUiIGN5PSIxNiIgcng9IjAuOCIgcnk9IjEuMiIgZmlsbD0iI0ZGNjlCNCIvPgo8ZWxsaXBzZSBjeD0iMTcuNSIgY3k9IjE2IiByeD0iMC44IiByeT0iMS4yIiBmaWxsPSIjRkY2OUI0Ii8+CjwhLS0gRXllcyAtLT4KPGNpcmNsZSBjeD0iMTMiIGN5PSIxMiIgcj0iMS4yIiBmaWxsPSIjMDAwIi8+CjxjaXJjbGUgY3g9IjE5IiBjeT0iMTIiIHI9IjEuMiIgZmlsbD0iIzAwMCIvPgo8IS0tIEVhcnMgLS0+CjxlbGxpcHNlIGN4PSIxMSIgY3k9IjkiIHJ4PSIyIiByeT0iMyIgZmlsbD0iI0ZGQzRDNCIgdHJhbnNmb3JtPSJyb3RhdGUoLTMwIDExIDkpIi8+CjxlbGxpcHNlIGN4PSIyMSIgY3k9IjkiIHJ4PSIyIiByeT0iMyIgZmlsbD0iI0ZGQzRDNCIgdHJhbnNmb3JtPSJyb3RhdGUoMzAgMjEgOSkiLz4KPCEtLSBDdXJseSBUYWlsIC0tPgo8cGF0aCBkPSJNMjQgMjAgQzI1IDE5IDI2IDIxIDI1IDIyIiBzdHJva2U9IiNGRkM0QzQiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4K">
-    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iMjgiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjwhLS0gUGlnIEJvZHkgLS0+CjxlbGxpcHNlIGN4PSI5MCIgY3k9Ijk4IiByeD0iNDUiIHJ5PSIzNSIgZmlsbD0iI0ZGQzRDNCIvPgo8IS0tIFBpZyBIZWFkIC0tPgo8Y2lyY2xlIGN4PSI5MCIgY3k9IjY1IiByPSIzMCIgZmlsbD0iI0ZGQzRDNCIvPgo8IS0tIFNub3V0IC0tPgo8ZWxsaXBzZSBjeD0iOTAiIGN5PSI3MCIgcng9IjE1IiByeT0iMTAiIGZpbGw9IiNGRkI2QjYiLz4KPCEtLSBOb3N0cmlscyAtLT4KPGVsbGlwc2UgY3g9Ijg1IiBjeT0iNzAiIHJ4PSIyLjUiIHJ5PSI0IiBmaWxsPSIjRkY2OUI0Ii8+CjxlbGxpcHNlIGN4PSI5NSIgY3k9IjcwIiByeD0iMi41IiByeT0iNCIgZmlsbD0iI0ZGNjlCNCIvPgo8IS0tIEV5ZXMgLS0+CjxjaXJjbGUgY3g9Ijc4IiBjeT0iNTUiIHI9IjQiIGZpbGw9IiMwMDAiLz4KPGNpcmNsZSBjeD0iMTAyIiBjeT0iNTUiIHI9IjQiIGZpbGw9IiMwMDAiLz4KPCEtLSBFYXJzIC0tPgo8ZWxsaXBzZSBjeD0iNjgiIGN5PSI0MiIgcng9IjciIHJ5PSIxMyIgZmlsbD0iI0ZGQzRDNCIgdHJhbnNmb3JtPSJyb3RhdGUoLTMwIDY4IDQyKSIvPgo8ZWxsaXBzZSBjeD0iMTEyIiBjeT0iNDIiIHJ4PSI3IiByeT0iMTMiIGZpbGw9IiNGRkM0QzQiIHRyYW5zZm9ybT0icm90YXRlKDMwIDExMiA0MikiLz4KPCEtLSBDdXJseSBUYWlsIC0tPgo8cGF0aCBkPSJNMTMzIDExMCBDMTM4IDEwNSAxNDMgMTE1IDEzOCAxMjAgQzEzMyAxMjUgMTQzIDEzMCAxNDAgMTM1IiBzdHJva2U9IiNGRkM0QzQiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjwhLS0gTGVncyAtLT4KPGVsbGlwc2UgY3g9IjcwIiBjeT0iMTMwIiByeD0iNiIgcnk9IjEyIiBmaWxsPSIjRkZDNEM0Ii8+CjxlbGxpcHNlIGN4PSIxMTAiIGN5PSIxMzAiIHJ4PSI2IiByeT0iMTIiIGZpbGw9IiNGRkM0QzQiLz4KPGVsbGlwc2UgY3g9Ijc1IiBjeT0iMTQwIiByeD0iNiIgcnk9IjEyIiBmaWxsPSIjRkZDNEM0Ii8+CjxlbGxpcHNlIGN4PSIxMDUiIGN5PSIxNDAiIHJ4PSI2IiByeT0iMTIiIGZpbGw9IiNGRkM0QzQiLz4KPCEtLSBIb292ZXMgLS0+CjxlbGxpcHNlIGN4PSI3MCIgY3k9IjE0MiIgcng9IjQiIHJ5PSIzIiBmaWxsPSIjMzMzIi8+CjxlbGxpcHNlIGN4PSIxMTAiIGN5PSIxNDIiIHJ4PSI0IiByeT0iMyIgZmlsbD0iIzMzMyIvPgo8ZWxsaXBzZSBjeD0iNzUiIGN5PSIxNTIiIHJ4PSI0IiByeT0iMyIgZmlsbD0iIzMzMyIvPgo8ZWxsaXBzZSBjeD0iMTA1IiBjeT0iMTUyIiByeD0iNCIgcnk9IjMiIGZpbGw9IiMzMzMiLz4KPHR4dCB4PSI5MCIgeT0iMjUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNGRkM0QzQiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk9JTkshPC90ZXh0Pgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSIgeDE9IjAiIHkxPSIwIiB4Mj0iMTgwIiB5Mj0iMTgwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNGRjY5QjQiLz4KPHN0b3Agb2Zmc2V0PSIwLjMiIHN0b3AtY29sb3I9IiNGRkM0QzQiLz4KPHN0b3Agb2Zmc2V0PSIwLjciIHN0b3AtY29sb3I9IiNGRkI2QjYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkZBNEE0Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iMjciIGZpbGw9IiMwZDJhMWMiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYyIiByPSI1MiIgc3Ryb2tlPSIjZDRhZjM3IiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSI0NSIgeT0iMTgiIHdpZHRoPSIzMCIgaGVpZ2h0PSIxOSIgZmlsbD0iI2Q0YWYzNyIvPjxyZWN0IHg9IjM4IiB5PSIzNiIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjUiIGZpbGw9IiNkNGFmMzciLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjY4IiByPSIyMyIgZmlsbD0iIzBkMmExYyIgc3Ryb2tlPSIjZDRhZjM3IiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI0MiIgY3k9IjUyIiByPSI0IiBmaWxsPSIjZDRhZjM3Ii8+PGNpcmNsZSBjeD0iNzgiIGN5PSI1MiIgcj0iNCIgZmlsbD0iI2Q0YWYzNyIvPjxjaXJjbGUgY3g9IjUxLjUiIGN5PSI2MiIgcj0iMyIgZmlsbD0iI2YyZDY3YyIvPjxjaXJjbGUgY3g9IjY4LjUiIGN5PSI2MiIgcj0iMyIgZmlsbD0iI2YyZDY3YyIvPjxjaXJjbGUgY3g9IjY4LjUiIGN5PSI2MiIgcj0iNy41IiBzdHJva2U9IiNmMmQ2N2MiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjxlbGxpcHNlIGN4PSI2MCIgY3k9Ijc1IiByeD0iOS41IiByeT0iNi41IiBmaWxsPSJub25lIiBzdHJva2U9IiNkNGFmMzciIHN0cm9rZS13aWR0aD0iMyIvPjxjaXJjbGUgY3g9IjU2LjUiIGN5PSI3NSIgcj0iMS44IiBmaWxsPSIjZDRhZjM3Ii8+PGNpcmNsZSBjeD0iNjMuNSIgY3k9Ijc1IiByPSIxLjgiIGZpbGw9IiNkNGFmMzciLz48cGF0aCBkPSJNNTIgOTMgTDYwIDk2IEw2OCA5MyBMNjggMTAxIEw2MCA5OCBMNTIgMTAxIFoiIGZpbGw9IiNkNGFmMzciLz48L3N2Zz4K">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
     
     <link rel="stylesheet" href="consolidated-styles.css">
 
@@ -98,8 +98,8 @@
                 
                 <!-- HOGWASH Gambling Button -->
                 <div style="text-align: center; margin: 20px 0;">
-                    <button class="hogwash-btn" onclick="showHogwashModal()">🐷🎲 HOGWASH 🎲🐷</button>
-                    <p style="font-size: 0.9em; color: #FF1493; margin-top: 8px; font-weight: bold;">🐷 Risk it all with the pig gods! 🐷</p>
+                    <button class="hogwash-btn" onclick="showHogwashModal()">🐷 HOGWASH 🐷</button>
+                    <p style="font-size: 0.82em; color: #c9bc9c; margin-top: 10px; font-style: italic; font-family: 'Fraunces', Georgia, serif;">Draw a card. The Pig Gods decide the rest.</p>
                 </div>
 
                 <!-- JUKEBOX Music Button -->
@@ -108,7 +108,7 @@
                         <img src="jukebox-icon.svg" alt="Jukebox" style="width: 24px; height: 24px; margin-right: 8px; vertical-align: middle;">
                         🎵 JUKEBOX 🎵
                     </button>
-                    <p style="font-size: 0.9em; color: #9370DB; margin-top: 8px; font-weight: bold;">🎶 Pump up the pig vibes! 🎶</p>
+                    <p style="font-size: 0.82em; color: #c9bc9c; margin-top: 10px; font-style: italic; font-family: 'Fraunces', Georgia, serif;">The house band awaits your request.</p>
                 </div>
 
                 <!-- Login buttons for non-logged users -->
@@ -336,25 +336,31 @@
                 <h4 style="margin: 0 0 12px 0; text-align: center; color: #e9cf8f; font-family: 'Fraunces', Georgia, serif; letter-spacing: 0.12em; font-weight: 700;">HOUSE ODDS</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em; color: #f4e9cf;">
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <span>🍺</span> <span>Take Drinks <strong style="color:#f2d67c">20%</strong></span>
+                        <span>🍺</span> <span>The Chalice <strong style="color:#f2d67c">17.5%</strong></span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <span>🎉</span> <span>Win Points <strong style="color:#f2d67c">20%</strong></span>
+                        <span>💰</span> <span>The Gilded Sow <strong style="color:#f2d67c">17.5%</strong></span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <span>😈</span> <span>Lose Points <strong style="color:#f2d67c">20%</strong></span>
+                        <span>💸</span> <span>The Tithe <strong style="color:#f2d67c">17.5%</strong></span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <span>🍺⚡</span> <span>Drink Power <strong style="color:#f2d67c">20%</strong></span>
+                        <span>🍻</span> <span>The Tapmaster <strong style="color:#f2d67c">17.5%</strong></span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <span>💀</span> <span>Danger Zone <strong style="color:#ff7dbb">10%</strong></span>
+                        <span>💀</span> <span>DEATH <strong style="color:#ff7dbb">10%</strong></span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <span>⛳</span> <span>Mulligan <strong style="color:#f2d67c">5%</strong></span>
+                        <span>😈</span> <span>The Temptation <strong style="color:#e6c9ff">7.5%</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>⛳</span> <span>Second Dawn <strong style="color:#f2d67c">5%</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>🪞</span> <span>Cruel Mirror <strong style="color:#f2d67c">5%</strong></span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px; grid-column: span 2; justify-content: center;">
-                        <span>🔄</span> <span>Reverse Mulligan <strong style="color:#f2d67c">5%</strong></span>
+                        <span>🐗</span> <span>THE HOG ITSELF <strong style="color:#f2d67c">2.5%</strong> — <em style="color:#9a9077">seize 12 pts &amp; 3 drinks to bestow</em></span>
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 12px; font-size: 0.78em; color: #9a9077; font-style: italic; font-family: 'Fraunces', Georgia, serif;">
@@ -363,7 +369,7 @@
             </div>
             
             <button class="hogwash-btn" onclick="rollHogwash()" style="width: 100%; margin-top: 20px;">
-                🐷 ROLL THE DICE 🐷
+                🐷 CONSULT THE FATES 🐷
             </button>
         </div>
     </div>
@@ -380,14 +386,20 @@
                 </p>
             </div>
 
-            <!-- Pull Button - above slot machine -->
-            <div style="text-align: center; margin: 10px 0 20px 0;">
-                <button id="openBoxBtn" class="hogwash-btn mystery-box-btn" onclick="spinPigSlots()" style="font-size: 1.15em; padding: 12px 28px;">
-                    🎰 PULL THE PIG SLOTS 🎰
+            <!-- Legacy trigger kept for compatibility (hidden; the cards are the trigger now) -->
+            <div style="text-align: center; margin: 0; display: none;">
+                <button id="openBoxBtn" class="hogwash-btn mystery-box-btn" onclick="spinPigSlots()">
+                    DRAW
                 </button>
             </div>
+
+            <!-- THE FATES: card ritual stage -->
+            <div class="fate-stage" id="fateStage">
+                <div class="fate-instruction" id="fateInstruction">The Pig Gods have dealt. Choose your fate.</div>
+                <div class="fate-fan" id="fateFan"></div>
+            </div>
             
-            <!-- Pig Slot Machine Container -->
+            <!-- Legacy slot machine (hidden; kept so legacy reset/init code can't crash) -->
             <div class="pig-slot-container" style="
                 position: relative;
                 width: 100%;
@@ -396,7 +408,7 @@
                 min-height: 250px;
                 margin: 10px auto;
                 padding: 0 10px;
-                display: flex;
+                display: none;
                 align-items: center;
                 justify-content: center;
                 box-sizing: border-box;
