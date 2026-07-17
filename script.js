@@ -1631,18 +1631,20 @@ function updateJukeboxDisplay() {
     // Update button states
     const shuffleBtn = document.querySelector('#jukeboxModal .shuffle-btn');
     if (shuffleBtn) {
-        shuffleBtn.style.opacity = isShuffled ? '1' : '0.6';
-        shuffleBtn.style.background = isShuffled ? 
-            'linear-gradient(45deg, #28a745, #20c997)' : 
-            'linear-gradient(45deg, #6c757d, #5a6268)';
+        shuffleBtn.style.opacity = isShuffled ? '1' : '0.75';
+        shuffleBtn.style.background = isShuffled ?
+            'linear-gradient(172deg, #e8cd74, #b68e2e)' :
+            'rgba(212,175,55,0.08)';
+        shuffleBtn.style.color = isShuffled ? '#1d150a' : '#c9bc9c';
     }
-    
+
     const repeatBtn = document.querySelector('#jukeboxModal .repeat-btn');
     if (repeatBtn) {
-        repeatBtn.style.opacity = isRepeatOne ? '1' : '0.6';
-        repeatBtn.style.background = isRepeatOne ? 
-            'linear-gradient(45deg, #28a745, #20c997)' : 
-            'linear-gradient(45deg, #6c757d, #5a6268)';
+        repeatBtn.style.opacity = isRepeatOne ? '1' : '0.75';
+        repeatBtn.style.background = isRepeatOne ?
+            'linear-gradient(172deg, #e8cd74, #b68e2e)' :
+            'rgba(212,175,55,0.08)';
+        repeatBtn.style.color = isRepeatOne ? '#1d150a' : '#c9bc9c';
     }
 }
 
@@ -1655,49 +1657,47 @@ function showJukeboxModal() {
     jukeboxModal.className = 'modal';
     jukeboxModal.style.display = 'flex';
     jukeboxModal.innerHTML = `
-        <div class="modal-content" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px; min-width: 400px;">
-            <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 PIGGY JUKEBOX 🎵</h2>
-            <div style="font-size: 4rem; margin: 20px 0; animation: spin 4s linear infinite;">🎶</div>
-            <p class="song-name" style="font-size: 1.5em; margin: 20px 0; font-weight: bold;">
+        <div class="modal-content" style="text-align: center; max-width: 420px; width: 92%;">
+            <h2 style="margin-bottom: 6px;">🎷 THE GRAMOPHONE</h2>
+            <div style="font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: #9a9077; margin-bottom: 14px;">House Band of the Royal Order</div>
+            <div style="width: 110px; height: 110px; margin: 14px auto; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #e9cf8f 0 12%, #04120b 13% 30%, #0e2c1e 31% 46%, #04120b 47% 62%, #0e2c1e 63% 78%, #04120b 79% 100%); border: 2px solid #d4af37; box-shadow: 0 0 24px rgba(212,175,55,0.3), inset 0 0 14px rgba(0,0,0,0.7); animation: spin 4s linear infinite;"></div>
+            <p class="song-name" style="font-size: 1.25em; margin: 14px 0 4px; font-weight: 600; font-family: 'Fraunces', Georgia, serif; font-style: italic; color: #f4e9cf;">
                 ${song.name}
             </p>
-            <p class="playlist-position" style="font-size: 0.9em; margin: 10px 0; opacity: 0.8;">
+            <p class="playlist-position" style="font-size: 0.68em; margin: 0 0 16px; letter-spacing: 0.2em; text-transform: uppercase; color: #9a9077;">
                 Song ${currentSongIndex + 1} of ${currentPlaylist.length}
             </p>
-            <p style="font-size: 1em; margin: 20px 0; opacity: 0.9;">
-                🎤 Pumping up the pig vibes! 🐷
-            </p>
-            
+
             <!-- Main Controls -->
-            <div style="margin: 20px 0;">
-                <button onclick="playPreviousSong()" class="transfer-btn" style="background: linear-gradient(45deg, #17a2b8, #138496); color: white; margin: 5px; min-width: 80px;">
-                    ⏮️ PREV
+            <div style="margin: 14px 0; display: flex; justify-content: center; gap: 8px;">
+                <button onclick="playPreviousSong()" class="transfer-btn" style="min-width: 76px;">
+                    ⏮ PREV
                 </button>
-                <button onclick="pauseJukeboxMusic()" class="transfer-btn" style="background: linear-gradient(45deg, #FFA500, #FF8C00); color: white; margin: 5px; min-width: 80px;">
-                    ⏸️ PAUSE
+                <button onclick="pauseJukeboxMusic()" class="transfer-btn" style="min-width: 92px;">
+                    ⏸ PAUSE
                 </button>
-                <button onclick="playNextSong()" class="transfer-btn" style="background: linear-gradient(45deg, #17a2b8, #138496); color: white; margin: 5px; min-width: 80px;">
-                    ⏭️ NEXT
+                <button onclick="playNextSong()" class="transfer-btn" style="min-width: 76px;">
+                    ⏭ NEXT
                 </button>
             </div>
-            
+
             <!-- Playback Options -->
-            <div style="margin: 20px 0;">
-                <button onclick="toggleShuffle()" class="transfer-btn shuffle-btn" style="background: linear-gradient(45deg, ${isShuffled ? '#28a745, #20c997' : '#6c757d, #5a6268'}); color: white; margin: 5px; min-width: 100px; opacity: ${isShuffled ? '1' : '0.6'};">
+            <div style="margin: 12px 0; display: flex; justify-content: center; gap: 8px;">
+                <button onclick="toggleShuffle()" class="transfer-btn shuffle-btn" style="min-width: 104px; background: ${isShuffled ? 'linear-gradient(172deg, #e8cd74, #b68e2e)' : 'rgba(212,175,55,0.08)'}; color: ${isShuffled ? '#1d150a' : '#c9bc9c'}; border: 1px solid rgba(212,175,55,0.35); opacity: ${isShuffled ? '1' : '0.75'};">
                     🔀 SHUFFLE
                 </button>
-                <button onclick="toggleRepeatOne()" class="transfer-btn repeat-btn" style="background: linear-gradient(45deg, ${isRepeatOne ? '#28a745, #20c997' : '#6c757d, #5a6268'}); color: white; margin: 5px; min-width: 100px; opacity: ${isRepeatOne ? '1' : '0.6'};">
+                <button onclick="toggleRepeatOne()" class="transfer-btn repeat-btn" style="min-width: 104px; background: ${isRepeatOne ? 'linear-gradient(172deg, #e8cd74, #b68e2e)' : 'rgba(212,175,55,0.08)'}; color: ${isRepeatOne ? '#1d150a' : '#c9bc9c'}; border: 1px solid rgba(212,175,55,0.35); opacity: ${isRepeatOne ? '1' : '0.75'};">
                     🔁 REPEAT
                 </button>
             </div>
-            
+
             <!-- Stop/Close Controls -->
-            <div style="margin: 20px 0;">
-                <button onclick="stopJukeboxMusic()" class="transfer-btn" style="background: linear-gradient(45deg, #dc3545, #c82333); color: white; margin: 5px;">
-                    ⏹️ STOP
+            <div style="margin: 14px 0 4px; display: flex; justify-content: center; gap: 8px;">
+                <button onclick="stopJukeboxMusic()" class="transfer-btn" style="background: linear-gradient(160deg, #8e1b1b, #5d0f0f); color: #ffd7d0; border: 1px solid rgba(255,99,71,0.5);">
+                    ⏹ STOP
                 </button>
-                <button class="transfer-btn" onclick="closeJukeboxModal()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #333; font-weight: bold; margin: 5px;">
-                    🎵 CLOSE JUKEBOX 🎵
+                <button class="transfer-btn" onclick="closeJukeboxModal()">
+                    CLOSE
                 </button>
             </div>
         </div>
@@ -1712,17 +1712,17 @@ function showJukeboxErrorModal() {
     jukeboxModal.className = 'modal';
     jukeboxModal.style.display = 'flex';
     jukeboxModal.innerHTML = `
-        <div class="modal-content" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; text-align: center; border: 3px solid #FFD700; border-radius: 20px;">
-            <h2 style="color: #FFD700; margin-bottom: 20px;">🎵 JUKEBOX ERROR 🎵</h2>
-            <div style="font-size: 4rem; margin: 20px 0;">❌</div>
-            <p style="font-size: 1.3em; margin: 20px 0;">
-                🎶 Audio files not found or failed to load! 🎶
+        <div class="modal-content" style="text-align: center; max-width: 420px; width: 92%;">
+            <h2 style="margin-bottom: 16px;">🎷 THE GRAMOPHONE</h2>
+            <div style="font-size: 3rem; margin: 16px 0;">🔇</div>
+            <p style="font-size: 1.1em; margin: 16px 0; font-family: 'Fraunces', Georgia, serif; font-style: italic;">
+                The house band has stepped out.
             </p>
-            <p style="font-size: 1em; margin: 20px 0; opacity: 0.9;">
-                Make sure music files are in the music/ directory.
+            <p style="font-size: 0.85em; margin: 16px 0; color: #9a9077;">
+                Audio files not found — make sure music files are in the music/ directory.
             </p>
-            <button class="transfer-btn" onclick="closeJukeboxModal()" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #333; font-weight: bold;">
-                🎵 CLOSE JUKEBOX 🎵
+            <button class="transfer-btn" onclick="closeJukeboxModal()">
+                CLOSE
             </button>
         </div>
     `;
