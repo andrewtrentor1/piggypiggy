@@ -41,6 +41,75 @@
 
         if (!cdTimer) cdTimer = setInterval(renderBanner, 1000);
         initRandomDangerZone();
+        initDebtChip();
+    }
+
+    // ---------- personal drink-debt banner (front page) ----------
+    // Mirrors the Parlour ledger rules: debts double per awake hour
+    // (9AM-10PM clock), 24-gulp mercy ceiling.
+    let dcActs = null, dcAcks = null, dcName = null;
+
+    function dcAwakeMinutes(startMs) {
+        let total = 0;
+        const start = new Date(startMs), now = new Date();
+        const day = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        while (day <= now) {
+            const wStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 9, 0, 0).getTime();
+            const wEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 22, 0, 0).getTime();
+            const s = Math.max(wStart, startMs), e = Math.min(wEnd, now.getTime());
+            if (e > s) total += (e - s) / 60000;
+            day.setDate(day.getDate() + 1);
+        }
+        return Math.floor(total);
+    }
+
+    function initDebtChip() {
+        if (!document.getElementById('myDebtChip')) return;
+        const db = window.firebaseDB;
+        const ref = window.firebaseRef;
+        window.firebaseOnValue(ref(db, 'activities'), (s) => { dcActs = s.val() || {}; renderDebtChip(); }, () => {});
+        window.firebaseOnValue(ref(db, 'drinkAcknowledgments'), (s) => { dcAcks = s.val() || {}; renderDebtChip(); }, () => {});
+        if (window.firebaseAuth && window.onAuthStateChanged) {
+            window.onAuthStateChanged(window.firebaseAuth, (user) => {
+                dcName = (user && user.displayName) || null;
+                renderDebtChip();
+            });
+        }
+        setInterval(renderDebtChip, 60000); // interest ticks upward while you procrastinate
+    }
+
+    function renderDebtChip() {
+        const el = document.getElementById('myDebtChip');
+        if (!el) return;
+        if (!dcName || !dcActs) { el.style.display = 'none'; return; }
+        const acked = {};
+        Object.values(dcAcks || {}).forEach((a) => {
+            if (a && a.originalEventId) acked[a.originalEventId + '|' + a.acknowledgedBy] = 1;
+        });
+        let total = 0;
+        Object.values(dcActs).forEach((a) => {
+            if (!a || a.type !== 'drink_assignment' || !a.message) return;
+            let m;
+            const found = [];
+            if ((m = a.message.match(/assigned (\d+) DRINKS? to (\w+)/))) {
+                found.push([m[2], parseInt(m[1], 10)]);
+            } else if (a.message.includes('assigned drinks:')) {
+                const re = /(\w+) \((\d+)\)/g; let mm;
+                while ((mm = re.exec(a.message))) found.push([mm[1], parseInt(mm[2], 10)]);
+            }
+            found.forEach(([name, n]) => {
+                if (name !== dcName) return;
+                if (acked[a.id + '|' + name]) return;
+                const mult = Math.pow(2, Math.floor(dcAwakeMinutes(Date.parse(a.timestamp || 0)) / 60));
+                total += Math.min(n * mult, 24);
+            });
+        });
+        total = Math.min(total, 24);
+        if (total <= 0) { el.style.display = 'none'; return; }
+        el.style.display = '';
+        el.innerHTML = '🍺 ' + dcName + ', your tab stands at <strong>' + total + ' gulp' + (total > 1 ? 's' : '') + '</strong>' +
+            (total >= 24 ? ' <strong>(DEBT CEILING)</strong>' : '') +
+            '<span class="mdc-cta">Tap to settle at the Parlour ledger →</span>';
     }
 
     // ---------- banner + countdown ----------

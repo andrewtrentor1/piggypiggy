@@ -83,6 +83,40 @@ body {
 
 .pig-grid { max-width: 420px; margin-left: auto; margin-right: auto; }
 
+/* Personal debt banner on the front page */
+.my-debt-chip {
+    margin: 14px auto 0;
+    max-width: 480px;
+    padding: 11px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 110, 90, 0.45);
+    background: linear-gradient(165deg, rgba(160, 37, 37, 0.35), rgba(109, 20, 20, 0.25));
+    color: var(--cream);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 0.88rem;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 3px 14px rgba(160, 37, 37, 0.25);
+    animation: mbe-debt-throb 3s ease-in-out infinite;
+}
+.my-debt-chip strong { color: var(--rose-bright); font-style: normal; }
+.my-debt-chip .mdc-cta {
+    display: block;
+    font-family: var(--font-ui);
+    font-style: normal;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-pale);
+    margin-top: 3px;
+}
+@keyframes mbe-debt-throb {
+    0%, 100% { box-shadow: 0 3px 14px rgba(160, 37, 37, 0.22); }
+    50% { box-shadow: 0 3px 22px rgba(160, 37, 37, 0.45); }
+}
+
 /* Narrow phones: never let the grid force a 320px minimum */
 @media (max-width: 700px) {
     .main-content { grid-template-columns: 1fr !important; }
