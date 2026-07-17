@@ -17,6 +17,11 @@
 
 const CLUB_KEY = 'IMAPIGOINK123'; // speed bump, not a vault — same club password as the site
 const MAX_PER_HOUR = 90;           // global send throttle (spam brake)
+
+// SURPRISE MODE: while set, ONLY these players receive pushes. Everyone
+// else may subscribe (their devices park dormant) but never gets sent to.
+// Set to null to unleash notifications on the whole Order.
+const ONLY_PLAYERS = ['Andrew'];
 const ALLOWED_TYPES = ['danger_zone', 'tribunal', 'drinks', 'supervisor', 'oracle', 'season', 'organ', 'general'];
 
 const CORS = {
@@ -117,11 +122,12 @@ export default {
             await env.SUBS.put('latest', JSON.stringify(event));
 
             const list = await env.SUBS.list({ prefix: 'sub:' });
-            let sent = 0, dead = 0;
+            let sent = 0, dead = 0, skipped = 0;
             for (const k of list.keys) {
                 const raw = await env.SUBS.get(k.name);
                 if (!raw) continue;
                 const rec = JSON.parse(raw);
+                if (ONLY_PLAYERS && !ONLY_PLAYERS.includes(rec.player)) { skipped++; continue; } // surprise mode
                 if (exclude && rec.player === exclude) continue; // don't buzz the perpetrator
                 try {
                     const res = await sendPush(rec.subscription, env);
@@ -129,7 +135,7 @@ export default {
                     else sent++;
                 } catch { dead++; }
             }
-            return json({ ok: true, sent, dead });
+            return json({ ok: true, sent, dead, skipped });
         }
 
         return json({ error: 'lost pig' }, 404);
