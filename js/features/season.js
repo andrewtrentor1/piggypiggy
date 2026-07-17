@@ -47,7 +47,7 @@
     // ---------- personal drink-debt banner (front page) ----------
     // Mirrors the Parlour ledger rules: debts double per awake hour
     // (9AM-10PM clock), 24-gulp mercy ceiling.
-    let dcActs = null, dcAcks = null, dcName = null;
+    let dcActs = null, dcAcks = null, dcName = null, dcClearances = null;
 
     function dcAwakeMinutes(startMs) {
         let total = 0;
@@ -64,11 +64,12 @@
     }
 
     function initDebtChip() {
-        if (!document.getElementById('myDebtChip')) return;
+        if (!document.getElementById('myDebtChip') && !document.getElementById('statusBar')) return;
         const db = window.firebaseDB;
         const ref = window.firebaseRef;
         window.firebaseOnValue(ref(db, 'activities'), (s) => { dcActs = s.val() || {}; renderDebtChip(); }, () => {});
         window.firebaseOnValue(ref(db, 'drinkAcknowledgments'), (s) => { dcAcks = s.val() || {}; renderDebtChip(); }, () => {});
+        window.firebaseOnValue(ref(db, 'drinkClearances'), (s) => { dcClearances = s.val() || {}; renderDebtChip(); }, () => {});
         if (window.firebaseAuth && window.onAuthStateChanged) {
             window.onAuthStateChanged(window.firebaseAuth, (user) => {
                 dcName = (user && user.displayName) || null;
@@ -78,15 +79,14 @@
         setInterval(renderDebtChip, 60000); // interest ticks upward while you procrastinate
     }
 
-    function renderDebtChip() {
-        const el = document.getElementById('myDebtChip');
-        if (!el) return;
-        if (!dcName || !dcActs) { el.style.display = 'none'; return; }
+    function computeMyDebt() {
+        // returns { total, pendingGulps, pendingCount } under ledger rules
+        const out = { total: 0, pendingGulps: 0, pendingCount: 0 };
+        if (!dcName || !dcActs) return out;
         const acked = {};
         Object.values(dcAcks || {}).forEach((a) => {
             if (a && a.originalEventId) acked[a.originalEventId + '|' + a.acknowledgedBy] = 1;
         });
-        let total = 0;
         Object.values(dcActs).forEach((a) => {
             if (!a || a.type !== 'drink_assignment' || !a.message) return;
             let m;
@@ -101,15 +101,56 @@
                 if (name !== dcName) return;
                 if (acked[a.id + '|' + name]) return;
                 const mult = Math.pow(2, Math.floor(dcAwakeMinutes(Date.parse(a.timestamp || 0)) / 60));
-                total += Math.min(n * mult, 24);
+                const gulps = Math.min(n * mult, 24);
+                out.total += gulps;
+                const cl = (dcClearances || {})[a.id + '_' + name];
+                if (cl && cl.status === 'pending') { out.pendingGulps += gulps; out.pendingCount++; }
             });
         });
-        total = Math.min(total, 24);
-        if (total <= 0) { el.style.display = 'none'; return; }
-        el.style.display = '';
-        el.innerHTML = '🍺 ' + dcName + ', your tab stands at <strong>' + total + ' gulp' + (total > 1 ? 's' : '') + '</strong>' +
-            (total >= 24 ? ' <strong>(DEBT CEILING)</strong>' : '') +
-            '<span class="mdc-cta">Tap to settle at the Parlour ledger →</span>';
+        out.total = Math.min(out.total, 24);
+        out.pendingGulps = Math.min(out.pendingGulps, out.total);
+        return out;
+    }
+
+    function renderDebtChip() {
+        const d = computeMyDebt();
+        const unclaimed = d.total - d.pendingGulps;
+
+        // ---- front-page banner ----
+        const el = document.getElementById('myDebtChip');
+        if (el) {
+            if (!dcName || d.total <= 0) {
+                el.style.display = 'none';
+            } else {
+                el.style.display = '';
+                el.innerHTML = '🍺 ' + dcName + ', your tab stands at <strong>' + d.total + ' gulp' + (d.total > 1 ? 's' : '') + '</strong>' +
+                    (d.total >= 24 ? ' <strong>(DEBT CEILING)</strong>' : '') +
+                    (d.pendingGulps > 0 ? ' — ⏳ ' + d.pendingGulps + ' awaiting a supervisor' : '') +
+                    '<span class="mdc-cta">Tap to settle at the Parlour ledger →</span>';
+            }
+        }
+
+        // ---- top status bar badge ----
+        const bar = document.getElementById('statusBar');
+        if (!bar) return;
+        let badge = document.getElementById('sbDebtBadge');
+        if (!dcName || d.total <= 0) {
+            if (badge) badge.remove();
+            return;
+        }
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.id = 'sbDebtBadge';
+            badge.onclick = () => { window.location.href = 'games.html'; };
+            const logout = bar.querySelector('.status-logout');
+            bar.insertBefore(badge, logout || null);
+        }
+        badge.className = 'sb-debt' + (unclaimed <= 0 ? ' all-pending' : '');
+        badge.innerHTML = (unclaimed > 0 ? '🍺 ' + unclaimed + ' owed' : '') +
+            (d.pendingGulps > 0 ? (unclaimed > 0 ? ' · ' : '') + '⏳ ' + d.pendingGulps + ' pending' : '');
+        badge.title = unclaimed > 0
+            ? 'You owe ' + unclaimed + ' gulps. Drink, then claim at the Parlour ledger.'
+            : 'All claimed — awaiting an Accountability Supervisor.';
     }
 
     // ---------- banner + countdown ----------

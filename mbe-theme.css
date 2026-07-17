@@ -83,6 +83,32 @@ body {
 
 .pig-grid { max-width: 420px; margin-left: auto; margin-right: auto; }
 
+/* Status-bar debt badge */
+.sb-debt {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 10px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    cursor: pointer;
+    color: #ffd9d3;
+    background: linear-gradient(165deg, rgba(160, 37, 37, 0.55), rgba(109, 20, 20, 0.45));
+    border: 1px solid rgba(255, 110, 90, 0.5);
+    animation: mbe-debt-throb 3s ease-in-out infinite;
+}
+.sb-debt.all-pending {
+    color: var(--felt-900);
+    background: var(--gold-grad);
+    border-color: var(--gold-bright);
+    animation: none;
+}
+
 /* Personal debt banner on the front page */
 .my-debt-chip {
     margin: 14px auto 0;

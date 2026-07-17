@@ -190,7 +190,8 @@
                             <button class="pp-innocent" onclick="missionDone()" style="border-radius:12px; min-height:46px; font-weight:700;">✅ ACCOMPLISHED (+3)</button>
                             <button class="pp-guilty" onclick="missionCaught()" style="border-radius:12px; min-height:46px; font-weight:700;">💀 I GOT CAUGHT</button>
                         </div>
-                        <div class="pp-note">Accomplished = +3 points from GOD, announced to the feed (subject to Tribunal challenge if you're lying). Caught = you drink, and the feed knows.</div>
+                        <div id="missionSwapRow"></div>
+                        <div class="pp-note">Accomplished = +3 points from GOD, announced to the feed (subject to Tribunal challenge if you're lying). Caught = you drink, and the feed knows. The shadows permit ONE mission exchange per day.</div>
                     </div>
                     <div id="missionStatus" class="pp-note" style="text-align:center;"></div>
                 </div>
@@ -619,25 +620,133 @@
             'Get someone to trade you literally anything for a single golf tee',
             'Address the beverage cart (or cooler) with a formal bow every time',
             'Whisper "the Hog is pleased" after anyone\'s good shot, 3 times',
-            'Invent a fake golf rule and get at least one person to follow it'
+            'Invent a fake golf rule and get at least one person to follow it',
+            'Get PLAYER to say the word "delicious" without asking directly',
+            'Yawn dramatically until 2 other people yawn (contagion confirmed)',
+            'Tell someone their shot "had beautiful bones" and refuse to elaborate',
+            'Line up a putt from four different angles, then putt without looking',
+            'Get PLAYER to ask if you\'re okay by sighing wistfully at the horizon',
+            'Use "per the bylaws" in 3 unrelated arguments',
+            'Applaud politely, golf-clap style, after someone closes a cooler',
+            'Get anyone to agree that a specific cloud "looks like a pig"',
+            'Speak only in questions for 10 straight minutes',
+            'Get PLAYER to taste your drink by describing it like a sommelier',
+            'Casually claim you were "almost a caddie for a pro" and survive questioning',
+            'Announce your own name, tournament-style, before one tee shot',
+            'Ask PLAYER to check you for ticks with complete sincerity',
+            'Convince the group a fake celebrity owns a cabin nearby',
+            'Wear your glove on the wrong hand for a full hole, deny anything is wrong',
+            'Get someone to smell your golf ball ("I think it\'s vanilla scented")',
+            'Say "the course remembers" ominously after any bad bounce, twice',
+            'Practice-swing in perfect mirror-sync behind PLAYER until noticed',
+            'Award an invisible trophy to someone for "outstanding achievement"',
+            'Get the words "silky", "buttery", and "supple" into one conversation',
+            'Read the wind with a licked finger before a PUTT, nod knowingly',
+            'Call one specific tree "old friend" and greet it warmly when passed',
+            'Get PLAYER to high-five you twice in under one minute',
+            'Claim you can identify any beer blindfolded; accept all challenges',
+            'Walk one full cart path stretch in exaggerated slow motion',
+            'Get someone to guess your "secret handicap" (there is no number)',
+            'Announce "no wind today, perfect conditions" during obvious wind',
+            'Use the phrase "when I shot my 68" and change the story if questioned',
+            'Get PLAYER to repeat something you said as if it was their idea',
+            'Kiss your ball goodbye, formally and at length, before a water carry',
+            'Offer unsolicited stretching guidance to exactly 2 members',
+            'Get anyone to join you in a 5-second team huddle you never explain',
+            'Claim the cart has "a racing mode" and refuse to demonstrate it',
+            'Speak with a faint, unplaceable accent for 15 minutes; deny it exists',
+            'Get PLAYER to look directly up at the sky by pointing at nothing',
+            'Call your driver "the Widowmaker" and insist everyone else does too',
+            'Successfully insert "that\'s what the government wants you to think" twice',
+            'Perform one flawless invisible jump-rope session where others can see',
+            'Get someone to hold their breath with you "for science"',
+            'Describe PLAYER\'s practice swing as "poetry" loud enough for all to hear',
+            'Establish a secret nod with one member; use it 3 times successfully',
+            'Blame one bad shot on "solar activity" and cite a fake article',
+            'Get the group to toast to something you invented ("to the harvest!")',
+            'Count someone\'s practice swings out loud until they stop',
+            'Convince PLAYER you once met a famous golfer in an airport',
+            'Narrate your walk to the tee like a nature documentary, once, fully',
+            'Get anyone to say "you\'re so right" — those words exactly',
+            'Hold one single note (hummed) longer than socially acceptable, twice',
+            'Ask "does anyone else hear that?" and never explain, three times',
+            'Get PLAYER to physically demonstrate their grip for you',
+            'Claim your socks are "performance grade" and accept no doubt',
+            'Stack three tees into a tiny tower on someone\'s cart seat, unseen',
+            'Get a member to agree the group needs "a signature celebration"',
+            'Use "allegedly" after your own statements 4 times',
+            'Point at the green and say "she breaks left, she always breaks left" every hole',
+            'Get PLAYER to check their phone by staring at yours and gasping',
+            'Declare one club "cursed", quarantine it, hold a small ceremony',
+            'Get someone to split a snack with you that you dramatically overpraise',
+            'Respond to your name only after a two-second delay for 20 minutes',
+            'Get anyone to ask "wait, is that true?" — then say "who knows"',
+            'Refer to the clubhouse (or cabin) as "HQ" until someone else does',
+            'Slow-clap a squirrel, bird, or insect\'s achievement, solemnly',
+            'Get PLAYER to give you a nickname by relentlessly suggesting bad ones',
+            'Claim you "used to review courses professionally"; rate this one 6.8',
+            'Convince someone the sprinklers are "on a military schedule"',
+            'Do the full "I\'m not touching the ball" hover-hand on someone\'s marker',
+            'Get two members arguing about the correct way to rake a bunker',
+            'Announce you are "entering the zone" and shush yourself thereafter',
+            'Get PLAYER to say "good talk" and walk away first',
+            'Pretend to find a message in a bottle in a water hazard; read it aloud',
+            'Insist one hole "plays uphill both ways"; die on this hill',
+            'Get someone to fan you with a scorecard, even briefly',
+            'Adopt a pebble as a pet for the day; introduce it to 3 people',
+            'Get PLAYER to admit your cart-driving is "actually smooth"',
+            'Stare into the ball washer and whisper "show me the future"',
+            'Get anyone to duck by yelling "FORE" at nothing (once, then apologize beautifully)',
+            'Review your own drink out loud like a professional critic, twice',
+            'Get a member to defend you in an argument you started about nothing',
+            'Successfully call dibs on something that cannot be owned (the sun, a breeze)',
+            'Get PLAYER to teach you something they clearly just made up',
+            'Announce "the back nine is a different animal" before it makes sense',
+            'Convince someone you know "the secret menu" at the beverage cart'
         ];
-        function myMission() {
+        let missionSwapped = false;
+        function myMission(swapped) {
             const day = todayKey();
             const meIdx = Math.max(0, ROSTER.indexOf(me));
-            const idx = (hash(day) + meIdx * 7) % MISSIONS.length;
+            const idx = (hash(day) + meIdx * 17 + (swapped ? 53 : 0)) % MISSIONS.length;
             let m = MISSIONS[idx];
             const others = ROSTER.filter((n) => n !== me);
-            m = m.replace('PLAYER', others[hash(day + me) % others.length]);
+            m = m.replace('PLAYER', others[hash(day + me + (swapped ? 'x' : '')) % others.length]);
             return m;
+        }
+        function renderSwapRow(status) {
+            const row = $('missionSwapRow');
+            if (!row) return;
+            if (status) { row.innerHTML = ''; return; }
+            row.innerHTML = missionSwapped
+                ? '<div class="pp-note" style="text-align:center; margin:6px 0;">🔮 The shadows have already granted you one exchange today. This mission is yours.</div>'
+                : '<button class="pp-chip" style="width:100%; margin:6px 0;" onclick="swapMission()">🔁 SWAP MISSION — the shadows offer ONE alternative</button>';
         }
         window.revealMission = async function () {
             if (needMe()) return;
-            const snap = await window.firebaseGet(R('secretSwine/' + todayKey() + '/' + me));
-            const done = snap.val();
+            const snap = await window.firebaseGet(R('secretSwine/' + todayKey()));
+            const day = snap.val() || {};
+            const status = day[me];
+            missionSwapped = day[me + '_swap'] === true;
             $('missionPanel').style.display = '';
-            $('missionText').textContent = '"' + myMission() + '"';
-            $('missionStatus').textContent = done === 'done' ? '✅ Already claimed today. Tomorrow brings new shadows.'
-                : done === 'caught' ? '💀 You were caught today. Drink your shame.' : '';
+            $('missionText').textContent = '"' + myMission(missionSwapped) + '"';
+            renderSwapRow(status);
+            $('missionStatus').textContent = status === 'done' ? '✅ Already claimed today. Tomorrow brings new shadows.'
+                : status === 'caught' ? '💀 You were caught today. Drink your shame.' : '';
+        };
+        window.swapMission = async function () {
+            if (needMe()) return;
+            const dayKey = 'secretSwine/' + todayKey();
+            const snap = await window.firebaseGet(R(dayKey));
+            const day = snap.val() || {};
+            if (day[me]) return alert('Your mission is already resolved today.');
+            if (day[me + '_swap']) return alert('The shadows granted you one exchange. It is spent.');
+            if (!confirm('🔁 EXCHANGE MISSIONS?\n\nThe shadows will issue ONE alternative. There is no returning to your old mission, even if the new one is worse.\n\nThe shadows find that funny.')) return;
+            await window.firebaseSet(R(dayKey + '/' + me + '_swap'), true);
+            missionSwapped = true;
+            $('missionText').textContent = '"' + myMission(true) + '"';
+            renderSwapRow(null);
+            await logAct('admin', '🕵️', '🕵️ SECRET SWINE: ' + me + ' rejected their mission and drew from the shadows again. The nature of both missions remains classified.');
         };
         window.missionDone = async function () {
             if (needMe()) return;
@@ -647,7 +756,7 @@
             await window.firebaseSet(R(key), 'done');
             await addPoints(me, 3);
             await addPoints('GOD', -3);
-            await logAct('admin', '🕵️', '🕵️ SECRET SWINE: ' + me + ' claims mission accomplished — "' + myMission() + '" (+3 pts). Tribunal challenges welcome.');
+            await logAct('admin', '🕵️', '🕵️ SECRET SWINE: ' + me + ' claims mission accomplished — "' + myMission(missionSwapped) + '" (+3 pts). Tribunal challenges welcome.');
             $('missionStatus').textContent = '✅ +3 points. The shadows salute you.';
         };
         window.missionCaught = async function () {
