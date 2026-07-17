@@ -237,7 +237,7 @@ body {
 }
 
 /* ---------- Cards: club plaques ---------- */
-.card, .leaderboard, .bookkeeper-panel, .year-section, .session-card, .activity-feed {
+.card, .leaderboard, .bookkeeper-panel, .year-section, .session-card, .activity-feed, .sessions-container {
     background: var(--plaque-grad) !important;
     border: 1px solid var(--felt-line) !important;
     border-radius: var(--radius) !important;
@@ -265,6 +265,8 @@ body {
     font-size: 1.15rem !important;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+    background: none !important;
+    -webkit-text-fill-color: currentColor !important;
     color: var(--gold-pale) !important;
     text-align: center;
     text-shadow: none !important;
@@ -647,7 +649,12 @@ body:has(.status-bar.visible) .container { padding-top: 46px; }
     letter-spacing: 0.03em;
 }
 
-.team-info { color: var(--cream-dim) !important; }
+.team-info {
+    color: var(--cream-dim) !important;
+    background: rgba(5, 15, 10, 0.45) !important;
+    border: 1px solid var(--felt-line) !important;
+    border-radius: 10px !important;
+}
 .team-players-prominent { color: var(--cream) !important; font-weight: 600 !important; }
 .team-score { color: var(--gold-bright) !important; font-family: var(--font-display) !important; font-weight: 700 !important; }
 

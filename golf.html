@@ -589,6 +589,7 @@
         <!-- Sessions Display -->
         <div class="sessions-container">
             <h2 class="card-title">🏌️ GOLF SESSIONS 🏌️</h2>
+            <div class="pp-chiprow" id="golfYearSelector" style="justify-content:center;"></div>
             <div id="sessionsDisplay">
                 <div id="sessionsLoadingIndicator" style="text-align: center; padding: 40px; color: #8B4513;">
                     <div style="font-size: 3rem; margin-bottom: 10px;">🏌️‍♂️</div>
@@ -2372,5 +2373,125 @@
         </div>
         <button class="status-logout" onclick="quickLogout()">Logout</button>
     </div>
+    <script>
+    // ============================================================
+    // GOLF YEAR SELECTOR — live year vs. archived vault years
+    // Live year renders through the existing loadSessions();
+    // vault years render READ-ONLY from archive/year{N}/golfSessions.
+    // ============================================================
+    (function () {
+        'use strict';
+        let viewingArchive = null;      // null = live, or year number
+        let archiveSessions = {};
+        let archiveYears = [];          // [{year, label}]
+        let liveYear = 6;               // bumped by season/current listener
+
+        const ROMAN = { 6: 'VI', 7: 'VII', 8: 'VIII', 9: 'IX', 10: 'X', 11: 'XI', 12: 'XII' };
+        const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
+        let tries = 0;
+        const boot = setInterval(() => {
+            if (window.firebaseDB && window.firebaseGet && typeof loadSessions === 'function') {
+                clearInterval(boot);
+                init();
+            } else if (++tries > 100) clearInterval(boot);
+        }, 300);
+
+        function init() {
+            // Wrap loadSessions so live-data updates can't stomp a vault view
+            const origLoad = loadSessions;
+            loadSessions = function () {
+                if (viewingArchive) renderArchive();
+                else origLoad();
+            };
+
+            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'season/current'), (s) => {
+                const v = s.val();
+                liveYear = (v && v.year) || 6;
+                discoverArchives();
+            }, () => { discoverArchives(); });
+        }
+
+        async function discoverArchives() {
+            archiveYears = [];
+            for (let y = 6; y < liveYear; y++) {
+                try {
+                    const snap = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'archive/year' + y + '/label'));
+                    if (snap.val()) archiveYears.push({ year: y, label: snap.val() });
+                } catch (e) { /* vault read blocked or absent — skip */ }
+            }
+            renderSelector();
+        }
+
+        function renderSelector() {
+            const el = document.getElementById('golfYearSelector');
+            if (!el) return;
+            if (!archiveYears.length) { el.innerHTML = ''; return; } // only one year exists — no picker needed
+            let html = '<button class="pp-chip' + (viewingArchive === null ? ' sel' : '') + '" onclick="golfYearPick(null)">⛳ YEAR ' + (ROMAN[liveYear] || liveYear) + ' · LIVE</button>';
+            archiveYears.forEach((a) => {
+                const yr = (a.label.match(/(20\d\d)/) || [])[1] || '';
+                html += '<button class="pp-chip' + (viewingArchive === a.year ? ' sel' : '') + '" onclick="golfYearPick(' + a.year + ')">🏛️ YEAR ' + (ROMAN[a.year] || a.year) + (yr ? ' · ' + yr : '') + '</button>';
+            });
+            el.innerHTML = html;
+        }
+
+        window.golfYearPick = async function (year) {
+            viewingArchive = year;
+            renderSelector();
+            const createCard = document.getElementById('bookkeeperControls');
+            if (createCard) createCard.parentElement.style.display = year ? 'none' : '';
+            if (year === null) { loadSessions(); return; }
+            try {
+                const snap = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'archive/year' + year + '/golfSessions'));
+                archiveSessions = snap.val() || {};
+            } catch (e) { archiveSessions = {}; }
+            renderArchive();
+        };
+
+        function teamScoresRO(t) {
+            const out = {};
+            if (!t || !t.scores) return out;
+            if (Array.isArray(t.scores)) t.scores.forEach((v, i) => { if (i >= 1 && v != null) out[i] = +v; });
+            else Object.entries(t.scores).forEach(([h, v]) => { if (v != null) out[+h] = +v; });
+            return out;
+        }
+
+        function renderArchive() {
+            const list = document.getElementById('sessionsList');
+            const loading = document.getElementById('sessionsLoadingIndicator');
+            if (loading) loading.style.display = 'none';
+            if (!list) return;
+            list.style.display = 'block';
+            const sessions = Object.values(archiveSessions).sort((a, b) => (b.created || '').localeCompare(a.created || ''));
+            if (!sessions.length) {
+                list.innerHTML = '<div style="text-align:center; padding:30px; color: var(--cream-faint); font-style: italic;">The vault holds no rounds for this year.</div>';
+                return;
+            }
+            list.innerHTML = '<div class="pp-note" style="text-align:center; margin-bottom:10px;">🏛️ THE VAULT — sealed history, view only</div>' +
+                sessions.map((s) => {
+                    const teams = (s.teams || []).filter(Boolean);
+                    const holes = Array.from({ length: 9 }, (_, i) => i + 1);
+                    const anyScores = teams.some((t) => Object.keys(teamScoresRO(t)).length);
+                    let table = '';
+                    if (anyScores) {
+                        table = '<div class="scorecard-container" style="overflow-x:auto; margin-top:10px;"><table class="scorecard-table" style="width:100%; border-collapse:collapse; font-size:0.72rem;">' +
+                            '<tr><th style="padding:5px; text-align:left;">Team</th>' + holes.map((h) => '<th style="padding:5px;">' + h + '</th>').join('') + '<th class="total-col" style="padding:5px;">TOT</th></tr>' +
+                            teams.map((t) => {
+                                const sc = teamScoresRO(t);
+                                const tot = Object.values(sc).reduce((a, b) => a + b, 0);
+                                return '<tr><td style="padding:5px; white-space:nowrap;">' + esc(t.players ? t.players.join('/') : t.name || '?') + '</td>' +
+                                    holes.map((h) => '<td style="padding:5px; text-align:center;">' + (sc[h] != null ? sc[h] : '·') + '</td>').join('') +
+                                    '<td class="total-col" style="padding:5px; text-align:center;">' + (tot || '·') + '</td></tr>';
+                            }).join('') + '</table></div>';
+                    } else {
+                        table = '<div class="pp-note">Teams: ' + teams.map((t) => esc(t.players ? t.players.join('/') : t.name || '?')).join(' · ') + ' (no scores recorded)</div>';
+                    }
+                    const when = s.created ? new Date(s.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                    return '<div class="session-card" style="cursor:default;"><div class="session-title">' + esc(s.title || s.id) + '</div>' +
+                        '<div class="pp-note">' + when + (s.rulebookSettled ? ' · ⚖️ rulebook settled' : '') + '</div>' + table + '</div>';
+                }).join('');
+        }
+    })();
+    </script>
 </body>
 </html>
