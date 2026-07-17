@@ -79,6 +79,15 @@ window.refreshLeaderboard = refreshLeaderboard;
 
 // PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
+    // When a new service worker takes control, reload once so the fresh
+    // version shows immediately (guard prevents reload loops)
+    let swReloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (swReloaded) return;
+        swReloaded = true;
+        window.location.reload();
+    });
+
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(registration => {

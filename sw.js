@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v3-parlour';
+const CACHE_NAME = 'mbe-pig-points-v4-freshnav';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -57,8 +57,31 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event
+// - Page navigations + core CSS/JS: NETWORK FIRST (so pushes appear on next
+//   open), falling back to cache when offline
+// - Everything else (audio, icons, fonts): cache first
 self.addEventListener('fetch', event => {
+  const isNavigation = event.request.mode === 'navigate' || event.request.destination === 'document';
+  const url = new URL(event.request.url);
+  const isCoreAsset = url.origin === self.location.origin &&
+    (url.pathname.endsWith('.css') || url.pathname.endsWith('.js') || url.pathname.endsWith('.json'));
+
+  if (isNavigation || isCoreAsset) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then(r => r || (isNavigation ? caches.match('/index.html') : undefined)))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
