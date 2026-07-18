@@ -120,6 +120,26 @@ export default {
             return json({ ok: true });
         }
 
+        // Debug: rename subscriptions (fix devices that enrolled before the oath)
+        // (body was already parsed by the router above — never re-read a request body)
+        if (url.pathname === '/rename') {
+            if (body.key !== CLUB_KEY) return json({ error: 'the Hog does not know you' }, 403);
+            if (!body.from || !body.player) return json({ error: 'need from + player' }, 400);
+            const list = await env.SUBS.list({ prefix: 'sub:' });
+            let renamed = 0;
+            for (const k of list.keys) {
+                const raw = await env.SUBS.get(k.name);
+                if (!raw) continue;
+                const rec = JSON.parse(raw);
+                if (rec.player === body.from) {
+                    rec.player = body.player;
+                    await env.SUBS.put(k.name, JSON.stringify(rec));
+                    renamed++;
+                }
+            }
+            return json({ ok: true, renamed });
+        }
+
         if (url.pathname === '/notify') {
             const { key, type, title, body: msg, exclude } = body || {};
             if (key !== CLUB_KEY) return json({ error: 'the Hog does not know you' }, 403);
