@@ -1165,6 +1165,17 @@ function debugFirebaseAuth() {
 }
 
 // PRIMARY LOGIN METHOD - oath-based login (no password; integrity is the collateral)
+// Fires the instant a name is picked from the dropdown: the picker modal
+// closes and THE OATH takes the stage.
+function playerChosen() {
+    const selectedPlayer = document.getElementById('playerSelect').value;
+    if (!selectedPlayer) return;
+    document.getElementById('playerSelect').value = ''; // fresh state for next time
+    closePlayerLoginModal();
+    showPigOathModal(selectedPlayer);
+}
+window.playerChosen = playerChosen;
+
 function bypassSMSForTesting() {
     const selectedPlayer = document.getElementById('playerSelect').value;
 
@@ -1173,6 +1184,8 @@ function bypassSMSForTesting() {
         return;
     }
 
+    document.getElementById('playerSelect').value = '';
+    closePlayerLoginModal();
     showPigOathModal(selectedPlayer);
 }
 
