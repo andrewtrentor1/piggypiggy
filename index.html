@@ -337,36 +337,37 @@
                 </select>
             </div>
             
-            <!-- HOGWASH Odds Display: the House Odds board -->
+            <!-- HOGWASH Odds Display: the House Odds board (tap a fate for its decree) -->
             <div style="background: rgba(5,15,10,0.5); border: 1px solid rgba(212,175,55,0.22); border-radius: 12px; padding: 15px; margin: 15px 0; font-size: 0.9em;">
-                <h4 style="margin: 0 0 12px 0; text-align: center; color: #e9cf8f; font-family: 'Fraunces', Georgia, serif; letter-spacing: 0.12em; font-weight: 700;">HOUSE ODDS</h4>
+                <h4 style="margin: 0 0 2px 0; text-align: center; color: #e9cf8f; font-family: 'Fraunces', Georgia, serif; letter-spacing: 0.12em; font-weight: 700;">HOUSE ODDS</h4>
+                <div style="text-align: center; font-size: 0.72em; color: #9a9077; font-style: italic; font-family: 'Fraunces', Georgia, serif; margin-bottom: 10px;">— tap any fate to read its decree —</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em; color: #f4e9cf;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="odds-row" onclick="showFateCodex('drink')">
                         <span>🍺</span> <span>The Chalice <strong style="color:#f2d67c">17.5%</strong></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="odds-row" onclick="showFateCodex('win')">
                         <span>💰</span> <span>The Gilded Sow <strong style="color:#f2d67c">17.5%</strong></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="odds-row" onclick="showFateCodex('lose')">
                         <span>💸</span> <span>The Tithe <strong style="color:#f2d67c">17.5%</strong></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="odds-row" onclick="showFateCodex('give_drinks')">
                         <span>🍻</span> <span>The Tapmaster <strong style="color:#f2d67c">17.5%</strong></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="odds-row" onclick="showFateCodex('danger')">
                         <span>💀</span> <span>DEATH <strong style="color:#ff7dbb">10%</strong></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="odds-row" onclick="showFateCodex('double')">
                         <span>😈</span> <span>The Temptation <strong style="color:#e6c9ff">7.5%</strong></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="odds-row" onclick="showFateCodex('mulligan')">
                         <span>⛳</span> <span>Second Dawn <strong style="color:#f2d67c">5%</strong></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="odds-row" onclick="showFateCodex('reverse_mulligan')">
                         <span>🪞</span> <span>Cruel Mirror <strong style="color:#f2d67c">5%</strong></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px; grid-column: span 2; justify-content: center;">
-                        <span>🐗</span> <span>THE HOG ITSELF <strong style="color:#f2d67c">2.5%</strong> — <em style="color:#9a9077">seize 12 pts &amp; 3 drinks to bestow</em></span>
+                    <div class="odds-row" onclick="showFateCodex('jackpot')" style="grid-column: span 2; justify-content: center;">
+                        <span>🐗</span> <span>THE HOG ITSELF <strong style="color:#f2d67c">2.5%</strong></span>
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 12px; font-size: 0.78em; color: #9a9077; font-style: italic; font-family: 'Fraunces', Georgia, serif;">

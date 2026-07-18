@@ -4351,6 +4351,56 @@ function resetSlotMachine() {
 // The chosen card is pure theater; calculateHogwashOutcome()
 // still decides, executeHogwashOutcome() still applies.
 // ============================================================
+// THE CODEX OF FATES — tap an odds row to read a fate's decree.
+// Mechanics here must mirror executeHogwashOutcome() exactly.
+const FATE_CODEX = {
+    drink:            { odds: '17.5%', decree: 'You take <strong>1–5 drinks</strong>, as the Pig Gods measure. And beware: roughly one Chalice in seven is bottomless — you <strong>FINISH your drink</strong>.' },
+    win:              { odds: '17.5%', decree: 'You seize <strong>2–6 points</strong> directly from GOD\'s coffers. GOD notices. GOD keeps a list.' },
+    lose:             { odds: '17.5%', decree: 'The House collects <strong>2–6 points</strong> from you, paid to GOD. Squealing does not reduce the amount.' },
+    give_drinks:      { odds: '17.5%', decree: 'You gain the power to assign <strong>1–5 drinks</strong> to your fellow hogs, whenever you choose. Stored in your Satchel until poured.' },
+    danger:           { odds: '10%', decree: '<strong>EVERY phone in the Order screams at once.</strong> All members report to the dice. Nobody is safe, including you. This is the fate that ruins lunches.' },
+    double:           { odds: '7.5%', decree: 'The Devil offers a choice: take <strong>+2 points and scurry</strong>, or flip his coin — <strong>+6 points</strong> on heads, <strong>−5</strong> on tails. Greed is a ladder.' },
+    mulligan:         { odds: '5%', decree: 'You earn a <strong>MULLIGAN</strong> — one of your own golf shots, erased from history as if it never happened. Stored in your Satchel; invoke it on the course.' },
+    reverse_mulligan: { odds: '5%', decree: 'You earn a <strong>REVERSE MULLIGAN</strong> — the power to UNMAKE an enemy\'s finest shot and force the re-hit. Stored in your Satchel. Savor it.' },
+    jackpot:          { odds: '2.5%', decree: 'The Sovereign Beast itself. You seize <strong>12 points from GOD</strong> and <strong>3 drinks to bestow</strong>. Your name is spoken with reverence until someone else hits one.' }
+};
+
+function showFateCodex(type) {
+    const card = FATE_CARDS[type];
+    const codex = FATE_CODEX[type];
+    if (!card || !codex) return;
+    const existing = document.getElementById('fateCodexModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'fateCodexModal';
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '99999';
+    modal.onclick = closeFateCodex;
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 380px; text-align: center;" onclick="event.stopPropagation()">
+            <div style="font-family: 'Fraunces', Georgia, serif; font-size: 0.72rem; letter-spacing: 0.3em; color: #9a9077;">CARD ${card.numeral} OF THE FATES</div>
+            <div style="font-size: 3.2rem; margin: 10px 0 2px;">${card.emblem}</div>
+            <h2 style="margin: 0 0 2px;">${card.title.toUpperCase()}</h2>
+            <div style="font-size: 0.78rem; color: #f2d67c; font-weight: 700; margin-bottom: 12px;">DRAWN ${codex.odds} OF THE TIME</div>
+            <div style="border-top: 1px solid rgba(212,175,55,0.25); border-bottom: 1px solid rgba(212,175,55,0.25); padding: 12px 4px; margin: 0 0 10px; font-size: 0.88rem; color: #f4e9cf; line-height: 1.55;">
+                ${codex.decree}
+            </div>
+            <div style="font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 0.8rem; color: #9a9077; margin-bottom: 16px;">
+                &ldquo;${card.flavor}&rdquo;
+            </div>
+            <button class="transfer-btn" onclick="closeFateCodex()" style="width: 100%;">🐷 UNDERSTOOD</button>
+        </div>`;
+    document.body.appendChild(modal);
+}
+window.showFateCodex = showFateCodex;
+
+function closeFateCodex() {
+    const m = document.getElementById('fateCodexModal');
+    if (m) m.remove();
+}
+window.closeFateCodex = closeFateCodex;
+
 const FATE_CARDS = {
     drink:            { numeral: 'II',   emblem: '🍺', title: 'The Chalice',     flavor: 'Drink deep — the trough is generous tonight.', cls: '' },
     win:              { numeral: 'III',  emblem: '💰', title: 'The Gilded Sow',  flavor: 'Fortune fattens the bold.', cls: '' },

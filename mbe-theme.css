@@ -83,6 +83,24 @@ body {
 
 .pig-grid { max-width: 420px; margin-left: auto; margin-right: auto; }
 
+/* House Odds board: tappable fate rows */
+.odds-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    margin: -2px -4px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.odds-row:hover, .odds-row:active {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
 /* Summons enrollment alarm banner */
 .summons-banner {
     display: flex;

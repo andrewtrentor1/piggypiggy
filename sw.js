@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v16-oathflow';
+const CACHE_NAME = 'mbe-pig-points-v17-codex';
 const urlsToCache = [
   '/',
   '/index.html',
