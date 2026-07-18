@@ -120,6 +120,24 @@ export default {
             return json({ ok: true });
         }
 
+        // Debug: remove subscriptions by push-service host (e.g. retire a device)
+        if (url.pathname === '/remove') {
+            if (body.key !== CLUB_KEY) return json({ error: 'the Hog does not know you' }, 403);
+            if (!body.service) return json({ error: 'need service host' }, 400);
+            const list = await env.SUBS.list({ prefix: 'sub:' });
+            let removed = 0;
+            for (const k of list.keys) {
+                const raw = await env.SUBS.get(k.name);
+                if (!raw) continue;
+                const rec = JSON.parse(raw);
+                if (new URL(rec.subscription.endpoint).host === body.service) {
+                    await env.SUBS.delete(k.name);
+                    removed++;
+                }
+            }
+            return json({ ok: true, removed });
+        }
+
         // Debug: rename subscriptions (fix devices that enrolled before the oath)
         // (body was already parsed by the router above — never re-read a request body)
         if (url.pathname === '/rename') {
@@ -151,10 +169,15 @@ export default {
             if (count >= MAX_PER_HOUR) return json({ error: 'the Hog is exhausted (rate limit)' }, 429);
             await env.SUBS.put(hourKey, String(count + 1), { expirationTtl: 7200 });
 
+            // BLAST MODE: danger zones hit every device three times (stacked,
+            // separately-buzzing notifications). Cap 3; other types default 1.
+            const blast = Math.min(Math.max(parseInt(body.blast, 10) || (type === 'danger_zone' ? 3 : 1), 1), 3);
+
             const event = {
                 type,
                 title: String(title || '🐷 THE ROYAL ORDER').slice(0, 80),
                 body: String(msg || '').slice(0, 160),
+                blast,
                 at: Date.now()
             };
             await env.SUBS.put('latest', JSON.stringify(event));
@@ -168,12 +191,16 @@ export default {
                 if (ONLY_PLAYERS && !ONLY_PLAYERS.includes(rec.player)) { skipped++; continue; } // surprise mode
                 if (exclude && rec.player === exclude) continue; // don't buzz the perpetrator
                 try {
-                    const res = await sendPush(rec.subscription, env);
-                    if (res.status === 404 || res.status === 410) { await env.SUBS.delete(k.name); dead++; }
-                    else sent++;
+                    let ok = false;
+                    for (let b = 0; b < blast; b++) {
+                        const res = await sendPush(rec.subscription, env);
+                        if (res.status === 404 || res.status === 410) { await env.SUBS.delete(k.name); break; }
+                        ok = true;
+                    }
+                    if (ok) sent++; else dead++;
                 } catch { dead++; }
             }
-            return json({ ok: true, sent, dead, skipped });
+            return json({ ok: true, sent, dead, skipped, blast });
         }
 
         return json({ error: 'lost pig' }, 404);

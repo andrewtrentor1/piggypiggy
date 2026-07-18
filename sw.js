@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v17-codex';
+const CACHE_NAME = 'mbe-pig-points-v18-obnoxious';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -130,25 +130,53 @@ const PUSH_URLS = {
   tribunal: '/games.html', oracle: '/games.html', organ: '/games.html', general: '/'
 };
 
+// OBNOXIOUS MODE: sticky notifications, siren vibrations, stacked blasts
+const PUSH_VIBRATE = {
+  danger_zone: [500, 150, 500, 150, 500, 150, 900, 300, 500, 150, 500],
+  tribunal:    [400, 120, 400, 120, 700],
+  organ:       [300, 80, 300, 80, 300, 80, 300],
+  default:     [300, 100, 300, 100, 500]
+};
+const PUSH_ACTIONS = {
+  danger_zone: [{ action: 'open', title: '💀 REPORT TO THE DICE' }],
+  tribunal:    [{ action: 'open', title: '⚖️ REPORT FOR JURY DUTY' }],
+  supervisor:  [{ action: 'open', title: '🍺 TO THE LEDGER' }],
+  default:     [{ action: 'open', title: '🐷 OBEY' }]
+};
+
 self.addEventListener('push', event => {
   console.log('📱 Service Worker: Push received, fetching latest event...');
   event.waitUntil(
     fetch(PUSH_WORKER + '/latest')
       .then(r => r.json())
-      .then(e => self.registration.showNotification(e.title || '🐷 THE ROYAL ORDER', {
-        body: e.body || '',
-        icon: '/icon-192x192.png',
-        badge: '/icon-72x72.png',
-        tag: 'mbe-' + (e.type || 'general'),
-        requireInteraction: e.type === 'danger_zone' || e.type === 'tribunal',
-        vibrate: e.type === 'danger_zone' ? [200, 100, 200, 100, 200] : [150, 75, 150],
-        data: { type: e.type, url: PUSH_URLS[e.type] || '/' }
-      }))
+      .then(e => {
+        const type = e.type || 'general';
+        // blasts get unique tags so each push STACKS and buzzes on its own;
+        // single sends reuse a stable tag (replaces instead of piling up)
+        const tag = (e.blast && e.blast > 1)
+          ? 'mbe-' + type + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6)
+          : 'mbe-' + type;
+        return self.registration.showNotification(e.title || '🐷 THE ROYAL ORDER', {
+          body: e.body || '',
+          icon: '/icon-192x192.png',
+          badge: '/icon-192x192.png',
+          image: type === 'danger_zone' ? '/icon-512x512.png' : undefined,
+          tag,
+          renotify: true,
+          requireInteraction: true,
+          vibrate: PUSH_VIBRATE[type] || PUSH_VIBRATE.default,
+          actions: PUSH_ACTIONS[type] || PUSH_ACTIONS.default,
+          data: { type, url: PUSH_URLS[type] || '/' }
+        });
+      })
       .catch(() => self.registration.showNotification('🐷 THE ROYAL ORDER', {
         body: 'Something happened at the club. Investigate.',
         icon: '/icon-192x192.png',
-        badge: '/icon-72x72.png',
+        badge: '/icon-192x192.png',
         tag: 'mbe-general',
+        renotify: true,
+        requireInteraction: true,
+        vibrate: PUSH_VIBRATE.default,
         data: { url: '/' }
       }))
   );
@@ -225,7 +253,7 @@ self.addEventListener('message', event => {
     let options = {
       body: notificationData.body || 'New activity in the app!',
       icon: '/icon-192x192.png',
-      badge: '/icon-72x72.png',
+      badge: '/icon-192x192.png',
       tag: notificationData.type || 'mbe-notification',
       requireInteraction: true,
       data: notificationData
@@ -235,14 +263,14 @@ self.addEventListener('message', event => {
     if (notificationData.type === 'danger_zone') {
       options.vibrate = [200, 100, 200, 100, 200];
       options.actions = [
-        { action: 'open', title: 'Open App', icon: '/icon-72x72.png' },
-        { action: 'dismiss', title: 'Dismiss', icon: '/icon-72x72.png' }
+        { action: 'open', title: 'Open App', icon: '/icon-192x192.png' },
+        { action: 'dismiss', title: 'Dismiss', icon: '/icon-192x192.png' }
       ];
     } else if (notificationData.type === 'drink_assignment') {
       options.vibrate = [100, 50, 100];
       options.actions = [
-        { action: 'open', title: 'Check Assignment', icon: '/icon-72x72.png' },
-        { action: 'dismiss', title: 'Later', icon: '/icon-72x72.png' }
+        { action: 'open', title: 'Check Assignment', icon: '/icon-192x192.png' },
+        { action: 'dismiss', title: 'Later', icon: '/icon-192x192.png' }
       ];
     } else {
       options.vibrate = [150];
