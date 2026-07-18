@@ -1164,35 +1164,67 @@ function debugFirebaseAuth() {
     console.log('🔍 Full Firebase Auth object:', window.firebaseAuth);
 }
 
-// PRIMARY LOGIN METHOD - Secure bypass login using Firebase Anonymous Auth
+// PRIMARY LOGIN METHOD - oath-based login (no password; integrity is the collateral)
 function bypassSMSForTesting() {
     const selectedPlayer = document.getElementById('playerSelect').value;
-    
+
     if (!selectedPlayer) {
         alert('🚫 Please select your name first!');
         return;
     }
 
-    // Prompt for secure bypass password
-    const enteredPassword = prompt(`🔐 SECURE LOGIN\n\nEnter the secure pig password to log in as ${selectedPlayer}:`);
-    
-    if (!enteredPassword) {
-        return; // User cancelled
-    }
-    
-    // Check if password is correct
-    if (enteredPassword !== 'IMAPIGOINK123') {
-        // Wrong password - SHAME!
-        closePlayerLoginModal(); // Close the player login modal first
-        document.getElementById('shameModal').style.display = 'flex';
-        return;
-    }
+    showPigOathModal(selectedPlayer);
+}
 
-    console.log(`🔐 PRIMARY: Secure login for ${selectedPlayer} using Firebase Anonymous Auth`);
-    
+// THE OATH — confirm identity by order of the PIG
+function showPigOathModal(selectedPlayer) {
+    const existing = document.getElementById('pigOathModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'pigOathModal';
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '99999';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 420px; text-align: center;">
+            <h2 style="margin-bottom: 6px;">⚖️🐷 BY ORDER OF THE PIG 🐷⚖️</h2>
+            <p style="font-family: 'Fraunces', Georgia, serif; font-style: italic; color: #c9bc9c; margin: 14px 0 4px;">
+                You stand before the Order claiming to be
+            </p>
+            <div style="font-family: 'Fraunces', Georgia, serif; font-weight: 800; font-size: 1.9rem; color: #f2d67c; letter-spacing: 0.04em; margin: 2px 0 14px;">
+                ${selectedPlayer.toUpperCase()}
+            </div>
+            <p style="font-size: 0.85rem; color: #c9bc9c; line-height: 1.55; margin: 0 0 6px;">
+                Swear it, and be admitted. But know this: falsely wearing another
+                hog's name is <strong style="color:#ff8a80;">IDENTITY THEFT MOST FOUL</strong>.
+                The penalty is the forfeiture of <strong>ALL personal integrity</strong> —
+                past, present, and future — plus the lifelong suspicion of everyone
+                you have ever high-fived.
+            </p>
+            <p style="font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 0.8rem; color: #9a9077; margin: 10px 0 18px;">
+                The Hog sees. The Hog remembers.
+            </p>
+            <button class="transfer-btn" onclick="swearPigOath('${selectedPlayer}')" style="width: 100%; margin-bottom: 10px;">
+                🐷 I SWEAR IT — I AM ${selectedPlayer.toUpperCase()}
+            </button>
+            <button onclick="refusePigOath()" style="width: 100%; min-height: 44px; background: transparent; border: 1px solid rgba(212,175,55,0.3); border-radius: 12px; color: #9a9077; cursor: pointer; font-size: 0.85rem;">
+                🐔 I cannot swear to this
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function swearPigOath(selectedPlayer) {
+    const modal = document.getElementById('pigOathModal');
+    if (modal) modal.remove();
+
+    console.log(`🔐 PRIMARY: Oath sworn — logging in ${selectedPlayer} via Firebase Anonymous Auth`);
+
     // Set the bypass login flag BEFORE Firebase auth to prevent race condition
     localStorage.setItem('bypassLoginInProgress', selectedPlayer);
-    
+
     // Clear any existing auth state first
     if (window.firebaseAuth.currentUser) {
         console.log('🧹 Clearing existing Firebase Auth state...');
@@ -1206,6 +1238,16 @@ function bypassSMSForTesting() {
         performBypassLogin(selectedPlayer);
     }
 }
+window.swearPigOath = swearPigOath;
+
+function refusePigOath() {
+    const modal = document.getElementById('pigOathModal');
+    if (modal) modal.remove();
+    // Cowardice before the Order is its own crime
+    closePlayerLoginModal();
+    document.getElementById('shameModal').style.display = 'flex';
+}
+window.refusePigOath = refusePigOath;
 
 function performBypassLogin(selectedPlayer) {
     // Use Firebase Anonymous Authentication
