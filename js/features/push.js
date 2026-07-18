@@ -132,6 +132,31 @@
         }
     }
 
+    // ---------- registration self-heal ----------
+    // If this device is subscribed but the club roster doesn't know WHO it
+    // is (e.g. armed before swearing the oath), re-register under the
+    // current identity. Runs quietly on every page load.
+    async function healRegistration() {
+        try {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+            if (!sub) return;
+            const player = (window.firebaseAuth && window.firebaseAuth.currentUser && window.firebaseAuth.currentUser.displayName)
+                || localStorage.getItem('bypassLoginInProgress') || null;
+            if (!player) return;
+            fetch(WORKER + '/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ player, subscription: sub.toJSON() })
+            }).catch(() => {});
+            console.log('🔔 Summons registration refreshed for', player);
+        } catch (e) { /* healing is best-effort */ }
+    }
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(renderCard, 1500));
     else setTimeout(renderCard, 1500);
+    // give Firebase auth time to restore the session, then heal (twice, for slow phones)
+    setTimeout(healRegistration, 4000);
+    setTimeout(healRegistration, 12000);
 })();

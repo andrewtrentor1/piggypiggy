@@ -77,6 +77,24 @@ export default {
             return json({ ok: true, subscribers: list.keys.length });
         }
 
+        // Debug: list subscriptions (player + push-service host only, key-gated)
+        if (url.pathname === '/subs') {
+            if (url.searchParams.get('key') !== CLUB_KEY) return json({ error: 'the Hog does not know you' }, 403);
+            const list = await env.SUBS.list({ prefix: 'sub:' });
+            const out = [];
+            for (const k of list.keys) {
+                const raw = await env.SUBS.get(k.name);
+                if (!raw) continue;
+                const rec = JSON.parse(raw);
+                out.push({
+                    player: rec.player,
+                    service: new URL(rec.subscription.endpoint).host,
+                    created: rec.created || null
+                });
+            }
+            return json(out);
+        }
+
         if (url.pathname === '/latest') {
             const latest = await env.SUBS.get('latest');
             return json(latest ? JSON.parse(latest) : { title: '🐷 THE ROYAL ORDER', body: 'Something happened. Probably.' });
