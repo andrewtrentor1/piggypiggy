@@ -2360,18 +2360,19 @@
             const pointsPerWinner = Math.floor(totalPointsCollected / winningTeam.players.length);
             
             // Update pig points - each losing player pays the award amount
+            // NOTE: players schema is {points, powerUps} — mutate .points, never the node itself
             losingTeams.forEach(team => {
                 team.players.forEach(playerName => {
-                    if (players[playerName] !== undefined) {
-                        players[playerName] -= points; // Each losing player pays the full award amount
+                    if (players[playerName] && typeof players[playerName].points === 'number') {
+                        players[playerName].points -= points; // Each losing player pays the full award amount
                     }
                 });
             });
-            
+
             // Each winning player gets their share of the total collected
             winningTeam.players.forEach(playerName => {
-                if (players[playerName] !== undefined) {
-                    players[playerName] += pointsPerWinner;
+                if (players[playerName] && typeof players[playerName].points === 'number') {
+                    players[playerName].points += pointsPerWinner;
                 }
             });
             
@@ -2466,13 +2467,14 @@
             const losers = sessionPlayers(session).filter(p => p !== winner);
             const totalCollected = points * losers.length;
 
+            // players schema is {points, powerUps} — mutate .points, never the node itself
             losers.forEach(playerName => {
-                if (players[playerName] !== undefined) {
-                    players[playerName] -= points;
+                if (players[playerName] && typeof players[playerName].points === 'number') {
+                    players[playerName].points -= points;
                 }
             });
-            if (players[winner] !== undefined) {
-                players[winner] += totalCollected;
+            if (players[winner] && typeof players[winner].points === 'number') {
+                players[winner].points += totalCollected;
             }
 
             if (!session.pinWinners) {
