@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v20-nested-points';
+const CACHE_NAME = 'mbe-pig-points-v21-drawing-of-lots';
 const urlsToCache = [
   '/',
   '/index.html',

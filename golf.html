@@ -369,6 +369,108 @@
             opacity: 1;
         }
 
+        /* THE DRAWING OF LOTS — scramble pairing reveal */
+        .lots-seg {
+            border: 1px solid rgba(139,69,19,0.25);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .lots-seg-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .lots-seg-title {
+            font-weight: 800;
+            color: #8B4513;
+            letter-spacing: 0.04em;
+        }
+
+        .lots-chip {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.06em;
+        }
+
+        .lots-chip.locked { background: #e8e2d2; color: #8a8064; }
+        .lots-chip.ready { background: linear-gradient(45deg, #daa520, #f0e68c); color: #5c3a0a; animation: pulse 2s infinite; }
+        .lots-chip.revealed { background: #dff0df; color: #1f6b33; }
+        .lots-chip.sealed { background: #d9e6df; color: #33564a; }
+
+        .lots-teams {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+        }
+
+        .lots-badge {
+            border: 1.5px solid #daa520;
+            border-radius: 10px;
+            padding: 10px 8px;
+            text-align: center;
+            font-weight: 800;
+            color: #8B4513;
+            background: rgba(218,165,32,0.08);
+        }
+
+        .lots-badge.mystery {
+            border-style: dashed;
+            color: #8a8064;
+            background: repeating-linear-gradient(45deg, rgba(0,0,0,0.04) 0 8px, transparent 8px 16px);
+        }
+
+        .lots-badge.mine {
+            box-shadow: 0 0 0 2px #daa520, 0 0 14px rgba(218,165,32,0.55);
+        }
+
+        .lots-badge.flip {
+            animation: lotsFlip 0.7s ease;
+        }
+
+        @keyframes lotsFlip {
+            0% { transform: rotateY(90deg); opacity: 0; }
+            100% { transform: rotateY(0deg); opacity: 1; }
+        }
+
+        .lots-actions { text-align: center; margin-top: 10px; }
+
+        .lots-btn {
+            border: none;
+            cursor: pointer;
+            font-weight: 800;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .lots-btn.reveal { background: linear-gradient(45deg, #8B4513, #daa520); color: #fff; }
+        .lots-btn.confirm { background: linear-gradient(45deg, #2e7d32, #66bb6a); color: #fff; }
+
+        .lots-note {
+            font-size: 0.78rem;
+            color: #8a8064;
+            font-style: italic;
+            text-align: center;
+            margin-top: 6px;
+        }
+
+        .lots-undo {
+            font-size: 0.7rem;
+            color: #a33;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-left: 8px;
+        }
+
         .activity-feed {
             max-height: 400px;
             overflow-y: auto;
@@ -637,7 +739,16 @@
                 <a href="history.html" class="nav-tab">🏛️ FAME</a>
             </div>
         </header>
-        
+
+        <!-- THE DRAWING OF LOTS — Year VII scramble pairings reveal -->
+        <div class="card" id="lotsCard" style="display: none;">
+            <h2 class="card-title">🎭 THE DRAWING OF LOTS 🎭</h2>
+            <p style="text-align: center; font-style: italic; color: #8B4513; margin: 2px 0 14px; font-size: 0.9rem;">
+                Five nines. Every hog partners every hog exactly once.<br>No one knows until the lots are drawn.
+            </p>
+            <div id="lotsBody"><!-- populated by renderLots() --></div>
+        </div>
+
         <!-- Sessions Display -->
         <div class="sessions-container">
             <h2 class="card-title">🏌️ GOLF SESSIONS 🏌️</h2>
@@ -1020,6 +1131,15 @@
                 }
             });
 
+            // THE DRAWING OF LOTS — scramble schedule listener
+            const lotsRef = window.firebaseRef(window.firebaseDB, LOTS_PATH);
+            window.firebaseOnValue(lotsRef, (snapshot) => {
+                lotsData = snapshot.exists() ? snapshot.val() : null;
+                renderLots();
+            }, (error) => {
+                console.error('❌ Lots listener error:', error);
+            });
+
             // Listen for DANGER ZONE broadcasts in real-time
             const dangerZoneRef = window.firebaseRef(window.firebaseDB, 'dangerZone');
             window.firebaseOnValue(dangerZoneRef, (snapshot) => {
@@ -1156,6 +1276,7 @@
                 document.getElementById('loginSection').style.display = 'block';
             }
             updateStatusBar();
+            renderLots(); // YOU-badge + Ham Handler controls depend on login state
         }
 
         function updateStatusBar() {
@@ -2574,6 +2695,157 @@
                     <button class="transfer-btn" onclick="document.getElementById('threePuttModal').remove()" style="width: 100%;">🐷 ACCEPT PUNISHMENT</button>
                 </div>`;
             document.body.appendChild(modal);
+        }
+
+        // ============================================================
+        // THE DRAWING OF LOTS — Year VII scramble pairings.
+        // 6 hogs, 5 auto nines = perfect round robin (every pair
+        // exactly once, circle method). Day 3 Back 9 is made by
+        // mortal hands at the course. Each drawing unlocks only
+        // after the previous nine is SEALED (scores confirmed).
+        // ============================================================
+        const LOTS_PATH = 'scramble/year7';
+        const LOTS_PLAYERS = ['Evan', 'Ian', 'Andrew', 'Zack', 'Brian', 'Alex'];
+        const LOTS_SEGMENTS = ['Day 1 · Front 9', 'Day 1 · Back 9', 'Day 2 · Front 9', 'Day 2 · Back 9', 'Day 3 · Front 9'];
+        let lotsData = null;
+
+        // Circle method: fix the first player, rotate the rest.
+        // Pairing i-th vs (n-1-i)-th each rotation meets every pair once.
+        function lotsPairs(order, segIdx) {
+            const fixed = order[0];
+            const rest = order.slice(1);
+            const r = segIdx % 5;
+            const rot = rest.slice(r).concat(rest.slice(0, r));
+            const line = [fixed].concat(rot);
+            return [[line[0], line[5]], [line[1], line[4]], [line[2], line[3]]];
+        }
+
+        function lotsViewer() {
+            return currentPlayer || localStorage.getItem('hamHandlerCurrentPlayer') || '';
+        }
+
+        function lotsSegState(i) {
+            const seg = (lotsData && lotsData.segments && lotsData.segments[i]) || {};
+            return { revealed: !!seg.revealed, confirmed: !!seg.confirmed };
+        }
+
+        function generateLots() {
+            if (!isBookkeeperLoggedIn) return alert('🚫 Only the Ham Handler may cast the lots!');
+            if (lotsData && lotsData.order) {
+                if (!confirm('♻️ RECAST THE LOTS?\n\nThis wipes all reveals and deals a completely fresh schedule.\nThe Pig Gods will remember this.')) return;
+            } else {
+                if (!confirm('🎭 CAST THE LOTS?\n\nThis deals the Year VII scramble schedule — five nines, every hog partners every hog exactly once.\n\nPairings stay sealed until each drawing.')) return;
+            }
+            const order = LOTS_PLAYERS.slice();
+            for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
+            }
+            // sanity: the 5 segments must produce all 15 unique pairs
+            const seen = new Set();
+            for (let s = 0; s < 5; s++) lotsPairs(order, s).forEach(p => seen.add(p.slice().sort().join('+')));
+            if (seen.size !== 15) return alert('❌ Lot casting failed validation (' + seen.size + '/15 unique pairs) — nothing saved. Try again.');
+            const payload = { order: order, createdAt: new Date().toISOString(), segments: {} };
+            window.firebaseSet(window.firebaseRef(window.firebaseDB, LOTS_PATH), payload)
+                .then(() => addActivity('admin', '🎭', 'THE LOTS ARE CAST: the Year VII scramble schedule is sealed. Five nines, fifteen fates. Draw when ready.'))
+                .catch(e => alert('❌ Failed to save the lots: ' + e.message));
+        }
+
+        function renderLots() {
+            const card = document.getElementById('lotsCard');
+            const body = document.getElementById('lotsBody');
+            if (!card || !body) return;
+            card.style.display = 'block';
+
+            if (!lotsData || !lotsData.order) {
+                body.innerHTML = '<div style="text-align:center; padding: 10px 0;">' +
+                    '<div style="font-size:2.4rem;">🎲</div>' +
+                    '<p style="color:#8B4513; font-weight:700; margin: 6px 0 12px;">The lots have not yet been cast.</p>' +
+                    (isBookkeeperLoggedIn
+                        ? '<button class="lots-btn reveal" onclick="generateLots()">🎭 CAST THE LOTS</button>'
+                        : '<p class="lots-note">The Ham Handler will cast them before the first tee.</p>') +
+                    '</div>';
+                return;
+            }
+
+            const me = lotsViewer();
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                const st = lotsSegState(i);
+                const prevSealed = i === 0 || lotsSegState(i - 1).confirmed;
+                const pairs = lotsPairs(lotsData.order, i);
+                let chip, badges, actions = '';
+
+                if (st.revealed) {
+                    chip = st.confirmed ? '<span class="lots-chip sealed">⛳ SEALED</span>' : '<span class="lots-chip revealed">REVEALED</span>';
+                    badges = pairs.map(p => {
+                        const mine = me && p.indexOf(me) !== -1;
+                        return '<div class="lots-badge flip' + (mine ? ' mine' : '') + '">' + p[0] + ' &amp; ' + p[1] + '</div>';
+                    }).join('');
+                    if (!st.confirmed) {
+                        actions = '<div class="lots-actions">' +
+                            '<button class="lots-btn confirm" onclick="confirmLotsSegment(' + i + ')">✅ SEAL THIS NINE</button>' +
+                            '<div class="lots-note">Tap once all 9 holes are scored — it unlocks the next drawing.</div></div>';
+                    }
+                } else {
+                    chip = prevSealed ? '<span class="lots-chip ready">READY TO DRAW</span>' : '<span class="lots-chip locked">🔒 LOCKED</span>';
+                    badges = pairs.map(p => {
+                        const mine = me && p.indexOf(me) !== -1;
+                        return '<div class="lots-badge mystery' + (mine ? ' mine' : '') + '">' + (mine ? me + ' &amp; 🎭 ???' : '🎭 SEALED') + '</div>';
+                    }).join('');
+                    actions = prevSealed
+                        ? '<div class="lots-actions"><button class="lots-btn reveal" onclick="revealLotsSegment(' + i + ')">🎭 DRAW THE LOTS</button></div>'
+                        : '<div class="lots-note">Unlocks when the previous nine is sealed.</div>';
+                }
+
+                const undo = isBookkeeperLoggedIn && (st.revealed || st.confirmed)
+                    ? '<span class="lots-undo" onclick="undoLotsSegment(' + i + ')">undo</span>' : '';
+                html += '<div class="lots-seg">' +
+                    '<div class="lots-seg-head"><span class="lots-seg-title">' + LOTS_SEGMENTS[i] + '</span><span>' + chip + undo + '</span></div>' +
+                    '<div class="lots-teams">' + badges + '</div>' + actions + '</div>';
+            }
+
+            html += '<div class="lots-seg">' +
+                '<div class="lots-seg-head"><span class="lots-seg-title">Day 3 · Back 9</span><span class="lots-chip sealed">MORTAL HANDS</span></div>' +
+                '<div class="lots-note" style="margin-top:2px;">The final nine is chosen by the Order itself, at the course. No lots. No mercy.</div></div>';
+
+            if (isBookkeeperLoggedIn) {
+                html += '<div style="text-align:center; margin-top:4px;"><span class="lots-undo" onclick="generateLots()">♻️ recast all lots</span></div>';
+            }
+            body.innerHTML = html;
+        }
+
+        function revealLotsSegment(i) {
+            if (!lotsData || !lotsData.order) return;
+            if (i > 0 && !lotsSegState(i - 1).confirmed) return alert('🔒 The previous nine is not sealed yet.');
+            if (lotsSegState(i).revealed) return;
+            if (!confirm('🎭 DRAW THE LOTS for ' + LOTS_SEGMENTS[i] + '?\n\nAll partners are revealed to everyone at once. No take-backs.')) return;
+            const teamsTxt = lotsPairs(lotsData.order, i).map(p => p.join(' & ')).join('  ·  ');
+            window.firebaseUpdate(window.firebaseRef(window.firebaseDB, LOTS_PATH + '/segments/' + i), {
+                revealed: true, revealedAt: new Date().toISOString(), revealedBy: lotsViewer() || 'unknown'
+            }).then(() => {
+                addActivity('admin', '🎭', 'THE LOTS ARE DRAWN — ' + LOTS_SEGMENTS[i] + ': ' + teamsTxt);
+                if (window.mbeNotify) window.mbeNotify('general', '🎭 THE LOTS ARE DRAWN', LOTS_SEGMENTS[i] + ' — ' + teamsTxt, lotsViewer() || null);
+            }).catch(e => alert('❌ Failed to reveal: ' + e.message));
+        }
+
+        function confirmLotsSegment(i) {
+            const st = lotsSegState(i);
+            if (!st.revealed || st.confirmed) return;
+            if (!confirm('✅ SEAL ' + LOTS_SEGMENTS[i] + '?\n\nOnly do this once all 9 holes are scored.\nThis unlocks the next drawing.')) return;
+            window.firebaseUpdate(window.firebaseRef(window.firebaseDB, LOTS_PATH + '/segments/' + i), {
+                confirmed: true, confirmedAt: new Date().toISOString(), confirmedBy: lotsViewer() || 'unknown'
+            }).then(() => {
+                addActivity('admin', '⛳', LOTS_SEGMENTS[i] + ' is SEALED. The next drawing is unlocked.');
+            }).catch(e => alert('❌ Failed to seal: ' + e.message));
+        }
+
+        function undoLotsSegment(i) {
+            if (!isBookkeeperLoggedIn) return;
+            if (!confirm('↩️ Undo reveal/seal for ' + LOTS_SEGMENTS[i] + '?\n\n(Ham Handler correction — players keep any pushes already sent.)')) return;
+            window.firebaseUpdate(window.firebaseRef(window.firebaseDB, LOTS_PATH + '/segments/' + i), {
+                revealed: false, confirmed: false
+            }).catch(e => alert('❌ Undo failed: ' + e.message));
         }
 
         function savePigPoints() {
