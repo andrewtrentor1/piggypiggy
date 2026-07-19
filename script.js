@@ -1198,7 +1198,9 @@ function showPigOathModal(selectedPlayer) {
     modal.id = 'pigOathModal';
     modal.className = 'modal';
     modal.style.display = 'flex';
-    modal.style.zIndex = '99999';
+    // No inline z-index: inherit .modal's (stylesheets differ per page) and win
+    // the tie by DOM order — an inline value below the sheet's put this BEHIND
+    // the parent modal. Danger Zone keeps the true max by design.
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 420px; text-align: center;">
             <h2 style="margin-bottom: 6px;">⚖️🐷 BY ORDER OF THE PIG 🐷⚖️</h2>
@@ -4375,7 +4377,9 @@ function showFateCodex(type) {
     modal.id = 'fateCodexModal';
     modal.className = 'modal';
     modal.style.display = 'flex';
-    modal.style.zIndex = '99999';
+    // No inline z-index: inherit .modal's (stylesheets differ per page) and win
+    // the tie by DOM order — an inline value below the sheet's put this BEHIND
+    // the parent modal. Danger Zone keeps the true max by design.
     modal.onclick = closeFateCodex;
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 380px; text-align: center;" onclick="event.stopPropagation()">

@@ -317,6 +317,58 @@
             animation: pulse 2s infinite;
         }
 
+        /* Closest-to-Pin flag (par 3s only, individual contest) */
+        .pin-flag {
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            opacity: 0.7;
+        }
+
+        .pin-flag:hover {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+
+        .pin-flag.won {
+            opacity: 1;
+            animation: pulse 2s infinite;
+        }
+
+        /* Par shown under hole number in scorecard header */
+        .par-sub {
+            display: block;
+            font-size: 0.62rem;
+            font-weight: 600;
+            opacity: 0.85;
+            letter-spacing: 0.03em;
+        }
+
+        /* Three-putt confession checkbox under each hole input */
+        .tp-check {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #8B4513;
+            cursor: pointer;
+            user-select: none;
+            opacity: 0.75;
+        }
+
+        .tp-check input {
+            margin: 0;
+            accent-color: #ff4757;
+            cursor: pointer;
+        }
+
+        .tp-check.cursed {
+            color: #ff4757;
+            opacity: 1;
+        }
+
         .activity-feed {
             max-height: 400px;
             overflow-y: auto;
@@ -640,7 +692,15 @@
                 <label>Session Title:</label>
                 <input type="text" id="sessionTitle" placeholder="e.g., Day 1 - Morning Round">
             </div>
-            
+
+            <div class="form-group">
+                <label>Course:</label>
+                <select id="sessionCourse">
+                    <option value="">No course / custom (no par info)</option>
+                </select>
+                <small style="color: #666;">Picking a course puts par on the scorecard, shows to-par totals, and arms 📍 Closest-to-Pin on the par 3s</small>
+            </div>
+
             <div class="team-creation">
                 <h3>👥 Add Teams</h3>
                 <div class="form-group">
@@ -754,7 +814,31 @@
             <button class="transfer-btn" onclick="awardSidebetsPoints()">🏆 AWARD SIDEBET POINTS</button>
         </div>
     </div>
-    
+
+    <!-- Closest to the Pin Modal (par 3s — INDIVIDUAL glory, not team) -->
+    <div class="modal" id="ctpPinModal">
+        <div class="modal-content">
+            <span class="close" onclick="closePinModal()">&times;</span>
+            <h2>📍 CLOSEST TO THE PIN 📍</h2>
+            <p id="pinHoleInfo" style="margin-bottom: 20px; font-weight: bold; color: #8B4513;"></p>
+
+            <div class="form-group">
+                <label>Who stuck it closest?</label>
+                <select id="pinWinner">
+                    <option value="">Select the marksman...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Points Each Other Player Pays:</label>
+                <input type="number" id="pinPoints" min="1" max="50" value="5">
+                <small style="color: #666;">This is INDIVIDUAL glory — every other player in the session pays the winner directly. Teammates included. No hiding.</small>
+            </div>
+
+            <button class="transfer-btn" onclick="awardPinPoints()">📍 CROWN THE MARKSMAN</button>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script type="module">
         // Import Firebase modules
@@ -810,7 +894,36 @@
         let currentSessionTeams = [];
         let currentSessionId = null;
         let currentCtpHole = null;
+        let currentPinHole = null;
         let players = {}; // Will be loaded from pig points system
+
+        // ============================================================
+        // COURSE SCORECARDS — add each course's real scorecard here.
+        // pars: front-to-back array; hole count follows its length (9 or 18).
+        // Par-3 holes automatically get the 📍 Closest-to-Pin contest.
+        // Sessions snapshot the pars at creation, so editing a course
+        // later never rewrites history.
+        //   exampleKey: { name: 'Example Muni (Front 9)', pars: [4,3,5,4,4,3,4,5,4] },
+        // ============================================================
+        const GOLF_COURSES = {
+        };
+
+        function sessionHoles(session) {
+            return (session && Array.isArray(session.pars) && session.pars.length) ? session.pars.length : 9;
+        }
+
+        function sessionPlayers(session) {
+            const names = [];
+            (session.teams || []).forEach(t => (t.players || []).forEach(p => {
+                if (!names.includes(p)) names.push(p);
+            }));
+            return names;
+        }
+
+        function formatToPar(diff) {
+            if (diff === 0) return 'E';
+            return diff > 0 ? `+${diff}` : `${diff}`;
+        }
         let activities = []; // Activity feed data
 
         // Phone number to player name mapping (same as index.html)
@@ -1830,6 +1943,18 @@
             document.getElementById('player1').value = '';
             document.getElementById('player2').value = '';
             document.getElementById('teamList').innerHTML = '';
+
+            // Populate course dropdown from GOLF_COURSES
+            const courseSelect = document.getElementById('sessionCourse');
+            courseSelect.innerHTML = '<option value="">No course / custom (no par info)</option>';
+            Object.keys(GOLF_COURSES).forEach(key => {
+                const c = GOLF_COURSES[key];
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `${c.name} (Par ${c.pars.reduce((a, b) => a + b, 0)}, ${c.pars.length} holes)`;
+                courseSelect.appendChild(option);
+            });
+
             document.getElementById('createSessionModal').style.display = 'flex';
         }
         
@@ -1904,12 +2029,19 @@
             }
             
             const sessionId = Date.now().toString();
+            const courseKey = document.getElementById('sessionCourse').value;
+            const course = GOLF_COURSES[courseKey];
             const session = {
                 id: sessionId,
                 title: sessionTitle,
                 teams: currentSessionTeams,
                 created: new Date().toISOString()
             };
+            if (course) {
+                session.courseKey = courseKey;
+                session.courseName = course.name;
+                session.pars = course.pars.slice(); // snapshot — course edits never rewrite history
+            }
             
             golfSessions[sessionId] = session;
             saveSessions();
@@ -1943,16 +2075,25 @@
                 let teamsHtml = '';
                 session.teams.forEach(team => {
                     const totalScore = Object.values(team.scores || {}).reduce((sum, score) => sum + (parseInt(score) || 0), 0);
+                    let toPar = '';
+                    if (Array.isArray(session.pars) && totalScore) {
+                        const parPlayed = Object.keys(team.scores || {}).reduce((sum, h) => sum + (session.pars[h - 1] || 0), 0);
+                        toPar = ` <small>(${formatToPar(totalScore - parPlayed)})</small>`;
+                    }
                     teamsHtml += `
                         <div class="team-info">
                             <div class="team-players-prominent">${team.players.join(' & ')}</div>
-                            <div class="team-score">${totalScore || 'No scores yet'}</div>
+                            <div class="team-score">${totalScore ? totalScore + toPar : 'No scores yet'}</div>
                         </div>
                     `;
                 });
-                
+
+                const courseLine = session.courseName
+                    ? `<div style="font-size: 0.85rem; color: #8B4513; opacity: 0.85; margin-top: 2px;">⛳ ${session.courseName}</div>`
+                    : '';
                 sessionCard.innerHTML = `
                     <div class="session-title">${session.title}</div>
+                    ${courseLine}
                     <div class="session-teams">
                         ${teamsHtml}
                     </div>
@@ -1968,33 +2109,45 @@
             
             document.getElementById('scoreModalTitle').textContent = `🏌️ ${session.title} - Enter Scores 🏌️`;
             
+            const holes = sessionHoles(session);
+            const pars = Array.isArray(session.pars) ? session.pars : null;
+
             // Create scorecard table
             const scorecardTable = document.getElementById('scorecardTable');
             scorecardTable.innerHTML = '';
-            
-            // Header row
+
+            // Header row (par + 📍 for par 3s when the course is known)
             const headerRow = document.createElement('tr');
             headerRow.innerHTML = '<th>Team</th>';
-            for (let i = 1; i <= 9; i++) {
-                headerRow.innerHTML += `<th class="hole-header">${i}</th>`;
+            for (let i = 1; i <= holes; i++) {
+                const par = pars ? pars[i - 1] : null;
+                const parSub = par ? `<span class="par-sub">Par ${par}${par === 3 ? ' 📍' : ''}</span>` : '';
+                headerRow.innerHTML += `<th class="hole-header">${i}${parSub}</th>`;
             }
-            headerRow.innerHTML += '<th class="total-col">Total</th>';
+            const parTotalSub = pars ? `<span class="par-sub">Par ${pars.reduce((a, b) => a + b, 0)}</span>` : '';
+            headerRow.innerHTML += `<th class="total-col">Total${parTotalSub}</th>`;
             scorecardTable.appendChild(headerRow);
-            
+
             // Team rows
             session.teams.forEach(team => {
                 const teamRow = document.createElement('tr');
                 teamRow.className = 'team-row';
                 teamRow.innerHTML = `<td><strong>${team.name}</strong><br><small>${team.players.join(' & ')}</small></td>`;
-                
+
                 let total = 0;
-                for (let i = 1; i <= 9; i++) {
+                let parPlayed = 0; // par total for scored holes only, so partial rounds show honest to-par
+                for (let i = 1; i <= holes; i++) {
                     const score = team.scores && team.scores[i] || '';
-                    teamRow.innerHTML += `<td>${score}</td>`;
-                    if (score) total += parseInt(score) || 0;
+                    const threePutt = team.threePutts && team.threePutts[i] ? ' 🥔' : '';
+                    teamRow.innerHTML += `<td${threePutt ? ` title="THREE-PUTT: ${team.threePutts[i].title}"` : ''}>${score}${threePutt}</td>`;
+                    if (score) {
+                        total += parseInt(score) || 0;
+                        if (pars) parPlayed += pars[i - 1];
+                    }
                 }
-                
-                teamRow.innerHTML += `<td class="total-col">${total || ''}</td>`;
+
+                const toPar = (pars && total) ? `<br><small>${formatToPar(total - parPlayed)}</small>` : '';
+                teamRow.innerHTML += `<td class="total-col">${total || ''}${toPar}</td>`;
                 scorecardTable.appendChild(teamRow);
             });
             
@@ -2012,21 +2165,21 @@
                 const holeInputsDiv = document.createElement('div');
                 holeInputsDiv.className = 'hole-inputs';
                 
-                for (let i = 1; i <= 9; i++) {
+                for (let i = 1; i <= holes; i++) {
                     const holeGroup = document.createElement('div');
                     holeGroup.className = 'hole-input-group';
-                    
+
                     const label = document.createElement('div');
                     label.className = 'hole-label';
-                    label.textContent = i.toString();
-                    
+                    label.textContent = pars ? `${i}·P${pars[i - 1]}` : i.toString();
+
                     // Add sidebet flag for all holes
                     const ctpFlag = document.createElement('span');
                     ctpFlag.className = 'ctp-flag';
                     ctpFlag.textContent = '⛳';
                     ctpFlag.title = 'Golf Sidebets';
                     ctpFlag.onclick = () => openSidebetsModal(sessionId, i);
-                    
+
                     // Check if sidebet has been won for this hole
                     const session = golfSessions[sessionId];
                     if (session && session.ctpWinners && session.ctpWinners[i]) {
@@ -2035,9 +2188,23 @@
                         const noteText = winner.note ? ` (${winner.note})` : '';
                         ctpFlag.title = `Sidebet Won by: ${winner.teamName}${noteText}`;
                     }
-                    
+
                     label.appendChild(ctpFlag);
-                    
+
+                    // Closest-to-Pin flag — par 3s only, individual contest
+                    if (pars && pars[i - 1] === 3) {
+                        const pinFlag = document.createElement('span');
+                        pinFlag.className = 'pin-flag';
+                        pinFlag.textContent = '📍';
+                        pinFlag.title = 'Closest to the Pin (individual)';
+                        pinFlag.onclick = () => openPinModal(sessionId, i);
+                        if (session && session.pinWinners && session.pinWinners[i]) {
+                            pinFlag.classList.add('won');
+                            pinFlag.title = `Closest to Pin: ${session.pinWinners[i].player}`;
+                        }
+                        label.appendChild(pinFlag);
+                    }
+
                     const input = document.createElement('input');
                     input.type = 'number';
                     input.className = 'hole-input';
@@ -2045,14 +2212,28 @@
                     input.min = '1';
                     input.max = '15';
                     input.id = `score-${sessionId}-${teamIndex}-${i}`;
-                    
+
                     const currentScore = team.scores && team.scores[i];
                     if (currentScore) {
                         input.value = currentScore;
                     }
-                    
+
                     holeGroup.appendChild(label);
                     holeGroup.appendChild(input);
+
+                    // Three-putt confession box — checking it summons a mystery punishment
+                    const cursed = !!(team.threePutts && team.threePutts[i]);
+                    const tpWrap = document.createElement('label');
+                    tpWrap.className = 'tp-check' + (cursed ? ' cursed' : '');
+                    tpWrap.title = cursed ? `THREE-PUTT: ${team.threePutts[i].title}` : 'Confess a three-putt';
+                    const tpBox = document.createElement('input');
+                    tpBox.type = 'checkbox';
+                    tpBox.checked = cursed;
+                    tpBox.onchange = () => toggleThreePutt(sessionId, teamIndex, i, tpBox);
+                    tpWrap.appendChild(tpBox);
+                    tpWrap.appendChild(document.createTextNode('3-putt'));
+                    holeGroup.appendChild(tpWrap);
+
                     holeInputsDiv.appendChild(holeGroup);
                 }
                 
@@ -2076,12 +2257,13 @@
             if (!session) return;
             
             // Save scores for each team
+            const holes = sessionHoles(session);
             session.teams.forEach((team, teamIndex) => {
                 if (!team.scores) {
                     team.scores = {};
                 }
-                
-                for (let i = 1; i <= 9; i++) {
+
+                for (let i = 1; i <= holes; i++) {
                     const input = document.getElementById(`score-${currentSessionId}-${teamIndex}-${i}`);
                     if (input && input.value) {
                         team.scores[i] = parseInt(input.value);
@@ -2216,14 +2398,182 @@
             const noteText = sidebetNote ? ` - ${sidebetNote}` : '';
             addActivity('admin', '⛳', `Sidebet${noteText}: ${winningTeam.name} won ${pointsPerWinner} points each (${totalPointsCollected} total collected)`);
             
-            // Refresh the score modal
-            openScoreModal(currentSessionId);
+            // Close first, THEN refresh — closeSidebetsModal nulls currentSessionId,
+            // which would leave the reopened score modal unable to save
+            const sid = currentSessionId;
             closeSidebetsModal();
+            openScoreModal(sid);
             
             const alertNoteText = sidebetNote ? `\n📝 Note: ${sidebetNote}` : '';
             alert(`🏆 Sidebet awarded to ${winningTeam.name}!${alertNoteText}\n🐷 ${pointsPerWinner} points per winner\n💰 Total points collected: ${totalPointsCollected}\n📊 Each losing player paid: ${points}`);
         }
-        
+
+        // ============================================================
+        // CLOSEST TO THE PIN — par 3s only. Individual contest:
+        // every other player in the session (teammates included)
+        // pays the winner directly.
+        // ============================================================
+        function openPinModal(sessionId, holeNumber) {
+            currentSessionId = sessionId;
+            currentPinHole = holeNumber;
+
+            const session = golfSessions[sessionId];
+            if (!session) return;
+
+            const par = session.pars ? session.pars[holeNumber - 1] : null;
+            const info = document.getElementById('pinHoleInfo');
+            info.textContent = `${session.title} - Hole ${holeNumber}${par ? ` (Par ${par})` : ''}`;
+
+            // Populate individual player dropdown
+            const winnerSelect = document.getElementById('pinWinner');
+            winnerSelect.innerHTML = '<option value="">Select the marksman...</option>';
+            sessionPlayers(session).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                winnerSelect.appendChild(option);
+            });
+
+            if (session.pinWinners && session.pinWinners[holeNumber]) {
+                const w = session.pinWinners[holeNumber];
+                info.innerHTML += `<br><span style="color: #28a745;">✅ Already claimed by: ${w.player} (+${w.totalCollected} points)</span>`;
+            }
+
+            document.getElementById('ctpPinModal').style.display = 'flex';
+        }
+
+        function closePinModal() {
+            document.getElementById('ctpPinModal').style.display = 'none';
+            document.getElementById('pinWinner').value = '';
+            document.getElementById('pinPoints').value = '5';
+            currentSessionId = null;
+            currentPinHole = null;
+        }
+
+        function awardPinPoints() {
+            if (!currentSessionId || !currentPinHole) return;
+
+            const winner = document.getElementById('pinWinner').value;
+            const points = parseInt(document.getElementById('pinPoints').value);
+
+            if (!winner || !points) {
+                alert('🚫 Please select the marksman and enter points!');
+                return;
+            }
+
+            const session = golfSessions[currentSessionId];
+            const hole = currentPinHole;
+            const losers = sessionPlayers(session).filter(p => p !== winner);
+            const totalCollected = points * losers.length;
+
+            losers.forEach(playerName => {
+                if (players[playerName] !== undefined) {
+                    players[playerName] -= points;
+                }
+            });
+            if (players[winner] !== undefined) {
+                players[winner] += totalCollected;
+            }
+
+            if (!session.pinWinners) {
+                session.pinWinners = {};
+            }
+            session.pinWinners[hole] = {
+                player: winner,
+                pointsPerLoser: points,
+                totalCollected: totalCollected,
+                timestamp: new Date().toISOString()
+            };
+
+            saveSessions();
+            savePigPoints();
+
+            addActivity('admin', '📍', `Closest to the Pin (Hole ${hole}): ${winner} stuck it — +${totalCollected} points (${points} from each of ${losers.length} pigs)`);
+
+            const sid = currentSessionId;
+            closePinModal();
+            openScoreModal(sid);
+
+            alert(`📍 ${winner} is CLOSEST TO THE PIN on Hole ${hole}!\n🐷 +${totalCollected} points (${points} from each of ${losers.length} other players)`);
+        }
+
+        // ============================================================
+        // THE THREE-PUTT TRIBUNAL — confess a three-putt, the Pig Gods
+        // draw a MYSTERY PUNISHMENT from the codex.
+        // ============================================================
+        const THREE_PUTT_PUNISHMENTS = [
+            { title: 'THE SACRED WADDLE', decree: 'You shall walk from the next tee to your ball in a full squat. The Order will be watching. Oink as needed.' },
+            { title: 'THE ONE-EYED SWINE', decree: 'Every putt on the next hole shall be struck with one eye closed. The Pig Gods squint upon you as you squinted at that line.' },
+            { title: 'THE TAIL OF SHAME', decree: 'A towel shall hang from your waistband like a tail for the next 3 holes. You are the pig now.' },
+            { title: 'THE PUBLIC CONFESSION', decree: 'Before your next tee shot, declare at full volume: "I AM A THREE-PUTTING SWINE AND MY TOUCH HAS ABANDONED ME."' },
+            { title: 'THE BOTTOMLESS CHALICE', decree: 'Finish your drink. The Pig Gods do not sip, and today neither do you.' },
+            { title: 'PUTTER VISITATION RIGHTS', decree: 'Your putter rides in an opponent\'s bag for one full hole. You may visit it. You may not hold it until you reach the green.' },
+            { title: 'THE KNEELING TEE', decree: 'Your next tee shot shall be struck from your knees. Beg the fairway for forgiveness.' },
+            { title: 'CADDIE OF THE DAMNED', decree: 'You shall carry an opponent\'s bag from this green to the next tee. They may walk slowly. They WILL walk slowly.' },
+            { title: 'THE OINK CLAUSE', decree: 'You must oink, audibly, before every putt on the next hole. The Order can tell a half-hearted oink.' },
+            { title: 'THE HAPPY GILMORE', decree: 'Your next tee shot must be a full running-start Happy Gilmore. No practice runs. No excuses.' },
+            { title: 'THE VOW OF SILENCE', decree: 'Not one word until your ball touches the next green. Squeals do not count as words.' },
+            { title: 'THE ROYAL CHAUFFEUR', decree: 'You drive the cart, fetch the drinks, and rake the traps for one full hole. Servitude cleanses.' },
+            { title: 'THE MERCY OF THE GODS', decree: 'Astonishing. The Pig Gods find your suffering... amusing enough. No punishment. Announce loudly that you got away with it — they\'ll hate that.' }
+        ];
+
+        function toggleThreePutt(sessionId, teamIndex, hole, checkbox) {
+            const session = golfSessions[sessionId];
+            if (!session) return;
+            const team = session.teams[teamIndex];
+
+            if (checkbox.checked) {
+                const punishment = THREE_PUTT_PUNISHMENTS[Math.floor(Math.random() * THREE_PUTT_PUNISHMENTS.length)];
+                if (!team.threePutts) {
+                    team.threePutts = {};
+                }
+                team.threePutts[hole] = {
+                    title: punishment.title,
+                    decree: punishment.decree,
+                    timestamp: new Date().toISOString()
+                };
+                saveSessions();
+                addActivity('admin', '🥔', `THREE-PUTT TRIBUNAL: ${team.name} confessed on Hole ${hole} — sentenced to ${punishment.title}`);
+                checkbox.parentElement.classList.add('cursed');
+                showThreePuttPunishment(team.name, hole, punishment);
+            } else {
+                if (!confirm('🐷 Lift the curse? The Pig Gods frown upon clerical reversals.')) {
+                    checkbox.checked = true;
+                    return;
+                }
+                if (team.threePutts) {
+                    delete team.threePutts[hole];
+                }
+                saveSessions();
+                checkbox.parentElement.classList.remove('cursed');
+            }
+        }
+
+        function showThreePuttPunishment(teamName, hole, punishment) {
+            const existing = document.getElementById('threePuttModal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'threePuttModal';
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            // No inline z-index: ties with the open score modal's .modal value and
+            // wins by DOM order (appended last). Danger Zone keeps the true max.
+            modal.innerHTML = `
+                <div class="modal-content" style="background: linear-gradient(45deg, #ff6b6b, #ff4757); color: white; border: 5px solid #ff3838; max-width: 420px; text-align: center;">
+                    <h2 style="font-size: 2.2rem; animation: shake 0.5s infinite; margin-bottom: 5px;">🥔 THREE-PUTT TRIBUNAL 🥔</h2>
+                    <p style="font-weight: bold; font-size: 1.1rem; margin-bottom: 4px;">${teamName} — Hole ${hole}</p>
+                    <p style="font-style: italic; opacity: 0.9; margin-bottom: 15px;">The Pig Gods witnessed everything. The jar has been shaken. Your MYSTERY PUNISHMENT:</p>
+                    <div style="background: rgba(0,0,0,0.25); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                        <div style="font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 8px;">${punishment.title}</div>
+                        <div style="font-size: 1.05rem; line-height: 1.5;">${punishment.decree}</div>
+                    </div>
+                    <div style="font-size: 3rem; margin-bottom: 10px; animation: spin 2s linear infinite;">🐷</div>
+                    <button class="transfer-btn" onclick="document.getElementById('threePuttModal').remove()" style="width: 100%;">🐷 ACCEPT PUNISHMENT</button>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+
         function savePigPoints() {
             if (!window.firebaseDB) return;
             

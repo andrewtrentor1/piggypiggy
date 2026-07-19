@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v18-obnoxious';
+const CACHE_NAME = 'mbe-pig-points-v19-golf-tribunal';
 const urlsToCache = [
   '/',
   '/index.html',
