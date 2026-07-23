@@ -1017,6 +1017,19 @@
         //   exampleKey: { name: 'Example Muni (Front 9)', pars: [4,3,5,4,4,3,4,5,4] },
         // ============================================================
         const GOLF_COURSES = {
+            stGermain: {
+                name: 'St. Germain Golf Club - Friday 3:00 PM',
+                pars: [4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 3, 4, 4, 4, 5]
+            },
+            tahoeLynx: {
+                name: 'Tahoe Lynx Golf Course - Saturday 12:00 PM',
+                // The supplied 18-hole card repeats this nine-hole layout.
+                pars: [4, 4, 4, 5, 4, 3, 4, 4, 3, 4, 4, 4, 5, 4, 3, 4, 4, 3]
+            },
+            timberRidge: {
+                name: 'Timber Ridge Golf Club - Sunday 12:00 PM',
+                pars: [4, 4, 4, 5, 3, 4, 5, 4, 3, 4, 5, 4, 3, 4, 5, 3, 4, 4]
+            }
         };
 
         function sessionHoles(session) {
@@ -2724,6 +2737,24 @@
             return currentPlayer || localStorage.getItem('hamHandlerCurrentPlayer') || '';
         }
 
+        // Keep the viewer's own pairing badge first on every device. Before a
+        // reveal, comparing badge positions across phones must not expose who
+        // shares the same hidden pair.
+        function lotsPairsForViewer(pairs, viewer) {
+            const displayPairs = pairs.map(pair => {
+                const copy = pair.slice();
+                if (viewer && copy[1] === viewer) {
+                    [copy[0], copy[1]] = [copy[1], copy[0]];
+                }
+                return copy;
+            });
+
+            if (!viewer) return displayPairs;
+            return displayPairs.sort((a, b) =>
+                Number(b[0] === viewer) - Number(a[0] === viewer)
+            );
+        }
+
         function lotsSegState(i) {
             const seg = (lotsData && lotsData.segments && lotsData.segments[i]) || {};
             return { revealed: !!seg.revealed, confirmed: !!seg.confirmed };
@@ -2774,11 +2805,12 @@
                 const st = lotsSegState(i);
                 const prevSealed = i === 0 || lotsSegState(i - 1).confirmed;
                 const pairs = lotsPairs(lotsData.order, i);
+                const displayPairs = lotsPairsForViewer(pairs, me);
                 let chip, badges, actions = '';
 
                 if (st.revealed) {
                     chip = st.confirmed ? '<span class="lots-chip sealed">⛳ SEALED</span>' : '<span class="lots-chip revealed">REVEALED</span>';
-                    badges = pairs.map(p => {
+                    badges = displayPairs.map(p => {
                         const mine = me && p.indexOf(me) !== -1;
                         return '<div class="lots-badge flip' + (mine ? ' mine' : '') + '">' + p[0] + ' &amp; ' + p[1] + '</div>';
                     }).join('');
@@ -2789,7 +2821,7 @@
                     }
                 } else {
                     chip = prevSealed ? '<span class="lots-chip ready">READY TO DRAW</span>' : '<span class="lots-chip locked">🔒 LOCKED</span>';
-                    badges = pairs.map(p => {
+                    badges = displayPairs.map(p => {
                         const mine = me && p.indexOf(me) !== -1;
                         return '<div class="lots-badge mystery' + (mine ? ' mine' : '') + '">' + (mine ? me + ' &amp; 🎭 ???' : '🎭 SEALED') + '</div>';
                     }).join('');
