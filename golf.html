@@ -369,6 +369,55 @@
             opacity: 1;
         }
 
+        .golf-rulebook-banner {
+            background: linear-gradient(135deg, #fff8dc, #f3e7bd);
+            border: 2px solid #8B4513;
+            border-radius: 12px;
+            color: #5b2d0c;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            margin: 8px 0 14px;
+            padding: 11px 13px;
+            text-align: center;
+        }
+
+        .hole-rule-result {
+            border-radius: 999px;
+            font-size: 0.58rem;
+            font-weight: 800;
+            line-height: 1.1;
+            min-height: 12px;
+            padding: 3px 5px;
+            text-align: center;
+        }
+
+        .hole-rule-result.win {
+            background: #d8f3dc;
+            color: #176b2c;
+        }
+
+        .hole-rule-result.loss {
+            background: #ffe0e0;
+            color: #b42318;
+        }
+
+        .pin-flag.carryover {
+            color: #d97706;
+            opacity: 1;
+            animation: pulse 2s infinite;
+        }
+
+        .pin-stake-card {
+            background: #fff8dc;
+            border: 2px solid #8B4513;
+            border-radius: 12px;
+            color: #5b2d0c;
+            font-weight: 800;
+            margin: 12px 0;
+            padding: 12px;
+            text-align: center;
+        }
+
         /* THE DRAWING OF LOTS — scramble pairing reveal */
         .lots-seg {
             border: 1px solid rgba(139,69,19,0.25);
@@ -858,7 +907,14 @@
         <div class="modal-content">
             <span class="close" onclick="closeScoreModal()">&times;</span>
             <h2 id="scoreModalTitle">🏌️ ENTER SCORES 🏌️</h2>
-            
+
+            <div class="golf-rulebook-banner">
+                🐷 <strong>PIG GODS’ HOLE TAX:</strong>
+                Birdie <strong>+2 each</strong> · Par <strong>+1 each</strong> ·
+                Double bogey or 3-putt <strong>−2 each</strong>.
+                Score edits automatically correct the Pig Points ledger.
+            </div>
+
             <div class="scorecard-container">
                 <table class="scorecard-table" id="scorecardTable">
                     <!-- Scorecard will be populated by JavaScript -->
@@ -869,7 +925,7 @@
                 <!-- Score inputs will be populated by JavaScript -->
             </div>
             
-            <button class="transfer-btn" onclick="saveScores()">💾 SAVE SCORES</button>
+            <button class="transfer-btn" id="saveScoresBtn" onclick="saveScores()">💾 SAVE SCORES &amp; SETTLE POINTS</button>
         </div>
     </div>
     
@@ -940,13 +996,13 @@
                 </select>
             </div>
 
-            <div class="form-group">
-                <label>Points Each Other Player Pays:</label>
-                <input type="number" id="pinPoints" min="1" max="50" value="5">
-                <small style="color: #666;">This is INDIVIDUAL glory — every other player in the session pays the winner directly. Teammates included. No hiding.</small>
+            <div class="pin-stake-card" id="pinStakeInfo">
+                5 points from every other player
             </div>
 
-            <button class="transfer-btn" onclick="awardPinPoints()">📍 CROWN THE MARKSMAN</button>
+            <button class="transfer-btn" id="awardPinBtn" onclick="awardPinPoints()">📍 CROWN THE MARKSMAN</button>
+            <button class="transfer-btn" id="carryPinBtn" onclick="carryOverPinPoints()" style="background: linear-gradient(45deg, #6b7280, #374151); margin-top: 10px;">🌲 NOBODY HIT THE GREEN — DOUBLE &amp; CARRY</button>
+            <small style="display:block; color:#666; margin-top:10px; text-align:center;">Individual glory: every other golfer pays the winner—even his teammate. A missed green by everyone doubles the stake at the next par 3.</small>
         </div>
     </div>
 
@@ -1048,6 +1104,164 @@
             if (diff === 0) return 'E';
             return diff > 0 ? `+${diff}` : `${diff}`;
         }
+
+        const BASE_PIN_STAKE = 5;
+
+        function holeRuleOutcome(session, team, hole) {
+            const par = Array.isArray(session.pars) ? Number(session.pars[hole - 1]) : 0;
+            const score = Number(team.scores && team.scores[hole]);
+            const threePutt = !!(team.threePutts && team.threePutts[hole]);
+
+            // "Three-putt OR double bogey" is one -2 result, never a stacked -4.
+            if (threePutt) {
+                return { pointsPerPlayer: -2, reason: '3-putt', icon: '🥔', label: '−2 each' };
+            }
+            if (!par || !score) return null;
+            if (score === par + 2) {
+                return { pointsPerPlayer: -2, reason: 'double bogey', icon: '🐷', label: '−2 each' };
+            }
+            if (score === par) {
+                return { pointsPerPlayer: 1, reason: 'par', icon: '🙏', label: '+1 each' };
+            }
+            if (score === par - 1) {
+                return { pointsPerPlayer: 2, reason: 'birdie', icon: '🐦', label: '+2 each' };
+            }
+            return null;
+        }
+
+        function pinResultFor(session, hole) {
+            if (session.pinResults && session.pinResults[hole]) return session.pinResults[hole];
+            // Read old winner records written by the previous scorecard version.
+            if (session.pinWinners && session.pinWinners[hole]) {
+                return Object.assign({ status: 'won' }, session.pinWinners[hole]);
+            }
+            return null;
+        }
+
+        function parThreeHoles(session) {
+            return (session.pars || [])
+                .map((par, index) => par === 3 ? index + 1 : null)
+                .filter(Boolean);
+        }
+
+        function pinStakeFor(session, hole) {
+            let stake = BASE_PIN_STAKE;
+            for (const parThreeHole of parThreeHoles(session)) {
+                if (parThreeHole >= hole) break;
+                const result = pinResultFor(session, parThreeHole);
+                if (!result) break;
+                stake = result.status === 'carryover'
+                    ? Number(result.nextStake || (Number(result.stake || stake) * 2))
+                    : BASE_PIN_STAKE;
+            }
+            return stake;
+        }
+
+        function unresolvedScoredParThree(session) {
+            return parThreeHoles(session).find(hole => {
+                if (pinResultFor(session, hole)) return false;
+                return (session.teams || []).every(team => Number(team.scores && team.scores[hole]) > 0);
+            }) || null;
+        }
+
+        function addPointDelta(deltas, playerName, amount) {
+            if (!amount) return;
+            deltas[playerName] = (deltas[playerName] || 0) + amount;
+        }
+
+        function pinPointDeltas(session, winner, stake) {
+            const losers = sessionPlayers(session).filter(name => name !== winner);
+            const totalCollected = stake * losers.length;
+            const deltas = {};
+            losers.forEach(name => addPointDelta(deltas, name, -stake));
+            addPointDelta(deltas, winner, totalCollected);
+            return { losers, totalCollected, deltas };
+        }
+
+        function reconcileHoleSettlement(session, teamIndex, hole, deltas, activityMessages) {
+            const team = session.teams[teamIndex];
+            if (!team.holePointSettlements) team.holePointSettlements = {};
+
+            const previous = team.holePointSettlements[hole] || null;
+            const next = holeRuleOutcome(session, team, hole);
+            const previousPoints = previous ? Number(previous.pointsPerPlayer || 0) : 0;
+            const nextPoints = next ? Number(next.pointsPerPlayer) : 0;
+            const netPerPlayer = nextPoints - previousPoints;
+
+            if (netPerPlayer) {
+                team.players.forEach(name => addPointDelta(deltas, name, netPerPlayer));
+                addPointDelta(deltas, 'GOD', -(netPerPlayer * team.players.length));
+            }
+
+            if (next) {
+                team.holePointSettlements[hole] = {
+                    pointsPerPlayer: next.pointsPerPlayer,
+                    reason: next.reason,
+                    score: Number(team.scores && team.scores[hole]) || null,
+                    timestamp: new Date().toISOString()
+                };
+            } else {
+                delete team.holePointSettlements[hole];
+            }
+
+            const changed = previousPoints !== nextPoints || ((previous && previous.reason) || '') !== ((next && next.reason) || '');
+            if (!changed) return;
+
+            if (next) {
+                const verb = next.pointsPerPlayer > 0 ? 'won from GOD' : 'paid to GOD';
+                activityMessages.push(
+                    `${next.icon} GOLF RULEBOOK — ${team.name}, Hole ${hole}: ${next.reason.toUpperCase()}. ` +
+                    `${team.players.join(' & ')} each ${verb} ${Math.abs(next.pointsPerPlayer)} point${Math.abs(next.pointsPerPlayer) === 1 ? '' : 's'}.`
+                );
+            } else if (previous) {
+                activityMessages.push(
+                    `↩️ GOLF CORRECTION — ${team.name}, Hole ${hole}: ${previous.reason} removed and Pig Points restored.`
+                );
+            }
+        }
+
+        function applyPointDeltasLocally(deltas) {
+            Object.keys(deltas).forEach(name => {
+                if (!players[name] || typeof players[name].points !== 'number') {
+                    throw new Error(`Pig Points are not loaded for ${name}. Wait a moment and try again.`);
+                }
+            });
+            Object.entries(deltas).forEach(([name, delta]) => {
+                players[name].points += delta;
+            });
+        }
+
+        function rollbackPointDeltasLocally(deltas) {
+            Object.entries(deltas).forEach(([name, delta]) => {
+                if (players[name] && typeof players[name].points === 'number') {
+                    players[name].points -= delta;
+                }
+            });
+        }
+
+        async function saveGolfAndPointChanges(sessionId, deltas) {
+            if (!window.firebaseDB || !window.firebaseUpdate) {
+                throw new Error('Piggy Piggy is not connected yet. Wait a moment and try again.');
+            }
+            applyPointDeltasLocally(deltas);
+            const updates = {};
+            updates[`golfSessions/${sessionId}`] = golfSessions[sessionId];
+            Object.keys(deltas).forEach(name => {
+                updates[`players/${name}/points`] = players[name].points;
+            });
+
+            try {
+                await window.firebaseUpdate(window.firebaseRef(window.firebaseDB), updates);
+            } catch (error) {
+                rollbackPointDeltasLocally(deltas);
+                throw error;
+            }
+        }
+
+        function logGolfActivities(messages) {
+            messages.forEach(message => addActivity('admin', '⛳', message));
+        }
+
         let activities = []; // Activity feed data
 
         // Phone number to player name mapping (same as index.html)
@@ -2273,7 +2487,11 @@
                 for (let i = 1; i <= holes; i++) {
                     const score = team.scores && team.scores[i] || '';
                     const threePutt = team.threePutts && team.threePutts[i] ? ' 🥔' : '';
-                    teamRow.innerHTML += `<td${threePutt ? ` title="THREE-PUTT: ${team.threePutts[i].title}"` : ''}>${score}${threePutt}</td>`;
+                    const outcome = holeRuleOutcome(session, team, i);
+                    const pointsNote = outcome
+                        ? `<br><small style="color:${outcome.pointsPerPlayer > 0 ? '#176b2c' : '#b42318'};">${outcome.label}</small>`
+                        : '';
+                    teamRow.innerHTML += `<td${threePutt ? ' title="THREE-PUTT"' : ''}>${score}${threePutt}${pointsNote}</td>`;
                     if (score) {
                         total += parseInt(score) || 0;
                         if (pars) parPlayed += pars[i - 1];
@@ -2329,12 +2547,17 @@
                     if (pars && pars[i - 1] === 3) {
                         const pinFlag = document.createElement('span');
                         pinFlag.className = 'pin-flag';
-                        pinFlag.textContent = '📍';
+                        pinFlag.textContent = `📍${pinStakeFor(session, i)}`;
                         pinFlag.title = 'Closest to the Pin (individual)';
                         pinFlag.onclick = () => openPinModal(sessionId, i);
-                        if (session && session.pinWinners && session.pinWinners[i]) {
+                        const pinResult = pinResultFor(session, i);
+                        if (pinResult && pinResult.status === 'won') {
                             pinFlag.classList.add('won');
-                            pinFlag.title = `Closest to Pin: ${session.pinWinners[i].player}`;
+                            pinFlag.title = `Closest to Pin: ${pinResult.player}`;
+                        } else if (pinResult && pinResult.status === 'carryover') {
+                            pinFlag.classList.add('carryover');
+                            pinFlag.textContent = `🌲→${pinResult.nextStake}`;
+                            pinFlag.title = `Nobody hit the green — ${pinResult.nextStake} each carries to the next par 3`;
                         }
                         label.appendChild(pinFlag);
                     }
@@ -2355,18 +2578,24 @@
                     holeGroup.appendChild(label);
                     holeGroup.appendChild(input);
 
-                    // Three-putt confession box — checking it summons a mystery punishment
+                    // Hole issues — the first rulebook issue is a three-putt.
                     const cursed = !!(team.threePutts && team.threePutts[i]);
                     const tpWrap = document.createElement('label');
                     tpWrap.className = 'tp-check' + (cursed ? ' cursed' : '');
-                    tpWrap.title = cursed ? `THREE-PUTT: ${team.threePutts[i].title}` : 'Confess a three-putt';
+                    tpWrap.title = cursed ? 'THREE-PUTT: both teammates pay 2 points to GOD' : 'Add three-putt issue';
                     const tpBox = document.createElement('input');
                     tpBox.type = 'checkbox';
                     tpBox.checked = cursed;
                     tpBox.onchange = () => toggleThreePutt(sessionId, teamIndex, i, tpBox);
                     tpWrap.appendChild(tpBox);
-                    tpWrap.appendChild(document.createTextNode('3-putt'));
+                    tpWrap.appendChild(document.createTextNode('Issue: 3-putt'));
                     holeGroup.appendChild(tpWrap);
+
+                    const outcome = holeRuleOutcome(session, team, i);
+                    const result = document.createElement('div');
+                    result.className = `hole-rule-result${outcome ? (outcome.pointsPerPlayer > 0 ? ' win' : ' loss') : ''}`;
+                    result.textContent = outcome ? `${outcome.icon} ${outcome.label}` : '';
+                    holeGroup.appendChild(result);
 
                     holeInputsDiv.appendChild(holeGroup);
                 }
@@ -2384,13 +2613,25 @@
             currentSessionId = null;
         }
         
-        function saveScores() {
+        async function saveScores() {
             if (!currentSessionId) return;
-            
-            const session = golfSessions[currentSessionId];
-            if (!session) return;
-            
-            // Save scores for each team
+
+            const saveButton = document.getElementById('saveScoresBtn');
+            saveButton.disabled = true;
+            saveButton.textContent = '🐷 SETTLING WITH GOD...';
+            const sessionId = currentSessionId;
+            const session = golfSessions[sessionId];
+            if (!session) {
+                saveButton.disabled = false;
+                saveButton.textContent = '💾 SAVE SCORES & SETTLE POINTS';
+                return;
+            }
+
+            const sessionBefore = JSON.parse(JSON.stringify(session));
+            const deltas = {};
+            const activityMessages = [];
+
+            // Save scores and reconcile every hole with the Pig Gods' ledger.
             const holes = sessionHoles(session);
             session.teams.forEach((team, teamIndex) => {
                 if (!team.scores) {
@@ -2398,16 +2639,37 @@
                 }
 
                 for (let i = 1; i <= holes; i++) {
-                    const input = document.getElementById(`score-${currentSessionId}-${teamIndex}-${i}`);
+                    const input = document.getElementById(`score-${sessionId}-${teamIndex}-${i}`);
                     if (input && input.value) {
                         team.scores[i] = parseInt(input.value);
+                    } else {
+                        delete team.scores[i];
                     }
+                    reconcileHoleSettlement(session, teamIndex, i, deltas, activityMessages);
                 }
             });
-            
-            saveSessions();
-            openScoreModal(currentSessionId); // Refresh the display
-            alert('💾 Golf scores saved successfully!');
+
+            try {
+                await saveGolfAndPointChanges(sessionId, deltas);
+                logGolfActivities(activityMessages);
+                openScoreModal(sessionId);
+
+                const pinHole = unresolvedScoredParThree(session);
+                if (pinHole) {
+                    setTimeout(() => openPinModal(sessionId, pinHole, true), 150);
+                } else {
+                    alert(activityMessages.length
+                        ? `💾 Scores saved and ${activityMessages.length} Pig Gods payout${activityMessages.length === 1 ? '' : 's'} settled!`
+                        : '💾 Golf scores saved successfully!');
+                }
+            } catch (error) {
+                golfSessions[sessionId] = sessionBefore;
+                openScoreModal(sessionId);
+                alert('❌ Scores were not saved: ' + error.message);
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = '💾 SAVE SCORES & SETTLE POINTS';
+            }
         }
         
         function saveSessions() {
@@ -2548,7 +2810,7 @@
         // every other player in the session (teammates included)
         // pays the winner directly.
         // ============================================================
-        function openPinModal(sessionId, holeNumber) {
+        function openPinModal(sessionId, holeNumber, automatic = false) {
             currentSessionId = sessionId;
             currentPinHole = holeNumber;
 
@@ -2556,8 +2818,19 @@
             if (!session) return;
 
             const par = session.pars ? session.pars[holeNumber - 1] : null;
+            if (par !== 3) return;
+
+            const earlierUnresolved = parThreeHoles(session).find(h => h < holeNumber && !pinResultFor(session, h));
+            if (earlierUnresolved) {
+                alert(`📍 Hole ${earlierUnresolved} must be settled first so the carryover stake is correct.`);
+                currentPinHole = earlierUnresolved;
+                return openPinModal(sessionId, earlierUnresolved, automatic);
+            }
+
+            const result = pinResultFor(session, holeNumber);
+            const stake = result ? Number(result.stake || result.pointsPerLoser || BASE_PIN_STAKE) : pinStakeFor(session, holeNumber);
             const info = document.getElementById('pinHoleInfo');
-            info.textContent = `${session.title} - Hole ${holeNumber}${par ? ` (Par ${par})` : ''}`;
+            info.textContent = `${automatic ? '🐷 Scores are in — settle the flag! ' : ''}${session.title} - Hole ${holeNumber} (Par 3)`;
 
             // Populate individual player dropdown
             const winnerSelect = document.getElementById('pinWinner');
@@ -2569,9 +2842,28 @@
                 winnerSelect.appendChild(option);
             });
 
-            if (session.pinWinners && session.pinWinners[holeNumber]) {
-                const w = session.pinWinners[holeNumber];
-                info.innerHTML += `<br><span style="color: #28a745;">✅ Already claimed by: ${w.player} (+${w.totalCollected} points)</span>`;
+            const stakeInfo = document.getElementById('pinStakeInfo');
+            const awardButton = document.getElementById('awardPinBtn');
+            const carryButton = document.getElementById('carryPinBtn');
+
+            if (result) {
+                winnerSelect.disabled = true;
+                awardButton.disabled = true;
+                carryButton.disabled = true;
+                if (result.status === 'carryover') {
+                    stakeInfo.textContent = `🌲 Nobody hit the green. ${result.nextStake} points each moved to the next par 3.`;
+                    info.innerHTML += '<br><span style="color:#d97706;">✅ Carryover recorded</span>';
+                } else {
+                    winnerSelect.value = result.player || '';
+                    stakeInfo.textContent = `✅ ${result.player} collected ${result.totalCollected} points — ${stake} from every other golfer.`;
+                    info.innerHTML += `<br><span style="color:#28a745;">Already claimed by ${result.player}</span>`;
+                }
+            } else {
+                winnerSelect.disabled = false;
+                awardButton.disabled = false;
+                carryButton.disabled = false;
+                const carryCount = Math.max(0, Math.round(Math.log2(stake / BASE_PIN_STAKE)));
+                stakeInfo.textContent = `📍 ${stake} points from every other player${carryCount ? ` (${carryCount} carryover${carryCount === 1 ? '' : 's'})` : ''}`;
             }
 
             document.getElementById('ctpPinModal').style.display = 'flex';
@@ -2580,134 +2872,158 @@
         function closePinModal() {
             document.getElementById('ctpPinModal').style.display = 'none';
             document.getElementById('pinWinner').value = '';
-            document.getElementById('pinPoints').value = '5';
+            document.getElementById('pinWinner').disabled = false;
+            document.getElementById('awardPinBtn').disabled = false;
+            document.getElementById('carryPinBtn').disabled = false;
             currentSessionId = null;
             currentPinHole = null;
         }
 
-        function awardPinPoints() {
+        function finishPinEntry(sessionId) {
+            closePinModal();
+            openScoreModal(sessionId);
+            const nextHole = unresolvedScoredParThree(golfSessions[sessionId]);
+            if (nextHole) {
+                setTimeout(() => openPinModal(sessionId, nextHole, true), 150);
+            }
+        }
+
+        async function awardPinPoints() {
             if (!currentSessionId || !currentPinHole) return;
 
+            const awardButton = document.getElementById('awardPinBtn');
+            const carryButton = document.getElementById('carryPinBtn');
+            awardButton.disabled = true;
+            carryButton.disabled = true;
+            const sessionId = currentSessionId;
             const winner = document.getElementById('pinWinner').value;
-            const points = parseInt(document.getElementById('pinPoints').value);
-
-            if (!winner || !points) {
-                alert('🚫 Please select the marksman and enter points!');
+            if (!winner) {
+                alert('🚫 Select the individual golfer who was closest.');
+                awardButton.disabled = false;
+                carryButton.disabled = false;
                 return;
             }
 
-            const session = golfSessions[currentSessionId];
+            const session = golfSessions[sessionId];
             const hole = currentPinHole;
-            const losers = sessionPlayers(session).filter(p => p !== winner);
-            const totalCollected = points * losers.length;
-
-            // players schema is {points, powerUps} — mutate .points, never the node itself
-            losers.forEach(playerName => {
-                if (players[playerName] && typeof players[playerName].points === 'number') {
-                    players[playerName].points -= points;
-                }
-            });
-            if (players[winner] && typeof players[winner].points === 'number') {
-                players[winner].points += totalCollected;
+            if (pinResultFor(session, hole)) {
+                awardButton.disabled = false;
+                carryButton.disabled = false;
+                return;
             }
 
-            if (!session.pinWinners) {
-                session.pinWinners = {};
-            }
-            session.pinWinners[hole] = {
+            const points = pinStakeFor(session, hole);
+            const { losers, totalCollected, deltas } = pinPointDeltas(session, winner, points);
+            const sessionBefore = JSON.parse(JSON.stringify(session));
+
+            if (!session.pinResults) session.pinResults = {};
+            session.pinResults[hole] = {
+                status: 'won',
                 player: winner,
+                stake: points,
                 pointsPerLoser: points,
                 totalCollected: totalCollected,
                 timestamp: new Date().toISOString()
             };
 
-            saveSessions();
-            savePigPoints();
-
-            addActivity('admin', '📍', `Closest to the Pin (Hole ${hole}): ${winner} stuck it — +${totalCollected} points (${points} from each of ${losers.length} pigs)`);
-
-            const sid = currentSessionId;
-            closePinModal();
-            openScoreModal(sid);
-
-            alert(`📍 ${winner} is CLOSEST TO THE PIN on Hole ${hole}!\n🐷 +${totalCollected} points (${points} from each of ${losers.length} other players)`);
-        }
-
-        // ============================================================
-        // THE THREE-PUTT TRIBUNAL — confess a three-putt, the Pig Gods
-        // draw a MYSTERY PUNISHMENT from the codex.
-        // ============================================================
-        const THREE_PUTT_PUNISHMENTS = [
-            { title: 'THE SACRED WADDLE', decree: 'You shall walk from the next tee to your ball in a full squat. The Order will be watching. Oink as needed.' },
-            { title: 'THE ONE-EYED SWINE', decree: 'Every putt on the next hole shall be struck with one eye closed. The Pig Gods squint upon you as you squinted at that line.' },
-            { title: 'THE TAIL OF SHAME', decree: 'A towel shall hang from your waistband like a tail for the next 3 holes. You are the pig now.' },
-            { title: 'THE PUBLIC CONFESSION', decree: 'Before your next tee shot, declare at full volume: "I AM A THREE-PUTTING SWINE AND MY TOUCH HAS ABANDONED ME."' },
-            { title: 'THE BOTTOMLESS CHALICE', decree: 'Finish your drink. The Pig Gods do not sip, and today neither do you.' },
-            { title: 'PUTTER VISITATION RIGHTS', decree: 'Your putter rides in an opponent\'s bag for one full hole. You may visit it. You may not hold it until you reach the green.' },
-            { title: 'THE KNEELING TEE', decree: 'Your next tee shot shall be struck from your knees. Beg the fairway for forgiveness.' },
-            { title: 'CADDIE OF THE DAMNED', decree: 'You shall carry an opponent\'s bag from this green to the next tee. They may walk slowly. They WILL walk slowly.' },
-            { title: 'THE OINK CLAUSE', decree: 'You must oink, audibly, before every putt on the next hole. The Order can tell a half-hearted oink.' },
-            { title: 'THE HAPPY GILMORE', decree: 'Your next tee shot must be a full running-start Happy Gilmore. No practice runs. No excuses.' },
-            { title: 'THE VOW OF SILENCE', decree: 'Not one word until your ball touches the next green. Squeals do not count as words.' },
-            { title: 'THE ROYAL CHAUFFEUR', decree: 'You drive the cart, fetch the drinks, and rake the traps for one full hole. Servitude cleanses.' },
-            { title: 'THE MERCY OF THE GODS', decree: 'Astonishing. The Pig Gods find your suffering... amusing enough. No punishment. Announce loudly that you got away with it — they\'ll hate that.' }
-        ];
-
-        function toggleThreePutt(sessionId, teamIndex, hole, checkbox) {
-            const session = golfSessions[sessionId];
-            if (!session) return;
-            const team = session.teams[teamIndex];
-
-            if (checkbox.checked) {
-                const punishment = THREE_PUTT_PUNISHMENTS[Math.floor(Math.random() * THREE_PUTT_PUNISHMENTS.length)];
-                if (!team.threePutts) {
-                    team.threePutts = {};
-                }
-                team.threePutts[hole] = {
-                    title: punishment.title,
-                    decree: punishment.decree,
-                    timestamp: new Date().toISOString()
-                };
-                saveSessions();
-                addActivity('admin', '🥔', `THREE-PUTT TRIBUNAL: ${team.name} confessed on Hole ${hole} — sentenced to ${punishment.title}`);
-                checkbox.parentElement.classList.add('cursed');
-                showThreePuttPunishment(team.name, hole, punishment);
-            } else {
-                if (!confirm('🐷 Lift the curse? The Pig Gods frown upon clerical reversals.')) {
-                    checkbox.checked = true;
-                    return;
-                }
-                if (team.threePutts) {
-                    delete team.threePutts[hole];
-                }
-                saveSessions();
-                checkbox.parentElement.classList.remove('cursed');
+            try {
+                await saveGolfAndPointChanges(sessionId, deltas);
+                addActivity('admin', '📍', `CLOSEST TO THE PIN — Hole ${hole}: ${winner} stuck it and collected ${totalCollected} points (${points} from each of ${losers.length} other pigs).`);
+                alert(`📍 ${winner} is CLOSEST TO THE PIN on Hole ${hole}!\n🐷 +${totalCollected} points (${points} from every other golfer)`);
+                finishPinEntry(sessionId);
+            } catch (error) {
+                golfSessions[sessionId] = sessionBefore;
+                awardButton.disabled = false;
+                carryButton.disabled = false;
+                alert('❌ Closest-to-Pin was not saved: ' + error.message);
             }
         }
 
-        function showThreePuttPunishment(teamName, hole, punishment) {
-            const existing = document.getElementById('threePuttModal');
-            if (existing) existing.remove();
+        async function carryOverPinPoints() {
+            if (!currentSessionId || !currentPinHole) return;
 
-            const modal = document.createElement('div');
-            modal.id = 'threePuttModal';
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-            // No inline z-index: ties with the open score modal's .modal value and
-            // wins by DOM order (appended last). Danger Zone keeps the true max.
-            modal.innerHTML = `
-                <div class="modal-content" style="background: linear-gradient(45deg, #ff6b6b, #ff4757); color: white; border: 5px solid #ff3838; max-width: 420px; text-align: center;">
-                    <h2 style="font-size: 2.2rem; animation: shake 0.5s infinite; margin-bottom: 5px;">🥔 THREE-PUTT TRIBUNAL 🥔</h2>
-                    <p style="font-weight: bold; font-size: 1.1rem; margin-bottom: 4px;">${teamName} — Hole ${hole}</p>
-                    <p style="font-style: italic; opacity: 0.9; margin-bottom: 15px;">The Pig Gods witnessed everything. The jar has been shaken. Your MYSTERY PUNISHMENT:</p>
-                    <div style="background: rgba(0,0,0,0.25); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
-                        <div style="font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 8px;">${punishment.title}</div>
-                        <div style="font-size: 1.05rem; line-height: 1.5;">${punishment.decree}</div>
-                    </div>
-                    <div style="font-size: 3rem; margin-bottom: 10px; animation: spin 2s linear infinite;">🐷</div>
-                    <button class="transfer-btn" onclick="document.getElementById('threePuttModal').remove()" style="width: 100%;">🐷 ACCEPT PUNISHMENT</button>
-                </div>`;
-            document.body.appendChild(modal);
+            const awardButton = document.getElementById('awardPinBtn');
+            const carryButton = document.getElementById('carryPinBtn');
+            awardButton.disabled = true;
+            carryButton.disabled = true;
+            const sessionId = currentSessionId;
+            const session = golfSessions[sessionId];
+            const hole = currentPinHole;
+            if (!session || pinResultFor(session, hole)) {
+                awardButton.disabled = false;
+                carryButton.disabled = false;
+                return;
+            }
+
+            const stake = pinStakeFor(session, hole);
+            const nextStake = stake * 2;
+            const sessionBefore = JSON.parse(JSON.stringify(session));
+            if (!session.pinResults) session.pinResults = {};
+            session.pinResults[hole] = {
+                status: 'carryover',
+                stake,
+                nextStake,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                await saveGolfAndPointChanges(sessionId, {});
+                addActivity('admin', '🌲', `CLOSEST TO THE PIN — Hole ${hole}: NOBODY HIT THE GREEN. The pot doubles from ${stake} to ${nextStake} points each at the next par 3.`);
+                alert(`🌲 Nobody hit the green on Hole ${hole}.\n📍 The next par 3 is now worth ${nextStake} points from every other golfer.`);
+                finishPinEntry(sessionId);
+            } catch (error) {
+                golfSessions[sessionId] = sessionBefore;
+                awardButton.disabled = false;
+                carryButton.disabled = false;
+                alert('❌ Carryover was not saved: ' + error.message);
+            }
+        }
+
+        // ============================================================
+        // HOLE ISSUES — a three-putt overrides the score result:
+        // both teammates pay 2 points to GOD, even if the score was par.
+        // Unchecking reverses the charge and re-applies the score rule.
+        // ============================================================
+        async function toggleThreePutt(sessionId, teamIndex, hole, checkbox) {
+            const session = golfSessions[sessionId];
+            if (!session) return;
+            checkbox.disabled = true;
+            const team = session.teams[teamIndex];
+            const sessionBefore = JSON.parse(JSON.stringify(session));
+            const deltas = {};
+            const activityMessages = [];
+
+            if (checkbox.checked) {
+                if (!team.threePutts) team.threePutts = {};
+                team.threePutts[hole] = {
+                    timestamp: new Date().toISOString()
+                };
+            } else {
+                if (!confirm('↩️ Remove this 3-putt issue? The Pig Points correction will happen automatically.')) {
+                    checkbox.checked = true;
+                    checkbox.disabled = false;
+                    return;
+                }
+                if (team.threePutts) delete team.threePutts[hole];
+            }
+
+            reconcileHoleSettlement(session, teamIndex, hole, deltas, activityMessages);
+
+            try {
+                await saveGolfAndPointChanges(sessionId, deltas);
+                logGolfActivities(activityMessages);
+                openScoreModal(sessionId);
+                alert(checkbox.checked
+                    ? `🥔 THREE-PUTT — ${team.players.join(' & ')} each paid 2 points to GOD.`
+                    : '↩️ Three-putt removed. The hole payout has been corrected.');
+            } catch (error) {
+                golfSessions[sessionId] = sessionBefore;
+                checkbox.checked = !checkbox.checked;
+                openScoreModal(sessionId);
+                alert('❌ Three-putt issue was not saved: ' + error.message);
+            } finally {
+                checkbox.disabled = false;
+            }
         }
 
         // ============================================================
