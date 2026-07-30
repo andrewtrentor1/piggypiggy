@@ -702,22 +702,22 @@ function closeGodModal() {
 }
 
 function resetAllPoints() {
-    if (confirm('🐷 Are you sure you want to reset ALL pig points back to starting values? This cannot be undone!\n\nThis will reset points for EVERYONE using this app!\n\nPlayers: 100 points\nGOD: 1000 points')) {
+    if (confirm('🐷 Are you sure you want to reset ALL pig points back to the Year VII starting values? This cannot be undone!\n\nThis will reset points for EVERYONE using this app!\n\nPlayers: 30 points\nGOD: 0 points')) {
         players = {
-            'Evan': 100,
-            'Ian': 100,
-            'Andrew': 100,
-            'Zack': 100,
-            'Brian': 100,
-            'Alex': 100,
-            'GOD': 1000
+            'Evan': { points: 30, powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 } },
+            'Ian': { points: 30, powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 } },
+            'Andrew': { points: 30, powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 } },
+            'Zack': { points: 30, powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 } },
+            'Brian': { points: 30, powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 } },
+            'Alex': { points: 30, powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 } },
+            'GOD': { points: 0, powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 } }
         };
         savePlayers();
         
         // Log activity
         addActivity('admin', '🔄', 'Ham Handler reset all points to starting values');
         
-        alert('🔄 All pig points have been reset!\n🐷 Players: 100 points\n✝️ GOD: 1000 points\n\nLet the divine games begin! 🙏');
+        alert('🔄 All pig points have been reset!\n🐷 Players: 30 points\n✝️ GOD: 0 points\n\nLet the divine games begin! 🙏');
     }
 }
 

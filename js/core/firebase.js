@@ -42,7 +42,10 @@ function initializeFirebase() {
                     } else if (typeof data[name] === 'object') {
                         // New structure - ensure all fields exist
                         players[name] = {
-                            points: data[name].points || (name === 'GOD' ? 1000 : 100),
+                            // Zero is a valid Year VII balance (especially for GOD).
+                            // Nullish fallback keeps 0 instead of reviving the old
+                            // 100/1000-point defaults.
+                            points: data[name].points ?? (name === 'GOD' ? 0 : 30),
                             powerUps: {
                                 mulligans: data[name].powerUps?.mulligans || 0,
                                 reverseMulligans: data[name].powerUps?.reverseMulligans || 0,
@@ -53,7 +56,7 @@ function initializeFirebase() {
                 } else {
                     // Player doesn't exist - create default
                     players[name] = {
-                        points: name === 'GOD' ? 1000 : 100,
+                        points: name === 'GOD' ? 0 : 30,
                         powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
                     };
                     needsMigration = true;

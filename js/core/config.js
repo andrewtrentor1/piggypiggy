@@ -3,31 +3,31 @@
 // Player data with Firebase persistence
 let players = {
     'Evan': { 
-        points: 100, 
+        points: 30,
         powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
     },
     'Ian': { 
-        points: 100, 
+        points: 30,
         powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
     },
     'Andrew': { 
-        points: 100, 
+        points: 30,
         powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
     },
     'Zack': { 
-        points: 100, 
+        points: 30,
         powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
     },
     'Brian': { 
-        points: 100, 
+        points: 30,
         powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
     },
     'Alex': { 
-        points: 100, 
+        points: 30,
         powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
     },
     'GOD': { 
-        points: 1000, 
+        points: 0,
         powerUps: { mulligans: 0, reverseMulligans: 0, giveDrinks: 0 }
     }
 };
