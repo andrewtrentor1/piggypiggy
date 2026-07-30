@@ -993,6 +993,92 @@ body:has(.status-bar.visible) .container { padding-top: 46px; }
     font-weight: 700 !important;
 }
 
+/* Score entry must stay legible inside the dark clubhouse modal. */
+#scoreModal .scorecard-table .team-row {
+    background: #102b1d !important;
+}
+#scoreModal .scorecard-table .team-row:nth-child(even) {
+    background: #173824 !important;
+}
+#scoreModal .scorecard-table .team-row td {
+    background: transparent !important;
+    color: #fff4cf !important;
+}
+#scoreModal .scorecard-table .team-row td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 118px;
+    background: #173824 !important;
+    box-shadow: 7px 0 12px rgba(0, 0, 0, 0.22);
+}
+#scoreModal .scorecard-table .team-row:nth-child(even) td:first-child {
+    background: #20482f !important;
+}
+#scoreModal .scorecard-table .team-row strong {
+    color: #fff8df !important;
+}
+#scoreModal .scorecard-table .team-row small {
+    color: #f2d67c !important;
+}
+
+#scoreModal .team-score-input {
+    padding: 12px;
+    border: 1px solid rgba(212, 175, 55, 0.38);
+    border-radius: 14px;
+    background: rgba(3, 12, 8, 0.46);
+}
+#scoreModal .team-score-input > label {
+    color: #fff1b8 !important;
+    font-size: 1rem;
+    line-height: 1.25;
+}
+#scoreModal .hole-input-group {
+    padding: 7px 5px;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 10px;
+    background: rgba(255, 248, 220, 0.06);
+}
+#scoreModal .hole-label {
+    color: #fff1b8 !important;
+    font-weight: 800;
+    opacity: 1;
+}
+#scoreModal .hole-input {
+    min-height: 48px;
+    padding: 8px 4px !important;
+    border: 2px solid #d4af37 !important;
+    border-radius: 8px !important;
+    background: #fffdf5 !important;
+    color: #143522 !important;
+    -webkit-text-fill-color: #143522;
+    caret-color: #143522;
+    font-size: 1.15rem !important;
+    font-weight: 900;
+    opacity: 1;
+    box-shadow: inset 0 1px 2px rgba(20, 53, 34, 0.12);
+}
+#scoreModal .hole-input:focus {
+    border-color: #fff1b8 !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(242, 214, 124, 0.3) !important;
+}
+#scoreModal .tp-check {
+    min-height: 28px;
+    color: #f2d67c !important;
+    font-size: 0.7rem;
+    line-height: 1.1;
+    opacity: 1;
+}
+#scoreModal .tp-check input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+}
+#scoreModal .tp-check.cursed {
+    color: #ffaaa3 !important;
+}
+
 .hole-label { color: var(--gold-pale) !important; }
 .ctp-flag { filter: grayscale(0.4) brightness(1.1); }
 .ctp-flag.won { filter: none; text-shadow: 0 0 12px rgba(212, 175, 55, 0.8) !important; }

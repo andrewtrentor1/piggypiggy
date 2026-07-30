@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v25-golf-test-drive';
+const CACHE_NAME = 'mbe-pig-points-v26-score-entry-contrast';
 const urlsToCache = [
   '/',
   '/index.html',

@@ -2748,7 +2748,7 @@
                     const threePutt = team.threePutts && team.threePutts[i] ? ' 🥔' : '';
                     const outcome = holeRuleOutcome(session, team, i);
                     const pointsNote = outcome
-                        ? `<br><small style="color:${outcome.pointsPerPlayer > 0 ? '#176b2c' : '#b42318'};">${outcome.label}</small>`
+                        ? `<br><small style="color:${outcome.pointsPerPlayer > 0 ? '#8ce99a' : '#ffaaa3'};">${outcome.label}</small>`
                         : '';
                     teamRow.innerHTML += `<td${threePutt ? ' title="THREE-PUTT"' : ''}>${score}${threePutt}${pointsNote}</td>`;
                     if (score) {
