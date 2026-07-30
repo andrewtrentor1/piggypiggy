@@ -129,16 +129,56 @@
         renderBanner(state);
         const el = document.getElementById('pushSetup');
         if (!el) return;
+        if (state === 'blocked' || state === 'unsupported') {
+            // Browser settings cannot be repaired from inside PiggyPiggy.
+            // Keep the page quiet instead of advertising a dead button.
+            el.innerHTML = '';
+            el.style.display = 'none';
+            return;
+        }
+        el.style.display = '';
         if (state === 'enabled') {
             el.innerHTML = '<div style="text-align:center; font-size:0.8rem; color:#7fd494; padding:6px 0;">🔔 THE SUMMONS IS ACTIVE on this device</div>';
-        } else if (state === 'unsupported') {
-            el.innerHTML = '<div style="text-align:center; font-size:0.75rem; color:#9a9077; padding:6px 0;">🔕 This browser cannot receive the Summons</div>';
         } else {
             const hint = state === 'ios_needs_install' ? '<div style="font-size:0.68rem; color:#9a9077; margin-top:4px;">iPhone: requires "Add to Home Screen" first — tap for instructions</div>'
-                : state === 'blocked' ? '<div style="font-size:0.68rem; color:#ff8a80; margin-top:4px;">Currently blocked in browser settings</div>' : '';
+                : '';
             el.innerHTML = '<button class="transfer-btn" onclick="mbeEnablePush()" style="width:100%;">🔔 ENABLE THE SUMMONS</button>' +
                 '<div style="text-align:center; font-size:0.7rem; color:#9a9077; margin-top:4px;">Danger Zones, jury duty, drink debts — delivered to your pocket.' + hint + '</div>';
         }
+    }
+
+    // ---------- HOG HOTLINE: harmless in-page comedy ----------
+    const HOG_DECREES = [
+        'Official forecast: mostly bogeys with isolated accusations after 4 PM.',
+        '“That should be findable” remains the most commonly reported lie in northern Wisconsin.',
+        'Any score beginning with “I think I got…” is now under active investigation.',
+        'The woods have retained counsel and will not be returning your golf ball.',
+        'A practice swing becomes evidence after the third one.',
+        'Cart-path-only rules do not apply to emotional support coolers.',
+        'The group behind you has issued a statement: “What the hell are they doing?”',
+        'Gimmes are measured in confidence, not distance. This group is therefore ineligible.',
+        'Lost-ball searches exceeding three minutes become Secret Swine missions.',
+        'The Pig Gods remind you: breakfast beers are still breakfast.'
+    ];
+
+    function renderHogHotline() {
+        const header = document.querySelector('.header');
+        if (!header || document.getElementById('hogHotline')) return;
+        let index = (new Date().getDate() + new Date().getMonth()) % HOG_DECREES.length;
+        const hotline = document.createElement('button');
+        hotline.type = 'button';
+        hotline.id = 'hogHotline';
+        hotline.className = 'hog-hotline';
+        hotline.setAttribute('aria-label', 'Hog Hotline decree. Tap for another.');
+        const draw = () => {
+            hotline.innerHTML = '<strong>🐖 HOG HOTLINE · OFFICIAL BULLETIN</strong>' + HOG_DECREES[index];
+        };
+        hotline.addEventListener('click', () => {
+            index = (index + 1) % HOG_DECREES.length;
+            draw();
+        });
+        draw();
+        header.insertAdjacentElement('afterend', hotline);
     }
 
     // ---------- registration self-heal ----------
@@ -163,8 +203,15 @@
         } catch (e) { /* healing is best-effort */ }
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(renderCard, 1500));
-    else setTimeout(renderCard, 1500);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHogHotline();
+            setTimeout(renderCard, 1500);
+        });
+    } else {
+        renderHogHotline();
+        setTimeout(renderCard, 1500);
+    }
     // give Firebase auth time to restore the session, then heal (twice, for slow phones)
     setTimeout(healRegistration, 4000);
     setTimeout(healRegistration, 12000);

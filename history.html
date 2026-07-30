@@ -228,7 +228,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Outfit:wght@400..800&display=swap">
-    <link rel="stylesheet" href="mbe-theme.css">
+    <link rel="stylesheet" href="mbe-theme.css?v=33">
 </head>
 <body>
     <div class="beer-bubbles" id="bubbles"></div>
@@ -270,17 +270,18 @@
                 <a href="golf.html" class="nav-tab">🏌️ GOLF</a>
                 <a href="games.html" class="nav-tab">🎪 PARLOUR</a>
                 <a href="activity.html" class="nav-tab">📜 FEED</a>
-                <a href="history.html" class="nav-tab active">🏛️ FAME</a>
+                <a href="history.html" class="nav-tab active" aria-current="page">🏛️ FAME</a>
             </div>
         </header>
 
     <div class="card">
         <h2 class="card-title">🐷💩 MBE PIG SLAUGHTER HISTORY 💩🐷</h2>
+        <p class="history-tap-note">Tap a year to unseal the evidence. The court accepts no appeals.</p>
         
-        <!-- Year 6 - Current Year 2025 -->
+        <!-- Year 6 - final ledger, then served from archive/year6 -->
         <div class="year-section">
             <div class="year-header">
-                🎯 Year 6 - Wabasha WI 2025 - Current Year 🎯
+                🎯 Year 6 - Wabasha WI 2025 - Final Ledger 🎯
             </div>
             <div class="year-content">
                 <div class="winner-section">
@@ -486,19 +487,26 @@
     </div>
 
     <!-- Rules and Regulations Section -->
-    <div class="card">
-        <h2 class="card-title">📋 RULES AND REGULATIONS 📋</h2>
+    <div class="card" style="padding:0 !important;">
+        <details class="history-rules">
+        <summary>
+            <div style="flex:1;">
+                <h2 class="card-title">📋 RULES AND REGULATIONS 📋</h2>
+                <div class="sessions-summary-note">Tap only if an argument has already started.</div>
+            </div>
+        </summary>
+        <div class="history-rules-body">
         
-        <div style="background: rgba(255, 255, 255, 0.8); padding: 20px; border-radius: 10px; border: 2px solid #daa520;">
+        <div class="rulebook-panel" style="background: rgba(255, 255, 255, 0.8); padding: 20px; border-radius: 10px; border: 2px solid #daa520;">
             <ul style="color: #333; line-height: 1.8; font-size: 1rem; list-style-type: none; padding-left: 0;">
                 <li style="margin-bottom: 8px;">🗳️ <strong>Majority Rules!</strong></li>
                 <li style="margin-bottom: 8px;">🎯 All players start with <strong>30 pts</strong></li>
                 <li style="margin-bottom: 8px;">🚫 <strong>No gambling money allowed!</strong></li>
                 <li style="margin-bottom: 8px;">💰 Anyone caught trying to gamble forfeits <strong>1 pt to God</strong></li>
                 <li style="margin-bottom: 8px;">🏌️‍♂️ Any <strong>hole in one</strong> results in an <strong>auto MVP</strong></li>
-                <li style="margin-bottom: 8px;">📈 <strong>Double bogeys</strong> pay <strong>1 pt to each player</strong> that wins the hole</li>
-                <li style="margin-bottom: 8px;">🐦 <strong>Birdies:</strong> God pays <strong>1 pt per player</strong></li>
-                <li style="margin-bottom: 8px;">🦅 <strong>Eagles:</strong> God pays <strong>2 pts per player</strong></li>
+                <li class="rulebook-new" style="margin-bottom: 8px;">🙏 <strong>Par:</strong> GOD pays <strong>+1 point to each teammate</strong></li>
+                <li class="rulebook-new" style="margin-bottom: 8px;">🐦 <strong>Birdie:</strong> GOD pays <strong>+2 points to each teammate</strong></li>
+                <li class="rulebook-new" style="margin-bottom: 8px;">🥔 <strong>Double bogey OR 3-putt:</strong> each teammate pays <strong>2 points to GOD</strong>. Never stacks to −4.</li>
                 <li style="margin-bottom: 8px;">🚫 If a player can't golf they forfeit <strong>double the max pts they could lose</strong> - Half to God, half to their partner</li>
                 <li style="margin-bottom: 8px;">⛳ The <strong>solo golfer</strong> gets <strong>1 God shot per hole</strong></li>
                 <li style="margin-bottom: 8px;">🏆 Forgetting to bring either trophy is <strong>-5 pts</strong></li>
@@ -515,7 +523,7 @@
                 </li>
                 <li style="margin-bottom: 8px;">🏌️ <strong>Golf Day 1:</strong> 1st: <span style="color: #28a745;">+15</span> | 2nd: <span style="color: #dc3545;">-5</span> | 3rd: <span style="color: #dc3545;">-10</span></li>
                 <li style="margin-bottom: 8px;">🏌️ <strong>Golf Day 2:</strong> 1st: <span style="color: #28a745;">+25</span> | 2nd: <span style="color: #dc3545;">-10</span> | 3rd: <span style="color: #dc3545;">-15</span></li>
-                <li style="margin-bottom: 8px;">🎯 All <strong>par 3s are CTP</strong> - Winner: <span style="color: #28a745;">+5</span> | Losers: <span style="color: #dc3545;">-1 each</span></li>
+                <li class="rulebook-new" style="margin-bottom: 8px;">📍 Every <strong>par 3 is individual CTP</strong>: each of the other five golfers pays the winner <strong>5 points</strong>. Nobody hits the green? The stake doubles and carries to the next par 3.</li>
             </ul>
         </div>
         
@@ -523,6 +531,8 @@
             <p style="color: #8B4513; font-weight: bold; font-size: 1.1rem;">🐷 Remember: The Pig Gods are always watching! 🐷</p>
             <p style="color: #666; margin-top: 5px;">May the best golfer win, and may the worst golfer embrace their inner pig!</p>
         </div>
+        </div>
+        </details>
     </div>
 
     <!-- Firebase SDK -->
@@ -573,6 +583,7 @@
         let isPlayerLoggedIn = false;
         let currentPlayer = '';
         let players = {};
+        let archivedYear6 = null;
 
         // Phone number to player name mapping (same as index.html)
         const phoneToPlayer = {
@@ -618,6 +629,15 @@
                     updateStatusBar();
                     updateCurrentStandings(); // Update current year standings
                 }
+            });
+
+            // Once Year VII opens, Year VI must stay frozen in the trophy case
+            // instead of accidentally displaying the freshly reset live ledger.
+            const archiveRef = window.firebaseRef(window.firebaseDB, 'archive/year6');
+            window.firebaseOnValue(archiveRef, (snapshot) => {
+                archivedYear6 = snapshot.exists() ? snapshot.val() : null;
+                updateCurrentYearStats();
+                updateCurrentStandings();
             });
 
             // Listen for DANGER ZONE broadcasts in real-time
@@ -758,7 +778,7 @@
             updateStatusBar();
         }
 
-        function updateCurrentYearStats() {
+        function updateCurrentYearStatsLegacy() {
             // Count different types of activities
             const hogwashCount = activities.filter(a => a.type === 'hogwash').length;
             const transferCount = activities.filter(a => a.type === 'transfer').length;
@@ -780,7 +800,7 @@
             document.getElementById('currentSidebets').textContent = sidebetsCount;
         }
 
-        function updateCurrentStandings() {
+        function updateCurrentStandingsLegacy() {
             console.log('🏆 updateCurrentStandings called, players:', players);
             
             // Only update if we have player data
@@ -906,6 +926,64 @@
             }
             
             console.log('🏆 Current standings updated - Leader:', currentLeader, 'Pig:', currentPig, 'All tied:', allSamePoints);
+        }
+
+        function updateCurrentYearStats() {
+            const sourceActivities = archivedYear6 && archivedYear6.activities
+                ? Object.values(archivedYear6.activities)
+                : activities;
+            const sourceSessions = archivedYear6 && archivedYear6.golfSessions
+                ? archivedYear6.golfSessions
+                : golfSessions;
+            const hogwashCount = sourceActivities.filter(a => a && a.type === 'hogwash').length;
+            const transferCount = sourceActivities.filter(a => a && a.type === 'transfer').length;
+            const sessionsCount = Object.keys(sourceSessions || {}).length;
+            let sidebetsCount = 0;
+            Object.values(sourceSessions || {}).forEach(session => {
+                if (session && session.ctpWinners) sidebetsCount += Object.keys(session.ctpWinners).length;
+                if (session && session.pinResults) sidebetsCount += Object.keys(session.pinResults).length;
+            });
+            document.getElementById('currentHogwashCount').textContent = hogwashCount;
+            document.getElementById('currentTransferCount').textContent = transferCount;
+            document.getElementById('currentGolfSessions').textContent = sessionsCount;
+            document.getElementById('currentSidebets').textContent = sidebetsCount;
+        }
+
+        function updateCurrentStandings() {
+            let standings;
+            if (archivedYear6 && Array.isArray(archivedYear6.finalStandings) && archivedYear6.finalStandings.length) {
+                standings = archivedYear6.finalStandings
+                    .map(entry => [entry.name, Number(entry.points || 0)])
+                    .sort((a, b) => b[1] - a[1]);
+            } else {
+                standings = Object.entries(players || {})
+                    .filter(([name]) => name !== 'GOD')
+                    .map(([name, value]) => [name, Number(typeof value === 'object' ? value.points : value) || 0])
+                    .sort((a, b) => b[1] - a[1]);
+            }
+            if (!standings.length) return;
+
+            const leader = standings[0];
+            const pig = standings[standings.length - 1];
+            const allTied = leader[1] === pig[1];
+            const firstYear = document.querySelector('.year-section');
+            if (!firstYear) return;
+            const mvpName = firstYear.querySelector('.mvp-card .winner-name');
+            const mvpDesc = firstYear.querySelector('.mvp-card p');
+            const pigName = firstYear.querySelector('.pig-card .winner-name');
+            const pigDesc = firstYear.querySelector('.pig-card p');
+
+            if (allTied) {
+                if (mvpName) mvpName.textContent = 'ALL TIED';
+                if (mvpDesc) mvpDesc.textContent = 'The final ledger refuses to choose.';
+                if (pigName) pigName.textContent = 'ALL TIED';
+                if (pigDesc) pigDesc.textContent = 'SNORTY MCPIGFACE 2025: collective guilt';
+            } else {
+                if (mvpName) mvpName.textContent = leader[0];
+                if (mvpDesc) mvpDesc.textContent = `YEAR VI MVP: ${leader[0]} (${leader[1]} pts)`;
+                if (pigName) pigName.textContent = pig[0];
+                if (pigDesc) pigDesc.textContent = `SNORTY MCPIGFACE 2025: ${pig[0]} (${pig[1]} pts)`;
+            }
         }
 
         function showAddYearModal() {
@@ -1705,6 +1783,34 @@
         // Create bubbles continuously (less frequent)
         setInterval(createBubbles, 5000);
         createBubbles();
+    </script>
+    <script>
+        // Keep the trophy cabinet scannable on a phone: newest year open,
+        // older evidence sealed until somebody taps it.
+        (function initHistoryCabinet() {
+            const sections = Array.from(document.querySelectorAll('.year-section'));
+            sections.forEach((section, index) => {
+                const header = section.querySelector('.year-header');
+                const content = section.querySelector('.year-content');
+                if (!header || !content) return;
+                if (index > 0) section.classList.add('is-collapsed');
+                header.setAttribute('role', 'button');
+                header.setAttribute('tabindex', '0');
+                const sync = () => header.setAttribute('aria-expanded', String(!section.classList.contains('is-collapsed')));
+                const toggle = () => {
+                    section.classList.toggle('is-collapsed');
+                    sync();
+                };
+                header.addEventListener('click', toggle);
+                header.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        toggle();
+                    }
+                });
+                sync();
+            });
+        })();
     </script>
     <script src="js/features/push.js"></script>
 </body>

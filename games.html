@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Outfit:wght@400..800&display=swap">
-    <link rel="stylesheet" href="mbe-theme.css">
+    <link rel="stylesheet" href="mbe-theme.css?v=33">
 
     <!-- Firebase -->
     <script type="module">
@@ -86,7 +86,7 @@
             <div class="nav-tabs">
                 <a href="index.html" class="nav-tab">🏆 PIG POINTS</a>
                 <a href="golf.html" class="nav-tab">🏌️ GOLF</a>
-                <a href="games.html" class="nav-tab active">🎪 PARLOUR</a>
+                <a href="games.html" class="nav-tab active" aria-current="page">🎪 PARLOUR</a>
                 <a href="activity.html" class="nav-tab">📜 FEED</a>
                 <a href="history.html" class="nav-tab">🏛️ FAME</a>
             </div>
@@ -244,11 +244,17 @@
                 <summary>
                     <span class="parlour-emoji">📖</span>
                     <span>
-                        <div class="parlour-name">RULEBOOK ENGINE</div>
-                        <div class="parlour-tag">Ham Handler only — auto-settle a round per the sacred rules</div>
+                        <div class="parlour-name">HAM HANDLER VAULT</div>
+                        <div class="parlour-tag">Placement payouts and controlled acts of chaos</div>
                     </span>
                 </summary>
                 <div class="parlour-body">
+                    <div class="pp-panel">
+                        <div class="pp-label">⛳ Round Placement Desk</div>
+                        <div class="pp-note" style="margin-bottom:10px;">
+                            Hole tax, 3-putts and individual CTP already settle themselves on the scorecard.
+                            This desk pays only the finished round’s 1st / 2nd / 3rd placement—so GOD is not charged twice.
+                        </div>
                     <div class="pp-label">Golf Session</div>
                     <select id="rbSession" style="width:100%;"></select>
                     <div class="pp-label">Day (payout table)</div>
@@ -256,10 +262,9 @@
                         <option value="1">Day 1 — 1st +15 / 2nd −5 / 3rd −10</option>
                         <option value="2">Day 2 — 1st +25 / 2nd −10 / 3rd −15</option>
                     </select>
-                    <div class="pp-label">Par per hole (1–9)</div>
-                    <div id="rbPars" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
-                    <button class="transfer-btn pp-big-btn" onclick="rbCompute()">📖 COMPUTE THE RECKONING</button>
+                    <button class="transfer-btn pp-big-btn" onclick="rbCompute()">🏆 PREVIEW PLACEMENT PAYOUT</button>
                     <div id="rbPreview"></div>
+                    </div>
                     <hr style="border-color: rgba(212,175,55,0.2); margin: 16px 0;">
                     <div class="pp-label">💀 Random Danger Zone</div>
                     <div class="pp-vote-row">
@@ -993,13 +998,8 @@
             if (!sel) return;
             const entries = Object.values(golfSessions).sort((a, b) => (b.created || '').localeCompare(a.created || ''));
             sel.innerHTML = entries.length
-                ? entries.map((s) => '<option value="' + s.id + '">' + esc(s.title || s.id) + (s.rulebookSettled ? ' ✅ (settled)' : '') + '</option>').join('')
+                ? entries.map((s) => '<option value="' + s.id + '">' + esc(s.title || s.id) + (s.placementSettlement ? ' ✅ (placement paid)' : '') + '</option>').join('')
                 : '<option value="">No golf sessions yet</option>';
-            const pars = $('rbPars');
-            if (pars && !pars.children.length) {
-                pars.innerHTML = Array.from({ length: 9 }, (_, i) =>
-                    '<input type="number" id="rbPar' + (i + 1) + '" value="3" min="3" max="5" style="width:48px; text-align:center; padding:8px 2px !important; min-height:40px;" title="Hole ' + (i + 1) + '">').join('');
-            }
         }
 
         function teamScores(t) {
@@ -1015,45 +1015,34 @@
         window.rbCompute = function () {
             const s = golfSessions[$('rbSession').value];
             if (!s) return alert('Pick a session.');
-            if (s.rulebookSettled && !confirm('This session was already settled by the Rulebook Engine on ' + s.rulebookSettled + '. Settle AGAIN (double payout)?')) return;
+            if (s.placementSettlement) {
+                return alert('🏛️ Placement was already paid for this round. The vault will not pay it twice.');
+            }
             const day = $('rbDay').value;
-            const pars = Array.from({ length: 9 }, (_, i) => parseInt($('rbPar' + (i + 1)).value, 10) || 3);
             const teams = (s.teams || []).filter((t) => t && t.players && t.players.length);
             if (!teams.length) return alert('Session has no teams.');
+            const expectedHoles = Array.isArray(s.pars) && s.pars.length ? s.pars.length : 9;
+            const unfinished = teams.some(t => Object.keys(teamScores(t)).length < expectedHoles);
+            if (unfinished) return alert('🔒 Finish every score first. The Placement Desk does not pay unfinished pigs.');
+            const parThrees = Array.isArray(s.pars)
+                ? s.pars.map((par, index) => par === 3 ? index + 1 : null).filter(Boolean)
+                : [];
+            const unresolvedPin = parThrees.find(hole => !(s.pinResults && s.pinResults[hole]) && !(s.pinWinners && s.pinWinners[hole]));
+            if (unresolvedPin) return alert('📍 Settle Closest-to-Pin on Hole ' + unresolvedPin + ' before paying placement.');
 
             const delta = {}; // name -> pts
             const lines = [];
             const add = (name, d, why) => { delta[name] = (delta[name] || 0) + d; };
-
-            // per-hole: winners, birdies/eagles vs par, double-bogey levies
-            for (let h = 1; h <= 9; h++) {
-                const par = pars[h - 1];
-                const played = teams.map((t) => ({ t, sc: teamScores(t)[h] })).filter((x) => x.sc != null);
-                if (played.length < 2) continue;
-                const best = Math.min(...played.map((x) => x.sc));
-                const winners = played.filter((x) => x.sc === best);
-                const holeWinner = winners.length === 1 ? winners[0].t : null;
-                played.forEach(({ t, sc }) => {
-                    if (sc === par - 1) {
-                        t.players.forEach((p) => { add(p, 1); add('GOD', -1); });
-                        lines.push('H' + h + ': 🐦 birdie by ' + t.players.join('/') + ' — GOD pays 1 each');
-                    } else if (sc <= par - 2) {
-                        t.players.forEach((p) => { add(p, 2); add('GOD', -2); });
-                        lines.push('H' + h + ': 🦅 EAGLE by ' + t.players.join('/') + ' — GOD pays 2 each');
-                    }
-                    if (sc >= par + 2 && holeWinner && holeWinner !== t) {
-                        t.players.forEach((p) => holeWinner.players.forEach((w) => { add(p, -1); add(w, 1); }));
-                        lines.push('H' + h + ': 💩 double+ by ' + t.players.join('/') + ' — pays 1 to each winner (' + holeWinner.players.join('/') + ')');
-                    }
-                });
-            }
 
             // round placement
             const totals = teams.map((t) => {
                 const sc = teamScores(t);
                 const holes = Object.keys(sc).length;
                 return { t, total: Object.values(sc).reduce((a, b) => a + b, 0), holes };
-            }).filter((x) => x.holes >= 5).sort((a, b) => a.total - b.total);
+            }).filter((x) => x.holes >= expectedHoles).sort((a, b) => a.total - b.total);
+            if (new Set(totals.map(x => x.total)).size !== totals.length) {
+                return alert('🤝 A tie exists. The sacred texts provide no tiebreaker—settle the dispute first, then return.');
+            }
             const table = day === '2' ? [25, -10, -15] : [15, -5, -10];
             totals.forEach((x, i) => {
                 if (i > 2) return;
@@ -1065,7 +1054,7 @@
             const placementNet = totals.slice(0, 3).reduce((s2, x, i) => s2 + table[i] * x.t.players.length, 0);
             add('GOD', -placementNet);
 
-            rbTransfers = { sessionId: s.id, title: s.title, delta, lines };
+            rbTransfers = { sessionId: s.id, title: s.title, day, delta, lines };
             $('rbPreview').innerHTML =
                 '<div class="pp-panel"><div class="pp-label">The Reckoning — ' + esc(s.title || s.id) + '</div>' +
                 '<div style="font-size:0.78rem; color:var(--cream-dim); margin:6px 0;">' + lines.map(esc).join('<br>') + '</div>' +
@@ -1083,10 +1072,14 @@
             for (const [name, d] of Object.entries(rbTransfers.delta)) {
                 if (d !== 0) await addPoints(name, d);
             }
-            await window.firebaseSet(R('golfSessions/' + rbTransfers.sessionId + '/rulebookSettled'), new Date().toISOString());
-            await logAct('admin', '📖', '📖 RULEBOOK ENGINE settled "' + (rbTransfers.title || rbTransfers.sessionId) + '": ' +
+            await window.firebaseSet(R('golfSessions/' + rbTransfers.sessionId + '/placementSettlement'), {
+                settledAt: new Date().toISOString(),
+                day: rbTransfers.day,
+                deltas: rbTransfers.delta
+            });
+            await logAct('admin', '🏆', '🏆 PLACEMENT DESK paid "' + (rbTransfers.title || rbTransfers.sessionId) + '": ' +
                 Object.entries(rbTransfers.delta).filter(([, d]) => d !== 0).map(([n, d]) => n + ' ' + (d > 0 ? '+' : '') + d).join(', '));
-            alert('⚖️ The Reckoning is written. ' + Object.keys(rbTransfers.delta).length + ' balances updated.');
+            alert('🏆 Placement is paid. ' + Object.keys(rbTransfers.delta).length + ' balances updated.');
             $('rbPreview').innerHTML = '';
             rbTransfers = null;
         };
