@@ -332,17 +332,6 @@ function showDirectNotification(data) {
     new Notification(title, options);
 }
 
-// Initialize push notifications when app loads
-setTimeout(() => {
-    requestNotificationPermission().then(granted => {
-        if (granted) {
-            console.log('✅ PWA: Notification permission granted');
-        } else {
-            console.log('❌ PWA: Notification permission denied');
-        }
-    });
-}, 2000);
-
 // Initialize bubbles (reduced frequency)
 function createBubbles() {
     const bubblesContainer = document.getElementById('bubbles');
@@ -2810,14 +2799,6 @@ function initiateDangerZone() {
         // Trigger the danger zone alert
         broadcastDangerZone('Alex (Manual Initiation)');
         
-        // Send push notification
-        sendPushNotification({
-            type: 'danger_zone',
-            title: '💀 DANGER ZONE 💀',
-            body: 'Alex initiated DANGER ZONE for all players!',
-            playerName: 'Alex'
-        });
-        
         // Update UI
         updateAlexDrinkUI();
         
@@ -3039,15 +3020,6 @@ function assignAlexDrinks() {
 
         // Broadcast drink assignment with message
         broadcastDrinkAssignment(assignments, totalDrinks, alexMessage);
-        
-        // Send push notification for drink assignment
-        sendPushNotification({
-            type: 'drink_assignment',
-            title: '🍺 DRINK ASSIGNMENT',
-            body: `Alex assigned ${totalDrinks} drinks! Check the app.`,
-            assignments: assignments,
-            message: alexMessage
-        });
         
         // Close modal
         closeDrinkAssignmentModal();
@@ -3769,15 +3741,6 @@ function assignPowerUpDrinks() {
 
         // Broadcast drink assignment globally (same as Alex's system)
         broadcastPowerUpDrinkAssignment(assignments, drinkAmount, currentPlayer);
-        
-        // Send push notification
-        sendPushNotification({
-            type: 'drink_assignment',
-            title: '🍺 DRINKS ASSIGNED!',
-            body: `${currentPlayer} assigned ${drinkText} to ${targetPlayer}!`,
-            assignments: assignments,
-            assignedBy: currentPlayer
-        });
         
         // Close modals
         closeDrinkAssignmentModal();
@@ -5846,12 +5809,6 @@ function executeHogwashOutcome(selectedOutcome) {
             
         case 'danger':
             broadcastDangerZone(playerName);
-            sendPushNotification({
-                type: 'danger_zone',
-                title: '💀 DANGER ZONE 💀',
-                body: `${playerName} triggered DANGER ZONE! All players affected!`,
-                playerName: playerName
-            });
             resultText = `${playerName} triggered the DANGER ZONE! 💀 ALL PLAYERS BEWARE!`;
             outcome = {
                 type: 'danger',

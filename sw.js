@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v31-funny-push-only';
+const CACHE_NAME = 'mbe-pig-points-v32-funny-push-only';
 const urlsToCache = [
   '/',
   '/index.html',
