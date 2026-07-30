@@ -1789,12 +1789,13 @@
         
         // Check login state on page load
         function checkLoginState() {
+            const loginSection = document.getElementById('loginSection');
             if (isBookkeeperLoggedIn) {
                 document.getElementById('bookkeeperControls').style.display = 'block';
-                document.getElementById('loginSection').style.display = 'none';
+                if (loginSection) loginSection.style.display = 'none';
             } else {
                 document.getElementById('bookkeeperControls').style.display = 'none';
-                document.getElementById('loginSection').style.display = 'block';
+                if (loginSection) loginSection.style.display = 'block';
             }
             updateStatusBar();
             renderLots(); // YOU-badge + Ham Handler controls depend on login state
@@ -2524,7 +2525,8 @@
                 isBookkeeperLoggedIn = true;
                 localStorage.setItem('bookkeeperLoggedIn', 'true');
                 document.getElementById('loginModal').style.display = 'none';
-                document.getElementById('loginSection').style.display = 'none';
+                const loginSection = document.getElementById('loginSection');
+                if (loginSection) loginSection.style.display = 'none';
                 document.getElementById('bookkeeperControls').style.display = 'block';
                 
                 document.getElementById('loginUsername').value = '';
@@ -2564,7 +2566,8 @@
             currentPlayer = '';
             
             document.getElementById('bookkeeperControls').style.display = 'none';
-            document.getElementById('loginSection').style.display = 'block';
+            const loginSection = document.getElementById('loginSection');
+            if (loginSection) loginSection.style.display = 'block';
             updateStatusBar();
             alert('👋 Bookkeeper logged out!');
         }

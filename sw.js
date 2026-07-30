@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v29-progressive-golf-gate';
+const CACHE_NAME = 'mbe-pig-points-v30-go-live-audit';
 const urlsToCache = [
   '/',
   '/index.html',
