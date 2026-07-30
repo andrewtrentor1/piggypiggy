@@ -1083,6 +1083,56 @@ body:has(.status-bar.visible) .container { padding-top: 46px; }
 .ctp-flag { filter: grayscale(0.4) brightness(1.1); }
 .ctp-flag.won { filter: none; text-shadow: 0 0 12px rgba(212, 175, 55, 0.8) !important; }
 
+.live-rehearsal-banner {
+    align-items: center;
+    background: linear-gradient(135deg, #7f1d1d, #b42318) !important;
+    border: 2px solid #ffaaa3 !important;
+    border-radius: 14px;
+    box-shadow: 0 0 24px rgba(255, 71, 87, 0.3);
+    color: #fff8df !important;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 0 16px;
+    padding: 13px 16px;
+    text-align: center;
+}
+.live-rehearsal-banner strong {
+    color: #ffffff !important;
+    font-family: var(--font-display);
+    letter-spacing: 0.05em;
+}
+.live-rehearsal-banner span {
+    color: #ffe4df !important;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+.live-rehearsal-panel {
+    background: rgba(5, 15, 10, 0.65);
+    border: 1px dashed rgba(242, 214, 124, 0.72);
+    border-radius: 14px;
+    margin: 14px auto;
+    max-width: 620px;
+    padding: 14px;
+}
+.live-rehearsal-panel p {
+    color: var(--cream-dim) !important;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    margin: 6px auto 12px;
+}
+.live-rehearsal-panel p strong {
+    color: #ffaaa3 !important;
+}
+.live-rehearsal-start {
+    background: linear-gradient(135deg, #9a6700, #d4af37) !important;
+    color: #102b1d !important;
+}
+.live-rehearsal-restore {
+    animation: pulse 2s infinite;
+    background: linear-gradient(135deg, #b42318, #ff4757) !important;
+    color: #ffffff !important;
+}
+
 /* ---------- History: the trophy cabinet ---------- */
 .year-section { padding: 18px 16px !important; margin-bottom: 16px !important; }
 

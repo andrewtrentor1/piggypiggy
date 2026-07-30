@@ -889,7 +889,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Outfit:wght@400..800&display=swap">
-    <link rel="stylesheet" href="mbe-theme.css?v=27">
+    <link rel="stylesheet" href="mbe-theme.css?v=28">
 </head>
 <body>
     <div class="beer-bubbles" id="bubbles"></div>
@@ -937,6 +937,11 @@
         </header>
 
         <!-- THE DRAWING OF LOTS — Year VII scramble pairings reveal -->
+        <div class="live-rehearsal-banner" id="liveGolfRehearsalBanner" style="display:none;">
+            <strong>🧪 REVERSIBLE LIVE GOLF TEST ACTIVE</strong>
+            <span>This is the real scoreboard, real Pig Points ledger, and real Drawing of Lots. Push alerts are muted. The Ham Handler must restore the pre-test snapshot when finished.</span>
+        </div>
+
         <div class="card" id="lotsCard" style="display: none;">
             <h2 class="card-title">🎭 THE DRAWING OF LOTS 🎭</h2>
             <p style="text-align: center; font-style: italic; color: #8B4513; margin: 2px 0 14px; font-size: 0.9rem;">
@@ -977,6 +982,12 @@
             <!-- Bookkeeper Controls (hidden by default) -->
             <div id="bookkeeperControls" style="display: none; text-align: center;">
                 <button class="session-btn" onclick="showCreateSessionModal()">➕ CREATE NEW SESSION</button>
+                <div class="live-rehearsal-panel">
+                    <div class="pp-label">PRODUCTION REHEARSAL</div>
+                    <p id="liveGolfRehearsalStatus">Run the actual live golf flow with a one-tap rollback.</p>
+                    <button class="session-btn live-rehearsal-start" id="startLiveGolfRehearsalBtn" onclick="startLiveGolfRehearsal()">🧪 START REVERSIBLE LIVE TEST</button>
+                    <button class="session-btn live-rehearsal-restore" id="restoreLiveGolfRehearsalBtn" onclick="restoreLiveGolfRehearsal()" style="display:none;">↩ RESTORE PRE-TEST STATE</button>
+                </div>
                 <button class="login-btn" onclick="logout()" style="background: linear-gradient(45deg, #666, #999);">👋 LOGOUT</button>
             </div>
         </div>
@@ -1229,6 +1240,8 @@
         let golfSandboxEvents = [];
         let golfSandboxCourseKey = null;
         let golfSandboxLots = [];
+        const LIVE_GOLF_REHEARSAL_PATH = 'golfRehearsal/active';
+        let liveGolfRehearsal = null;
 
         function isGolfSandbox(sessionId) {
             return sessionId === GOLF_SANDBOX_ID;
@@ -1617,6 +1630,20 @@
                 console.error('❌ Lots listener error:', error);
             });
 
+            // A production rehearsal snapshots and later restores the exact
+            // live golf branches. Normal scoring and lots functions continue
+            // using their real paths; only irreversible push alerts are muted.
+            const rehearsalRef = window.firebaseRef(window.firebaseDB, LIVE_GOLF_REHEARSAL_PATH);
+            window.firebaseOnValue(rehearsalRef, (snapshot) => {
+                liveGolfRehearsal = snapshot.exists() ? snapshot.val() : null;
+                window.__liveGolfRehearsal = liveGolfRehearsal && liveGolfRehearsal.active
+                    ? liveGolfRehearsal.id
+                    : null;
+                renderLiveGolfRehearsal();
+            }, (error) => {
+                console.error('Live golf rehearsal listener error:', error);
+            });
+
             // Listen for DANGER ZONE broadcasts in real-time
             const dangerZoneRef = window.firebaseRef(window.firebaseDB, 'dangerZone');
             window.firebaseOnValue(dangerZoneRef, (snapshot) => {
@@ -1754,6 +1781,7 @@
             }
             updateStatusBar();
             renderLots(); // YOU-badge + Ham Handler controls depend on login state
+            renderLiveGolfRehearsal();
         }
 
         function updateStatusBar() {
@@ -3494,6 +3522,162 @@
             const seg = (lotsData && lotsData.segments && lotsData.segments[i]) || {};
             return { revealed: !!seg.revealed, confirmed: !!seg.confirmed };
         }
+
+        function packLiveBranch(snapshot) {
+            return snapshot.exists()
+                ? { exists: true, value: snapshot.val() }
+                : { exists: false };
+        }
+
+        function unpackLiveBranch(branch) {
+            return branch && branch.exists ? branch.value : null;
+        }
+
+        function renderLiveGolfRehearsal() {
+            const active = !!(liveGolfRehearsal && liveGolfRehearsal.active);
+            const banner = document.getElementById('liveGolfRehearsalBanner');
+            const startButton = document.getElementById('startLiveGolfRehearsalBtn');
+            const restoreButton = document.getElementById('restoreLiveGolfRehearsalBtn');
+            const status = document.getElementById('liveGolfRehearsalStatus');
+
+            if (banner) banner.style.display = active ? 'flex' : 'none';
+            if (startButton) startButton.style.display = active ? 'none' : 'inline-block';
+            if (restoreButton) restoreButton.style.display = active ? 'inline-block' : 'none';
+            if (status) {
+                status.innerHTML = active
+                    ? `<strong>LIVE TEST ARMED</strong><br>Snapshot ${liveGolfRehearsal.id} is holding the original state. Use the normal real controls, then restore here.`
+                    : 'Run the actual live golf flow with a one-tap rollback.';
+            }
+        }
+
+        async function startLiveGolfRehearsal() {
+            if (!isBookkeeperLoggedIn) {
+                return alert('🚫 Only the Ham Handler can start a production rehearsal.');
+            }
+            if (liveGolfRehearsal && liveGolfRehearsal.active) {
+                return alert('🧪 A reversible live golf test is already active.');
+            }
+            if (!window.firebaseDB || !window.firebaseGet || !window.firebaseSet) {
+                return alert('🚫 Firebase is not ready yet. Wait a moment and try again.');
+            }
+            if (!confirm(
+                '🧪 START A REVERSIBLE LIVE GOLF TEST?\n\n' +
+                'This snapshots the REAL players, golf sessions, activity feed, and Drawing of Lots. ' +
+                'Your next actions will use the REAL production scoreboard and ledger, visible to everyone, ' +
+                'until you press RESTORE PRE-TEST STATE.\n\nPush alerts will be muted because they cannot be recalled.'
+            )) return;
+
+            const button = document.getElementById('startLiveGolfRehearsalBtn');
+            if (button) {
+                button.disabled = true;
+                button.textContent = '🐷 CAPTURING LIVE STATE...';
+            }
+
+            try {
+                const refs = {
+                    players: window.firebaseRef(window.firebaseDB, 'players'),
+                    golfSessions: window.firebaseRef(window.firebaseDB, 'golfSessions'),
+                    activities: window.firebaseRef(window.firebaseDB, 'activities'),
+                    lots: window.firebaseRef(window.firebaseDB, LOTS_PATH)
+                };
+                const snapshots = await Promise.all([
+                    window.firebaseGet(refs.players),
+                    window.firebaseGet(refs.golfSessions),
+                    window.firebaseGet(refs.activities),
+                    window.firebaseGet(refs.lots)
+                ]);
+                const id = `golf_${Date.now()}`;
+                const rehearsal = {
+                    id,
+                    active: true,
+                    startedAt: new Date().toISOString(),
+                    startedBy: lotsViewer() || 'Ham Handler',
+                    backup: {
+                        players: packLiveBranch(snapshots[0]),
+                        golfSessions: packLiveBranch(snapshots[1]),
+                        activities: packLiveBranch(snapshots[2]),
+                        lots: packLiveBranch(snapshots[3])
+                    }
+                };
+                await window.firebaseSet(
+                    window.firebaseRef(window.firebaseDB, LIVE_GOLF_REHEARSAL_PATH),
+                    rehearsal
+                );
+                liveGolfRehearsal = rehearsal;
+                window.__liveGolfRehearsal = id;
+                renderLiveGolfRehearsal();
+                alert(
+                    '✅ LIVE STATE CAPTURED\n\n' +
+                    'You are now testing the actual production golf system. Use the normal Drawing of Lots, ' +
+                    'session, score, 3-putt, Pig Gods, and CTP controls. When finished, press RESTORE PRE-TEST STATE.'
+                );
+            } catch (error) {
+                alert('❌ The live rehearsal was NOT started: ' + error.message);
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = '🧪 START REVERSIBLE LIVE TEST';
+                }
+            }
+        }
+
+        async function restoreLiveGolfRehearsal() {
+            if (!isBookkeeperLoggedIn) {
+                return alert('🚫 Only the Ham Handler can restore the live golf state.');
+            }
+            if (!liveGolfRehearsal || !liveGolfRehearsal.active || !liveGolfRehearsal.backup) {
+                return alert('🚫 There is no active live golf rehearsal to restore.');
+            }
+            if (!confirm(
+                '↩ RESTORE THE EXACT PRE-TEST STATE?\n\n' +
+                'This atomically replaces the real players, golf sessions, activity feed, and Drawing of Lots ' +
+                'with the snapshot captured before this test. Every test score, pairing, point, CTP result, ' +
+                'and activity will disappear.'
+            )) return;
+
+            const button = document.getElementById('restoreLiveGolfRehearsalBtn');
+            if (button) {
+                button.disabled = true;
+                button.textContent = '🐷 RESTORING ORIGINAL STATE...';
+            }
+
+            try {
+                const backup = liveGolfRehearsal.backup;
+                const required = ['players', 'golfSessions', 'activities', 'lots'];
+                if (!required.every(key => backup[key] && typeof backup[key].exists === 'boolean')) {
+                    throw new Error('The saved rehearsal snapshot is incomplete. Nothing was changed.');
+                }
+                const updates = {
+                    players: unpackLiveBranch(backup.players),
+                    golfSessions: unpackLiveBranch(backup.golfSessions),
+                    activities: unpackLiveBranch(backup.activities),
+                    [LOTS_PATH]: unpackLiveBranch(backup.lots),
+                    [LIVE_GOLF_REHEARSAL_PATH]: null
+                };
+                await window.firebaseUpdate(window.firebaseRef(window.firebaseDB), updates);
+                liveGolfRehearsal = null;
+                window.__liveGolfRehearsal = null;
+                renderLiveGolfRehearsal();
+                alert(
+                    '✅ PRE-TEST STATE RESTORED\n\n' +
+                    'The real players, golf sessions, activities, and Drawing of Lots match the captured snapshot. ' +
+                    'The rehearsal backup has also been erased.'
+                );
+            } catch (error) {
+                alert(
+                    '❌ RESTORE FAILED — THE BACKUP IS STILL SAFE\n\n' +
+                    error.message + '\n\nDo not continue testing. Try RESTORE PRE-TEST STATE again.'
+                );
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = '↩ RESTORE PRE-TEST STATE';
+                }
+            }
+        }
+
+        window.startLiveGolfRehearsal = startLiveGolfRehearsal;
+        window.restoreLiveGolfRehearsal = restoreLiveGolfRehearsal;
 
         function generateLots() {
             if (!isBookkeeperLoggedIn) return alert('🚫 Only the Ham Handler may cast the lots!');

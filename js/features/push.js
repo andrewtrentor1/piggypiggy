@@ -15,6 +15,10 @@
     // ---------- outbound: any page can fire a summons ----------
     // mbeNotify(type, title, body, excludePlayer)
     window.mbeNotify = function (type, title, body, exclude) {
+        if (window.__liveGolfRehearsal) {
+            console.log('🧪 Push muted during reversible live golf rehearsal:', type, title);
+            return;
+        }
         try {
             fetch(WORKER + '/notify', {
                 method: 'POST',
