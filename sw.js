@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v39-year-seven-baseline-delivery';
+const CACHE_NAME = 'mbe-pig-points-v40-year-seven-safety-ledger';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -15,6 +15,7 @@ const urlsToCache = [
   '/script.js?v=38',
   '/js/core/config.js?v=38',
   '/js/core/firebase.js?v=38',
+  '/js/core/safety-ledger.js?v=1',
   '/js/features/season.js',
   '/js/features/push.js',
   '/js/features/launch-gate.js',

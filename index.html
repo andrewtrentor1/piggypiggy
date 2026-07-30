@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="js/features/launch-gate.js?v=36"></script>
+    <script src="js/core/safety-ledger.js?v=1"></script>
     <title>🐷 PIGGY PIGGY - OINK OINK! 🐷</title>
     
     <!-- PWA Meta Tags -->
@@ -139,8 +140,17 @@
                     <h4 style="color: #d4af37; margin: 0 0 10px 0;">🗓️ SEASON CEREMONY 🗓️</h4>
                     <button class="transfer-btn" id="startYear7Btn" onclick="startYearSeven()" style="width: 100%;">🎊 COMMENCE YEAR VII 🎊</button>
                     <p style="font-size: 0.8em; color: #666; margin: 10px 0 0 0;">
-                        Atomically seals ALL Year VI points, golf, games, debts, photos, and feed activity in the permanent vault; then resets everyone to 30 and clears every live ledger for Year VII. Requires the sacred oath. Nothing is lost.
+                        The Year VII books are open. This ceremony is permanently locked, and the separate safety ledger is now recording every new write.
                     </p>
+                </div>
+                <div class="login-section" style="margin-bottom: 20px; padding: 15px; border: 1px solid rgba(73, 190, 130, 0.55); border-radius: 12px; background: rgba(22, 92, 59, 0.13);">
+                    <h4 style="color: #2f8f61; margin: 0 0 8px 0;">💾 YEAR VII SAFETY VAULT 💾</h4>
+                    <p style="font-size: 0.82em; color: #666; margin: 0 0 10px 0;">
+                        Every successful score, game, photo, and ledger write is copied to a separate append-only trail. Download the current live books plus that trail anytime.
+                    </p>
+                    <button class="transfer-btn" onclick="downloadYear7SafetyLedger()" style="width: 100%; background: linear-gradient(45deg, #176b45, #2f9e67);">
+                        💾 DOWNLOAD SAFETY VAULT
+                    </button>
                 </div>
                     <!-- God Points and Reset buttons -->
                 <div class="login-section" style="margin-bottom: 20px;">
