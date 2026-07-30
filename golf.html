@@ -889,7 +889,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Outfit:wght@400..800&display=swap">
-    <link rel="stylesheet" href="mbe-theme.css?v=28">
+    <link rel="stylesheet" href="mbe-theme.css?v=29">
 </head>
 <body>
     <div class="beer-bubbles" id="bubbles"></div>
@@ -1340,6 +1340,10 @@
             return (session && Array.isArray(session.pars) && session.pars.length) ? session.pars.length : 9;
         }
 
+        function displayHoleNumber(session, hole) {
+            return Number(session && session.holeOffset || 0) + Number(hole);
+        }
+
         function sessionPlayers(session) {
             const names = [];
             (session.teams || []).forEach(t => (t.players || []).forEach(p => {
@@ -1393,10 +1397,22 @@
         }
 
         function pinStakeFor(session, hole) {
-            let stake = BASE_PIN_STAKE;
+            let stake = Number(session && session.initialPinStake || BASE_PIN_STAKE);
             for (const parThreeHole of parThreeHoles(session)) {
                 if (parThreeHole >= hole) break;
                 const result = pinResultFor(session, parThreeHole);
+                if (!result) break;
+                stake = result.status === 'carryover'
+                    ? Number(result.nextStake || (Number(result.stake || stake) * 2))
+                    : BASE_PIN_STAKE;
+            }
+            return stake;
+        }
+
+        function endingPinStake(session) {
+            let stake = Number(session && session.initialPinStake || BASE_PIN_STAKE);
+            for (const hole of parThreeHoles(session || {})) {
+                const result = pinResultFor(session, hole);
                 if (!result) break;
                 stake = result.status === 'carryover'
                     ? Number(result.nextStake || (Number(result.stake || stake) * 2))
@@ -1458,12 +1474,12 @@
             if (next) {
                 const verb = next.pointsPerPlayer > 0 ? 'won from GOD' : 'paid to GOD';
                 activityMessages.push(
-                    `${next.icon} GOLF RULEBOOK — ${team.name}, Hole ${hole}: ${next.reason.toUpperCase()}. ` +
+                    `${next.icon} GOLF RULEBOOK — ${team.name}, Hole ${displayHoleNumber(session, hole)}: ${next.reason.toUpperCase()}. ` +
                     `${team.players.join(' & ')} each ${verb} ${Math.abs(next.pointsPerPlayer)} point${Math.abs(next.pointsPerPlayer) === 1 ? '' : 's'}.`
                 );
             } else if (previous) {
                 activityMessages.push(
-                    `↩️ GOLF CORRECTION — ${team.name}, Hole ${hole}: ${previous.reason} removed and Pig Points restored.`
+                    `↩️ GOLF CORRECTION — ${team.name}, Hole ${displayHoleNumber(session, hole)}: ${previous.reason} removed and Pig Points restored.`
                 );
             }
         }
@@ -1591,6 +1607,7 @@
                     console.log('🏌️ No existing golf sessions in Firebase');
                     loadSessions();
                 }
+                renderLots();
                 isFirebaseReady = true;
             }, (error) => {
                 console.error('❌ Firebase golf sessions listener error:', error);
@@ -2575,10 +2592,18 @@
             courseSelect.innerHTML = '<option value="">No course / custom (no par info)</option>';
             Object.keys(GOLF_COURSES).forEach(key => {
                 const c = GOLF_COURSES[key];
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = `${c.name} (Par ${c.pars.reduce((a, b) => a + b, 0)}, ${c.pars.length} holes)`;
-                courseSelect.appendChild(option);
+                const variants = [
+                    { value: key, label: `All ${c.pars.length}`, pars: c.pars },
+                    { value: `${key}:front`, label: 'Front 9', pars: c.pars.slice(0, 9) },
+                    { value: `${key}:back`, label: 'Back 9', pars: c.pars.slice(9, 18) }
+                ];
+                variants.forEach(variant => {
+                    if (!variant.pars.length) return;
+                    const option = document.createElement('option');
+                    option.value = variant.value;
+                    option.textContent = `${c.name} — ${variant.label} (Par ${variant.pars.reduce((a, b) => a + b, 0)})`;
+                    courseSelect.appendChild(option);
+                });
             });
 
             document.getElementById('createSessionModal').style.display = 'flex';
@@ -2655,7 +2680,8 @@
             }
             
             const sessionId = Date.now().toString();
-            const courseKey = document.getElementById('sessionCourse').value;
+            const courseSelection = document.getElementById('sessionCourse').value;
+            const [courseKey, courseNine] = courseSelection.split(':');
             const course = GOLF_COURSES[courseKey];
             const session = {
                 id: sessionId,
@@ -2665,8 +2691,16 @@
             };
             if (course) {
                 session.courseKey = courseKey;
-                session.courseName = course.name;
-                session.pars = course.pars.slice(); // snapshot — course edits never rewrite history
+                const start = courseNine === 'back' ? 9 : 0;
+                const end = courseNine ? start + 9 : course.pars.length;
+                const nineLabel = courseNine ? ` — ${courseNine === 'back' ? 'Back 9' : 'Front 9'}` : '';
+                session.courseName = `${course.name}${nineLabel}`;
+                session.pars = course.pars.slice(start, end); // snapshot — course edits never rewrite history
+                session.holeOffset = start;
+                if (courseKey === 'timberRidge' && courseNine === 'back') {
+                    const frontSession = golfSessions[lotsSessionId(4)];
+                    session.initialPinStake = frontSession ? endingPinStake(frontSession) : BASE_PIN_STAKE;
+                }
             }
             
             golfSessions[sessionId] = session;
@@ -2757,7 +2791,7 @@
             for (let i = 1; i <= holes; i++) {
                 const par = pars ? pars[i - 1] : null;
                 const parSub = par ? `<span class="par-sub">Par ${par}${par === 3 ? ' 📍' : ''}</span>` : '';
-                headerRow.innerHTML += `<th class="hole-header">${i}${parSub}</th>`;
+                headerRow.innerHTML += `<th class="hole-header">${displayHoleNumber(session, i)}${parSub}</th>`;
             }
             const parTotalSub = pars ? `<span class="par-sub">Par ${pars.reduce((a, b) => a + b, 0)}</span>` : '';
             headerRow.innerHTML += `<th class="total-col">Total${parTotalSub}</th>`;
@@ -2810,7 +2844,7 @@
 
                     const label = document.createElement('div');
                     label.className = 'hole-label';
-                    label.textContent = pars ? `${i}·P${pars[i - 1]}` : i.toString();
+                    label.textContent = pars ? `${displayHoleNumber(session, i)}·P${pars[i - 1]}` : displayHoleNumber(session, i).toString();
 
                     // General live sidebets stay out of the isolated practice round.
                     if (!isGolfSandbox(sessionId)) {
@@ -2940,13 +2974,16 @@
             try {
                 await saveGolfAndPointChanges(sessionId, deltas);
                 logGolfActivities(activityMessages, sessionId);
+                const nineSealed = await maybeAutoSealLotsSegment(sessionId);
                 openScoreModal(sessionId);
 
                 const pinHole = unresolvedScoredParThree(session);
                 if (pinHole) {
                     setTimeout(() => openPinModal(sessionId, pinHole, true), 150);
                 } else {
-                    alert(activityMessages.length
+                    alert(nineSealed
+                        ? '✅ All scores and par-3 decisions are complete. This nine is sealed and the next drawing is unlocked!'
+                        : activityMessages.length
                         ? `💾 Scores saved and ${activityMessages.length} Pig Gods payout${activityMessages.length === 1 ? '' : 's'} settled!`
                         : '💾 Golf scores saved successfully!');
                 }
@@ -3110,7 +3147,7 @@
 
             const earlierUnresolved = parThreeHoles(session).find(h => h < holeNumber && !pinResultFor(session, h));
             if (earlierUnresolved) {
-                alert(`📍 Hole ${earlierUnresolved} must be settled first so the carryover stake is correct.`);
+                alert(`📍 Hole ${displayHoleNumber(session, earlierUnresolved)} must be settled first so the carryover stake is correct.`);
                 currentPinHole = earlierUnresolved;
                 return openPinModal(sessionId, earlierUnresolved, automatic);
             }
@@ -3118,7 +3155,7 @@
             const result = pinResultFor(session, holeNumber);
             const stake = result ? Number(result.stake || result.pointsPerLoser || BASE_PIN_STAKE) : pinStakeFor(session, holeNumber);
             const info = document.getElementById('pinHoleInfo');
-            info.textContent = `${automatic ? '🐷 Scores are in — settle the flag! ' : ''}${session.title} - Hole ${holeNumber} (Par 3)`;
+            info.textContent = `${automatic ? '🐷 Scores are in — settle the flag! ' : ''}${session.title} - Hole ${displayHoleNumber(session, holeNumber)} (Par 3)`;
 
             // Populate individual player dropdown
             const winnerSelect = document.getElementById('pinWinner');
@@ -3216,8 +3253,10 @@
 
             try {
                 await saveGolfAndPointChanges(sessionId, deltas);
-                logGolfActivity(sessionId, '📍', `CLOSEST TO THE PIN — Hole ${hole}: ${winner} stuck it and collected ${totalCollected} points (${points} from each of ${losers.length} other pigs).`);
-                alert(`📍 ${winner} is CLOSEST TO THE PIN on Hole ${hole}!\n🐷 +${totalCollected} points (${points} from every other golfer)`);
+                const nineSealed = await maybeAutoSealLotsSegment(sessionId);
+                const displayHole = displayHoleNumber(session, hole);
+                logGolfActivity(sessionId, '📍', `CLOSEST TO THE PIN — Hole ${displayHole}: ${winner} stuck it and collected ${totalCollected} points (${points} from each of ${losers.length} other pigs).`);
+                alert(`📍 ${winner} is CLOSEST TO THE PIN on Hole ${displayHole}!\n🐷 +${totalCollected} points (${points} from every other golfer)${nineSealed ? '\n\n✅ Nine complete — the next drawing is unlocked!' : ''}`);
                 finishPinEntry(sessionId);
             } catch (error) {
                 restoreGolfSession(sessionId, sessionBefore);
@@ -3256,8 +3295,10 @@
 
             try {
                 await saveGolfAndPointChanges(sessionId, {});
-                logGolfActivity(sessionId, '🌲', `CLOSEST TO THE PIN — Hole ${hole}: NOBODY HIT THE GREEN. The pot doubles from ${stake} to ${nextStake} points each at the next par 3.`);
-                alert(`🌲 Nobody hit the green on Hole ${hole}.\n📍 The next par 3 is now worth ${nextStake} points from every other golfer.`);
+                const nineSealed = await maybeAutoSealLotsSegment(sessionId);
+                const displayHole = displayHoleNumber(session, hole);
+                logGolfActivity(sessionId, '🌲', `CLOSEST TO THE PIN — Hole ${displayHole}: NOBODY HIT THE GREEN. The pot doubles from ${stake} to ${nextStake} points each at the next par 3.`);
+                alert(`🌲 Nobody hit the green on Hole ${displayHole}.\n📍 The next par 3 is now worth ${nextStake} points from every other golfer.${nineSealed ? '\n\n✅ Nine complete — the next drawing is unlocked!' : ''}`);
                 finishPinEntry(sessionId);
             } catch (error) {
                 restoreGolfSession(sessionId, sessionBefore);
@@ -3324,6 +3365,13 @@
         const LOTS_PATH = 'scramble/year7';
         const LOTS_PLAYERS = ['Evan', 'Ian', 'Andrew', 'Zack', 'Brian', 'Alex'];
         const LOTS_SEGMENTS = ['Day 1 · Front 9', 'Day 1 · Back 9', 'Day 2 · Front 9', 'Day 2 · Back 9', 'Day 3 · Front 9'];
+        const LOTS_COURSE_SEGMENTS = [
+            { courseKey: 'stGermain', start: 0, label: 'Front 9' },
+            { courseKey: 'stGermain', start: 9, label: 'Back 9' },
+            { courseKey: 'tahoeLynx', start: 0, label: 'Front 9' },
+            { courseKey: 'tahoeLynx', start: 9, label: 'Back 9' },
+            { courseKey: 'timberRidge', start: 0, label: 'Front 9' }
+        ];
         let lotsData = null;
 
         // Circle method: fix the first player, rotate the rest.
@@ -3357,6 +3405,147 @@
             return displayPairs.sort((a, b) =>
                 Number(b[0] === viewer) - Number(a[0] === viewer)
             );
+        }
+
+        function lotsPairKey(pair) {
+            return pair.slice().sort().join('|');
+        }
+
+        function lotsAllMatchings(players) {
+            if (!players.length) return [[]];
+            const first = players[0];
+            const matchings = [];
+            for (let i = 1; i < players.length; i++) {
+                const partner = players[i];
+                const remaining = players.slice(1, i).concat(players.slice(i + 1));
+                lotsAllMatchings(remaining).forEach(rest => {
+                    matchings.push([[first, partner]].concat(rest));
+                });
+            }
+            return matchings;
+        }
+
+        function shuffledCopy(items) {
+            const copy = items.slice();
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function lotsCanFinish(usedEdges, roundsRemaining, matchings) {
+            if (roundsRemaining === 0) return true;
+            return matchings.some(matching => {
+                const edges = matching.map(lotsPairKey);
+                if (edges.some(edge => usedEdges.has(edge))) return false;
+                const nextUsed = new Set(usedEdges);
+                edges.forEach(edge => nextUsed.add(edge));
+                return lotsCanFinish(nextUsed, roundsRemaining - 1, matchings);
+            });
+        }
+
+        function lotsNextPairs(segmentIndex) {
+            const usedEdges = new Set();
+            for (let i = 0; i < segmentIndex; i++) {
+                const pairs = lotsSegState(i).pairs;
+                if (!Array.isArray(pairs) || pairs.length !== 3) {
+                    throw new Error(`Drawing ${i + 1} is missing its revealed teams.`);
+                }
+                pairs.forEach(pair => usedEdges.add(lotsPairKey(pair)));
+            }
+
+            const matchings = lotsAllMatchings(LOTS_PLAYERS);
+            const roundsRemaining = LOTS_SEGMENTS.length - segmentIndex - 1;
+            const candidate = shuffledCopy(matchings).find(matching => {
+                const edges = matching.map(lotsPairKey);
+                if (edges.some(edge => usedEdges.has(edge))) return false;
+                const nextUsed = new Set(usedEdges);
+                edges.forEach(edge => nextUsed.add(edge));
+                return lotsCanFinish(nextUsed, roundsRemaining, matchings);
+            });
+            if (!candidate) throw new Error('No valid round-robin drawing remains.');
+            return shuffledCopy(candidate).map(pair => shuffledCopy(pair));
+        }
+
+        function lotsSessionId(segmentIndex) {
+            return `year7-segment-${segmentIndex}`;
+        }
+
+        function lotsSessionForSegment(segmentIndex) {
+            return golfSessions[lotsSessionId(segmentIndex)] || null;
+        }
+
+        function buildLotsSession(segmentIndex, pairs) {
+            const spec = LOTS_COURSE_SEGMENTS[segmentIndex];
+            const course = GOLF_COURSES[spec.courseKey];
+            const previous = segmentIndex > 0 ? lotsSessionForSegment(segmentIndex - 1) : null;
+            return {
+                id: lotsSessionId(segmentIndex),
+                title: LOTS_SEGMENTS[segmentIndex],
+                teams: pairs.map((pair, index) => ({
+                    name: `Team ${index + 1}`,
+                    players: pair.slice(),
+                    scores: {}
+                })),
+                created: new Date().toISOString(),
+                courseKey: spec.courseKey,
+                courseName: `${course.name} — ${spec.label}`,
+                pars: course.pars.slice(spec.start, spec.start + 9),
+                holeOffset: spec.start,
+                initialPinStake: previous ? endingPinStake(previous) : BASE_PIN_STAKE,
+                lotsSegment: segmentIndex
+            };
+        }
+
+        function lotsSegmentProgress(segmentIndex) {
+            const session = lotsSessionForSegment(segmentIndex);
+            if (!session) {
+                return { complete: false, scoresDone: 0, scoresRequired: 27, pinsDone: 0, pinsRequired: 0 };
+            }
+            const holes = sessionHoles(session);
+            const scoresRequired = (session.teams || []).length * holes;
+            let scoresDone = 0;
+            (session.teams || []).forEach(team => {
+                for (let hole = 1; hole <= holes; hole++) {
+                    if (Number(team.scores && team.scores[hole]) > 0) scoresDone++;
+                }
+            });
+            const pinHoles = parThreeHoles(session);
+            const pinsDone = pinHoles.filter(hole => !!pinResultFor(session, hole)).length;
+            return {
+                complete: scoresDone === scoresRequired && pinsDone === pinHoles.length,
+                scoresDone,
+                scoresRequired,
+                pinsDone,
+                pinsRequired: pinHoles.length
+            };
+        }
+
+        async function maybeAutoSealLotsSegment(sessionId) {
+            if (isGolfSandbox(sessionId)) return false;
+            const session = golfSessions[sessionId];
+            const segmentIndex = session && Number.isInteger(session.lotsSegment)
+                ? session.lotsSegment
+                : null;
+            if (segmentIndex === null) return false;
+            const state = lotsSegState(segmentIndex);
+            if (!state.revealed || state.confirmed || !lotsSegmentProgress(segmentIndex).complete) return false;
+
+            const completedAt = new Date().toISOString();
+            await window.firebaseUpdate(window.firebaseRef(window.firebaseDB, `${LOTS_PATH}/segments/${segmentIndex}`), {
+                confirmed: true,
+                confirmedAt: completedAt,
+                confirmedBy: 'automatic-scorecard-gate'
+            });
+            if (!lotsData.segments) lotsData.segments = {};
+            lotsData.segments[segmentIndex] = Object.assign({}, lotsData.segments[segmentIndex], {
+                confirmed: true,
+                confirmedAt: completedAt,
+                confirmedBy: 'automatic-scorecard-gate'
+            });
+            addActivity('admin', '⛳', `${LOTS_SEGMENTS[segmentIndex]} is COMPLETE: all scores and par-3 flags are settled. The next drawing is unlocked.`);
+            return true;
         }
 
         // ============================================================
@@ -3520,7 +3709,11 @@
 
         function lotsSegState(i) {
             const seg = (lotsData && lotsData.segments && lotsData.segments[i]) || {};
-            return { revealed: !!seg.revealed, confirmed: !!seg.confirmed };
+            return {
+                revealed: !!seg.revealed,
+                confirmed: !!seg.confirmed,
+                pairs: Array.isArray(seg.pairs) ? seg.pairs : []
+            };
         }
 
         function packLiveBranch(snapshot) {
@@ -3679,26 +3872,29 @@
         window.startLiveGolfRehearsal = startLiveGolfRehearsal;
         window.restoreLiveGolfRehearsal = restoreLiveGolfRehearsal;
 
-        function generateLots() {
+        async function generateLots() {
             if (!isBookkeeperLoggedIn) return alert('🚫 Only the Ham Handler may cast the lots!');
-            if (lotsData && lotsData.order) {
-                if (!confirm('♻️ RECAST THE LOTS?\n\nThis wipes all reveals and deals a completely fresh schedule.\nThe Pig Gods will remember this.')) return;
+            if (lotsData && (lotsData.castAt || lotsData.createdAt || lotsData.order)) {
+                if (!confirm('♻️ RECAST THE LOTS?\n\nThis wipes every reveal and the five automatic scorecards. Any existing scores in those cards will be removed.\nThe Pig Gods will remember this.')) return;
             } else {
-                if (!confirm('🎭 CAST THE LOTS?\n\nThis deals the Year VII scramble schedule — five nines, every hog partners every hog exactly once.\n\nPairings stay sealed until each drawing.')) return;
+                if (!confirm('🎭 CAST THE LOTS?\n\nThis arms five progressive drawings. No future pairing is created or stored until that nine is actually drawn.\n\nAcross all five nines, every hog will still partner every other hog exactly once.')) return;
             }
-            const order = LOTS_PLAYERS.slice();
-            for (let i = order.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [order[i], order[j]] = [order[j], order[i]];
+            const payload = {
+                castAt: new Date().toISOString(),
+                castBy: lotsViewer() || 'Ham Handler',
+                mode: 'progressive-reveal',
+                segments: {}
+            };
+            const updates = { [LOTS_PATH]: payload };
+            LOTS_SEGMENTS.forEach((_, index) => {
+                updates[`golfSessions/${lotsSessionId(index)}`] = null;
+            });
+            try {
+                await window.firebaseUpdate(window.firebaseRef(window.firebaseDB), updates);
+                addActivity('admin', '🎭', 'THE LOTS ARE ARMED: five progressive drawings, zero future pairings stored. Draw the first nine when ready.');
+            } catch (error) {
+                alert('❌ Failed to arm the lots: ' + error.message);
             }
-            // sanity: the 5 segments must produce all 15 unique pairs
-            const seen = new Set();
-            for (let s = 0; s < 5; s++) lotsPairs(order, s).forEach(p => seen.add(p.slice().sort().join('+')));
-            if (seen.size !== 15) return alert('❌ Lot casting failed validation (' + seen.size + '/15 unique pairs) — nothing saved. Try again.');
-            const payload = { order: order, createdAt: new Date().toISOString(), segments: {} };
-            window.firebaseSet(window.firebaseRef(window.firebaseDB, LOTS_PATH), payload)
-                .then(() => addActivity('admin', '🎭', 'THE LOTS ARE CAST: the Year VII scramble schedule is sealed. Five nines, fifteen fates. Draw when ready.'))
-                .catch(e => alert('❌ Failed to save the lots: ' + e.message));
         }
 
         function renderLots() {
@@ -3707,7 +3903,7 @@
             if (!card || !body) return;
             card.style.display = 'block';
 
-            if (!lotsData || !lotsData.order) {
+            if (!lotsData || !(lotsData.castAt || lotsData.createdAt || lotsData.order)) {
                 body.innerHTML = '<div style="text-align:center; padding: 10px 0;">' +
                     '<div style="font-size:2.4rem;">🎲</div>' +
                     '<p style="color:#8B4513; font-weight:700; margin: 6px 0 12px;">The lots have not yet been cast.</p>' +
@@ -3723,8 +3919,7 @@
             for (let i = 0; i < 5; i++) {
                 const st = lotsSegState(i);
                 const prevSealed = i === 0 || lotsSegState(i - 1).confirmed;
-                const pairs = lotsPairs(lotsData.order, i);
-                const displayPairs = lotsPairsForViewer(pairs, me);
+                const displayPairs = st.revealed ? lotsPairsForViewer(st.pairs, me) : [];
                 let chip, badges, actions = '';
 
                 if (st.revealed) {
@@ -3733,19 +3928,28 @@
                         const mine = me && p.indexOf(me) !== -1;
                         return '<div class="lots-badge flip' + (mine ? ' mine' : '') + '">' + p[0] + ' &amp; ' + p[1] + '</div>';
                     }).join('');
+                    const progress = lotsSegmentProgress(i);
+                    const scorecardButton = '<button class="lots-btn reveal" onclick="openScoreModal(\'' + lotsSessionId(i) + '\')">🏌️ OPEN THIS NINE\'S SCORECARD</button>';
                     if (!st.confirmed) {
                         actions = '<div class="lots-actions">' +
-                            '<button class="lots-btn confirm" onclick="confirmLotsSegment(' + i + ')">✅ SEAL THIS NINE</button>' +
-                            '<div class="lots-note">Tap once all 9 holes are scored — it unlocks the next drawing.</div></div>';
+                            scorecardButton +
+                            '<div class="lots-note"><strong>' + progress.scoresDone + '/' + progress.scoresRequired + ' team scores</strong> · ' +
+                            progress.pinsDone + '/' + progress.pinsRequired + ' par-3 decisions<br>' +
+                            'The next drawing unlocks automatically only when both are complete.</div></div>';
+                    } else {
+                        actions = '<div class="lots-actions">' + scorecardButton +
+                            '<div class="lots-note">Complete and sealed. The next drawing is available.</div></div>';
                     }
                 } else {
                     chip = prevSealed ? '<span class="lots-chip ready">READY TO DRAW</span>' : '<span class="lots-chip locked">🔒 LOCKED</span>';
-                    badges = displayPairs.map(p => {
-                        const mine = me && p.indexOf(me) !== -1;
-                        return '<div class="lots-badge mystery' + (mine ? ' mine' : '') + '">' + (mine ? me + ' &amp; 🎭 ???' : '🎭 SEALED') + '</div>';
-                    }).join('');
+                    badges = (me
+                        ? ['<div class="lots-badge mystery mine">' + me + ' &amp; 🎭 ???</div>', '<div class="lots-badge mystery">🎭 SEALED</div>', '<div class="lots-badge mystery">🎭 SEALED</div>']
+                        : ['<div class="lots-badge mystery">🎭 SEALED</div>', '<div class="lots-badge mystery">🎭 SEALED</div>', '<div class="lots-badge mystery">🎭 SEALED</div>']
+                    ).join('');
                     actions = prevSealed
-                        ? '<div class="lots-actions"><button class="lots-btn reveal" onclick="revealLotsSegment(' + i + ')">🎭 DRAW THE LOTS</button></div>'
+                        ? (isBookkeeperLoggedIn
+                            ? '<div class="lots-actions"><button class="lots-btn reveal" onclick="revealLotsSegment(' + i + ')">🎭 DRAW THE LOTS</button></div>'
+                            : '<div class="lots-note">Ready. Waiting for the Ham Handler to draw.</div>')
                         : '<div class="lots-note">Unlocks when the previous nine is sealed.</div>';
                 }
 
@@ -3766,37 +3970,62 @@
             body.innerHTML = html;
         }
 
-        function revealLotsSegment(i) {
-            if (!lotsData || !lotsData.order) return;
+        async function revealLotsSegment(i) {
+            if (!isBookkeeperLoggedIn) return alert('🚫 Only the Ham Handler can draw the lots.');
+            if (!lotsData || !(lotsData.castAt || lotsData.createdAt)) return;
             if (i > 0 && !lotsSegState(i - 1).confirmed) return alert('🔒 The previous nine is not sealed yet.');
             if (lotsSegState(i).revealed) return;
-            if (!confirm('🎭 DRAW THE LOTS for ' + LOTS_SEGMENTS[i] + '?\n\nAll partners are revealed to everyone at once. No take-backs.')) return;
-            const teamsTxt = lotsPairs(lotsData.order, i).map(p => p.join(' & ')).join('  ·  ');
-            window.firebaseUpdate(window.firebaseRef(window.firebaseDB, LOTS_PATH + '/segments/' + i), {
-                revealed: true, revealedAt: new Date().toISOString(), revealedBy: lotsViewer() || 'unknown'
-            }).then(() => {
+            if (!confirm('🎭 DRAW THE LOTS for ' + LOTS_SEGMENTS[i] + '?\n\nOnly now will this pairing be generated. All partners are revealed to everyone at once.')) return;
+            try {
+                const pairs = lotsNextPairs(i);
+                const teamsTxt = pairs.map(pair => pair.join(' & ')).join('  ·  ');
+                const session = buildLotsSession(i, pairs);
+                const segment = {
+                    revealed: true,
+                    revealedAt: new Date().toISOString(),
+                    revealedBy: lotsViewer() || 'unknown',
+                    pairs
+                };
+                const updates = {
+                    [`${LOTS_PATH}/segments/${i}`]: segment,
+                    [`golfSessions/${lotsSessionId(i)}`]: session
+                };
+                await window.firebaseUpdate(window.firebaseRef(window.firebaseDB), updates);
                 addActivity('admin', '🎭', 'THE LOTS ARE DRAWN — ' + LOTS_SEGMENTS[i] + ': ' + teamsTxt);
                 if (window.mbeNotify) window.mbeNotify('general', '🎭 THE LOTS ARE DRAWN', LOTS_SEGMENTS[i] + ' — ' + teamsTxt, lotsViewer() || null);
-            }).catch(e => alert('❌ Failed to reveal: ' + e.message));
+            } catch (error) {
+                alert('❌ Failed to reveal: ' + error.message);
+            }
         }
 
-        function confirmLotsSegment(i) {
+        async function confirmLotsSegment(i) {
             const st = lotsSegState(i);
             if (!st.revealed || st.confirmed) return;
-            if (!confirm('✅ SEAL ' + LOTS_SEGMENTS[i] + '?\n\nOnly do this once all 9 holes are scored.\nThis unlocks the next drawing.')) return;
-            window.firebaseUpdate(window.firebaseRef(window.firebaseDB, LOTS_PATH + '/segments/' + i), {
-                confirmed: true, confirmedAt: new Date().toISOString(), confirmedBy: lotsViewer() || 'unknown'
-            }).then(() => {
-                addActivity('admin', '⛳', LOTS_SEGMENTS[i] + ' is SEALED. The next drawing is unlocked.');
-            }).catch(e => alert('❌ Failed to seal: ' + e.message));
+            const progress = lotsSegmentProgress(i);
+            if (!progress.complete) {
+                return alert(`🔒 This nine cannot be sealed yet.\n\nScores: ${progress.scoresDone}/${progress.scoresRequired}\nPar-3 decisions: ${progress.pinsDone}/${progress.pinsRequired}`);
+            }
+            await maybeAutoSealLotsSegment(lotsSessionId(i));
         }
 
-        function undoLotsSegment(i) {
+        async function undoLotsSegment(i) {
             if (!isBookkeeperLoggedIn) return;
-            if (!confirm('↩️ Undo reveal/seal for ' + LOTS_SEGMENTS[i] + '?\n\n(Ham Handler correction — players keep any pushes already sent.)')) return;
-            window.firebaseUpdate(window.firebaseRef(window.firebaseDB, LOTS_PATH + '/segments/' + i), {
-                revealed: false, confirmed: false
-            }).catch(e => alert('❌ Undo failed: ' + e.message));
+            if (i < LOTS_SEGMENTS.length - 1 && lotsSegState(i + 1).revealed) {
+                return alert('🔒 Undo the later drawing first.');
+            }
+            const progress = lotsSegmentProgress(i);
+            if (progress.scoresDone || progress.pinsDone) {
+                return alert('🚫 This scorecard already contains results. Use the reversible live rehearsal for a full rollback; a simple undo would corrupt the Pig Points ledger.');
+            }
+            if (!confirm('↩️ Undo the reveal for ' + LOTS_SEGMENTS[i] + '?\n\nThis removes its empty scorecard and forgets those partners. A replacement pairing will be generated at the next draw.')) return;
+            try {
+                await window.firebaseUpdate(window.firebaseRef(window.firebaseDB), {
+                    [`${LOTS_PATH}/segments/${i}`]: null,
+                    [`golfSessions/${lotsSessionId(i)}`]: null
+                });
+            } catch (error) {
+                alert('❌ Undo failed: ' + error.message);
+            }
         }
 
         function savePigPoints() {
