@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v23-golf-rulebook';
+const CACHE_NAME = 'mbe-pig-points-v24-course-preview';
 const urlsToCache = [
   '/',
   '/index.html',

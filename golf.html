@@ -418,6 +418,94 @@
             text-align: center;
         }
 
+        .course-preview-note {
+            color: #8B4513;
+            font-size: 0.86rem;
+            font-style: italic;
+            line-height: 1.45;
+            margin: 2px auto 13px;
+            max-width: 680px;
+            text-align: center;
+        }
+
+        .course-preview-body {
+            background: rgba(255, 248, 220, 0.72);
+            border: 1px solid rgba(139, 69, 19, 0.28);
+            border-radius: 14px;
+            margin-top: 13px;
+            padding: 13px;
+        }
+
+        .course-preview-title {
+            color: #5b2d0c;
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-bottom: 3px;
+            text-align: center;
+        }
+
+        .course-preview-summary {
+            color: #8B4513;
+            font-size: 0.78rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .preview-nine-wrap {
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .preview-nine {
+            border-collapse: separate;
+            border-spacing: 3px;
+            min-width: 470px;
+            width: 100%;
+        }
+
+        .preview-nine th,
+        .preview-nine td {
+            border-radius: 6px;
+            font-size: 0.75rem;
+            padding: 7px 4px;
+            text-align: center;
+        }
+
+        .preview-nine th {
+            background: #5b2d0c;
+            color: #fff8dc;
+        }
+
+        .preview-nine td {
+            background: #fffdf5;
+            color: #5b2d0c;
+            font-weight: 700;
+        }
+
+        .preview-nine td.preview-label {
+            background: #ead9a4;
+            font-weight: 900;
+            min-width: 54px;
+        }
+
+        .preview-nine td.preview-par3 {
+            background: #d8f3dc;
+            color: #176b2c;
+            box-shadow: inset 0 0 0 1px #79b889;
+        }
+
+        .course-preview-rules {
+            background: #5b2d0c;
+            border-radius: 10px;
+            color: #fff8dc;
+            font-size: 0.76rem;
+            line-height: 1.5;
+            margin-top: 10px;
+            padding: 9px 11px;
+            text-align: center;
+        }
+
         /* THE DRAWING OF LOTS — scramble pairing reveal */
         .lots-seg {
             border: 1px solid rgba(139,69,19,0.25);
@@ -798,6 +886,17 @@
             <div id="lotsBody"><!-- populated by renderLots() --></div>
         </div>
 
+        <!-- Read-only Year VII course layouts: never writes to Firebase -->
+        <div class="card" id="coursePreviewCard">
+            <h2 class="card-title">🗺️ 2026 COURSE PREVIEW 🗺️</h2>
+            <p class="course-preview-note">
+                Inspect the future scorecards safely. This preview creates no session,
+                reveals no partners, and moves no Pig Points.
+            </p>
+            <div class="pp-chiprow" id="coursePreviewButtons" style="justify-content:center;"></div>
+            <div class="course-preview-body" id="coursePreviewBody"></div>
+        </div>
+
         <!-- Sessions Display -->
         <div class="sessions-container">
             <h2 class="card-title">🏌️ GOLF SESSIONS 🏌️</h2>
@@ -1087,6 +1186,59 @@
                 pars: [4, 4, 4, 5, 3, 4, 5, 4, 3, 4, 5, 4, 3, 4, 5, 3, 4, 4]
             }
         };
+
+        let selectedCoursePreview = 'stGermain';
+
+        function previewNineTable(pars, startHole, label) {
+            const nine = pars.slice(startHole - 1, startHole + 8);
+            const holes = nine.map((_, index) => startHole + index);
+            const cells = (values, className) => values.map((value, index) => {
+                const par = nine[index];
+                const parThreeClass = par === 3 ? ' preview-par3' : '';
+                return `<td class="${className || ''}${parThreeClass}">${value}</td>`;
+            }).join('');
+
+            return `
+                <div class="preview-nine-wrap">
+                    <table class="preview-nine" aria-label="${label}">
+                        <tr><th>${label}</th>${holes.map(hole => `<th>${hole}</th>`).join('')}</tr>
+                        <tr><td class="preview-label">PAR</td>${cells(nine)}</tr>
+                        <tr><td class="preview-label">CTP</td>${cells(nine.map(par => par === 3 ? '📍' : '—'))}</tr>
+                    </table>
+                </div>`;
+        }
+
+        function showCoursePreview(courseKey) {
+            const course = GOLF_COURSES[courseKey];
+            if (!course) return;
+            selectedCoursePreview = courseKey;
+
+            const buttons = document.getElementById('coursePreviewButtons');
+            buttons.innerHTML = Object.entries(GOLF_COURSES).map(([key, item]) => {
+                const shortName = item.name.split(' - ')[0];
+                return `<button class="pp-chip${key === courseKey ? ' sel' : ''}" onclick="showCoursePreview('${key}')">${shortName}</button>`;
+            }).join('');
+
+            const totalPar = course.pars.reduce((sum, par) => sum + par, 0);
+            const parThrees = course.pars
+                .map((par, index) => par === 3 ? index + 1 : null)
+                .filter(Boolean);
+            document.getElementById('coursePreviewBody').innerHTML = `
+                <div class="course-preview-title">${course.name}</div>
+                <div class="course-preview-summary">
+                    ${course.pars.length} holes · Par ${totalPar} · Closest-to-Pin on holes ${parThrees.join(', ')}
+                </div>
+                ${previewNineTable(course.pars, 1, 'FRONT')}
+                ${course.pars.length > 9 ? previewNineTable(course.pars, 10, 'BACK') : ''}
+                <div class="course-preview-rules">
+                    🐦 Birdie: +2 each · 🙏 Par: +1 each ·
+                    🐷 Double bogey or 3-putt: −2 each ·
+                    📍 CTP: 5 from every other golfer; nobody on green doubles the next par 3
+                </div>`;
+        }
+
+        window.showCoursePreview = showCoursePreview;
+        showCoursePreview(selectedCoursePreview);
 
         function sessionHoles(session) {
             return (session && Array.isArray(session.pars) && session.pars.length) ? session.pars.length : 9;
