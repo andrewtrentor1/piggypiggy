@@ -506,6 +506,65 @@
             text-align: center;
         }
 
+        .sandbox-console {
+            background: linear-gradient(135deg, #122d20, #214f37);
+            border: 3px dashed #d4af37;
+            border-radius: 14px;
+            color: #fff8dc;
+            margin-top: 14px;
+            padding: 14px;
+        }
+
+        .sandbox-badge {
+            background: #d4af37;
+            border-radius: 999px;
+            color: #1f3828;
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            padding: 4px 9px;
+        }
+
+        .sandbox-points {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .sandbox-point {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(212,175,55,0.5);
+            border-radius: 8px;
+            font-size: 0.7rem;
+            padding: 5px 7px;
+        }
+
+        .sandbox-console .lots-note {
+            color: rgba(255, 248, 220, 0.78);
+        }
+
+        .sandbox-console .lots-seg {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(212,175,55,0.38);
+        }
+
+        .sandbox-score-status {
+            background: #122d20;
+            border: 2px dashed #d4af37;
+            border-radius: 10px;
+            color: #fff8dc;
+            display: none;
+            font-size: 0.74rem;
+            line-height: 1.45;
+            margin: 8px 0 12px;
+            padding: 9px 11px;
+            text-align: center;
+        }
+
         /* THE DRAWING OF LOTS — scramble pairing reveal */
         .lots-seg {
             border: 1px solid rgba(139,69,19,0.25);
@@ -895,6 +954,7 @@
             </p>
             <div class="pp-chiprow" id="coursePreviewButtons" style="justify-content:center;"></div>
             <div class="course-preview-body" id="coursePreviewBody"></div>
+            <div class="sandbox-console" id="golfSandboxConsole" style="display:none;"></div>
         </div>
 
         <!-- Sessions Display -->
@@ -1013,6 +1073,7 @@
                 Double bogey or 3-putt <strong>−2 each</strong>.
                 Score edits automatically correct the Pig Points ledger.
             </div>
+            <div class="sandbox-score-status" id="sandboxScoreStatus"></div>
 
             <div class="scorecard-container">
                 <table class="scorecard-table" id="scorecardTable">
@@ -1162,6 +1223,25 @@
         let currentCtpHole = null;
         let currentPinHole = null;
         let players = {}; // Will be loaded from pig points system
+        const GOLF_SANDBOX_ID = '__year7_practice_round__';
+        let golfSandboxSession = null;
+        let golfSandboxPlayers = {};
+        let golfSandboxEvents = [];
+        let golfSandboxCourseKey = null;
+        let golfSandboxLots = [];
+
+        function isGolfSandbox(sessionId) {
+            return sessionId === GOLF_SANDBOX_ID;
+        }
+
+        function golfSessionById(sessionId) {
+            return isGolfSandbox(sessionId) ? golfSandboxSession : golfSessions[sessionId];
+        }
+
+        function restoreGolfSession(sessionId, snapshot) {
+            if (isGolfSandbox(sessionId)) golfSandboxSession = snapshot;
+            else golfSessions[sessionId] = snapshot;
+        }
 
         // ============================================================
         // COURSE SCORECARDS — add each course's real scorecard here.
@@ -1234,7 +1314,10 @@
                     🐦 Birdie: +2 each · 🙏 Par: +1 each ·
                     🐷 Double bogey or 3-putt: −2 each ·
                     📍 CTP: 5 from every other golfer; nobody on green doubles the next par 3
-                </div>`;
+                </div>
+                <button class="transfer-btn" onclick="startGolfSandbox('${courseKey}')" style="margin-top:12px; width:100%;">
+                    🧪 TEST DRIVE THIS COURSE
+                </button>`;
         }
 
         window.showCoursePreview = showCoursePreview;
@@ -1372,26 +1455,31 @@
             }
         }
 
-        function applyPointDeltasLocally(deltas) {
+        function applyPointDeltasLocally(deltas, ledger = players) {
             Object.keys(deltas).forEach(name => {
-                if (!players[name] || typeof players[name].points !== 'number') {
+                if (!ledger[name] || typeof ledger[name].points !== 'number') {
                     throw new Error(`Pig Points are not loaded for ${name}. Wait a moment and try again.`);
                 }
             });
             Object.entries(deltas).forEach(([name, delta]) => {
-                players[name].points += delta;
+                ledger[name].points += delta;
             });
         }
 
-        function rollbackPointDeltasLocally(deltas) {
+        function rollbackPointDeltasLocally(deltas, ledger = players) {
             Object.entries(deltas).forEach(([name, delta]) => {
-                if (players[name] && typeof players[name].points === 'number') {
-                    players[name].points -= delta;
+                if (ledger[name] && typeof ledger[name].points === 'number') {
+                    ledger[name].points -= delta;
                 }
             });
         }
 
         async function saveGolfAndPointChanges(sessionId, deltas) {
+            if (isGolfSandbox(sessionId)) {
+                applyPointDeltasLocally(deltas, golfSandboxPlayers);
+                renderGolfSandbox();
+                return;
+            }
             if (!window.firebaseDB || !window.firebaseUpdate) {
                 throw new Error('Piggy Piggy is not connected yet. Wait a moment and try again.');
             }
@@ -1410,8 +1498,18 @@
             }
         }
 
-        function logGolfActivities(messages) {
-            messages.forEach(message => addActivity('admin', '⛳', message));
+        function logGolfActivity(sessionId, emoji, message) {
+            if (isGolfSandbox(sessionId)) {
+                golfSandboxEvents.unshift({ emoji, message });
+                golfSandboxEvents = golfSandboxEvents.slice(0, 8);
+                renderGolfSandbox();
+                return;
+            }
+            addActivity('admin', emoji, message);
+        }
+
+        function logGolfActivities(messages, sessionId) {
+            messages.forEach(message => logGolfActivity(sessionId, '⛳', message));
         }
 
         let activities = []; // Activity feed data
@@ -2605,9 +2703,18 @@
         
         function openScoreModal(sessionId) {
             currentSessionId = sessionId;
-            const session = golfSessions[sessionId];
-            
+            const session = golfSessionById(sessionId);
+            if (!session) return;
+
             document.getElementById('scoreModalTitle').textContent = `🏌️ ${session.title} - Enter Scores 🏌️`;
+            const sandboxStatus = document.getElementById('sandboxScoreStatus');
+            if (isGolfSandbox(sessionId)) {
+                sandboxStatus.style.display = 'block';
+                sandboxStatus.innerHTML = '🧪 <strong>PRACTICE MODE</strong> — these scores, issues, CTP winners, carryovers, and points exist only on this device.<br>' + sandboxPointSummary();
+            } else {
+                sandboxStatus.style.display = 'none';
+                sandboxStatus.innerHTML = '';
+            }
             
             const holes = sessionHoles(session);
             const pars = Array.isArray(session.pars) ? session.pars : null;
@@ -2677,23 +2784,22 @@
                     label.className = 'hole-label';
                     label.textContent = pars ? `${i}·P${pars[i - 1]}` : i.toString();
 
-                    // Add sidebet flag for all holes
-                    const ctpFlag = document.createElement('span');
-                    ctpFlag.className = 'ctp-flag';
-                    ctpFlag.textContent = '⛳';
-                    ctpFlag.title = 'Golf Sidebets';
-                    ctpFlag.onclick = () => openSidebetsModal(sessionId, i);
+                    // General live sidebets stay out of the isolated practice round.
+                    if (!isGolfSandbox(sessionId)) {
+                        const ctpFlag = document.createElement('span');
+                        ctpFlag.className = 'ctp-flag';
+                        ctpFlag.textContent = '⛳';
+                        ctpFlag.title = 'Golf Sidebets';
+                        ctpFlag.onclick = () => openSidebetsModal(sessionId, i);
 
-                    // Check if sidebet has been won for this hole
-                    const session = golfSessions[sessionId];
-                    if (session && session.ctpWinners && session.ctpWinners[i]) {
-                        ctpFlag.classList.add('won');
-                        const winner = session.ctpWinners[i];
-                        const noteText = winner.note ? ` (${winner.note})` : '';
-                        ctpFlag.title = `Sidebet Won by: ${winner.teamName}${noteText}`;
+                        if (session.ctpWinners && session.ctpWinners[i]) {
+                            ctpFlag.classList.add('won');
+                            const winner = session.ctpWinners[i];
+                            const noteText = winner.note ? ` (${winner.note})` : '';
+                            ctpFlag.title = `Sidebet Won by: ${winner.teamName}${noteText}`;
+                        }
+                        label.appendChild(ctpFlag);
                     }
-
-                    label.appendChild(ctpFlag);
 
                     // Closest-to-Pin flag — par 3s only, individual contest
                     if (pars && pars[i - 1] === 3) {
@@ -2761,8 +2867,10 @@
         }
         
         function closeScoreModal() {
+            const wasSandbox = isGolfSandbox(currentSessionId);
             document.getElementById('scoreModal').style.display = 'none';
             currentSessionId = null;
+            if (wasSandbox) renderGolfSandbox();
         }
         
         async function saveScores() {
@@ -2772,7 +2880,7 @@
             saveButton.disabled = true;
             saveButton.textContent = '🐷 SETTLING WITH GOD...';
             const sessionId = currentSessionId;
-            const session = golfSessions[sessionId];
+            const session = golfSessionById(sessionId);
             if (!session) {
                 saveButton.disabled = false;
                 saveButton.textContent = '💾 SAVE SCORES & SETTLE POINTS';
@@ -2803,7 +2911,7 @@
 
             try {
                 await saveGolfAndPointChanges(sessionId, deltas);
-                logGolfActivities(activityMessages);
+                logGolfActivities(activityMessages, sessionId);
                 openScoreModal(sessionId);
 
                 const pinHole = unresolvedScoredParThree(session);
@@ -2815,7 +2923,7 @@
                         : '💾 Golf scores saved successfully!');
                 }
             } catch (error) {
-                golfSessions[sessionId] = sessionBefore;
+                restoreGolfSession(sessionId, sessionBefore);
                 openScoreModal(sessionId);
                 alert('❌ Scores were not saved: ' + error.message);
             } finally {
@@ -2966,7 +3074,7 @@
             currentSessionId = sessionId;
             currentPinHole = holeNumber;
 
-            const session = golfSessions[sessionId];
+            const session = golfSessionById(sessionId);
             if (!session) return;
 
             const par = session.pars ? session.pars[holeNumber - 1] : null;
@@ -3034,7 +3142,7 @@
         function finishPinEntry(sessionId) {
             closePinModal();
             openScoreModal(sessionId);
-            const nextHole = unresolvedScoredParThree(golfSessions[sessionId]);
+            const nextHole = unresolvedScoredParThree(golfSessionById(sessionId));
             if (nextHole) {
                 setTimeout(() => openPinModal(sessionId, nextHole, true), 150);
             }
@@ -3056,7 +3164,7 @@
                 return;
             }
 
-            const session = golfSessions[sessionId];
+            const session = golfSessionById(sessionId);
             const hole = currentPinHole;
             if (pinResultFor(session, hole)) {
                 awardButton.disabled = false;
@@ -3080,11 +3188,11 @@
 
             try {
                 await saveGolfAndPointChanges(sessionId, deltas);
-                addActivity('admin', '📍', `CLOSEST TO THE PIN — Hole ${hole}: ${winner} stuck it and collected ${totalCollected} points (${points} from each of ${losers.length} other pigs).`);
+                logGolfActivity(sessionId, '📍', `CLOSEST TO THE PIN — Hole ${hole}: ${winner} stuck it and collected ${totalCollected} points (${points} from each of ${losers.length} other pigs).`);
                 alert(`📍 ${winner} is CLOSEST TO THE PIN on Hole ${hole}!\n🐷 +${totalCollected} points (${points} from every other golfer)`);
                 finishPinEntry(sessionId);
             } catch (error) {
-                golfSessions[sessionId] = sessionBefore;
+                restoreGolfSession(sessionId, sessionBefore);
                 awardButton.disabled = false;
                 carryButton.disabled = false;
                 alert('❌ Closest-to-Pin was not saved: ' + error.message);
@@ -3099,7 +3207,7 @@
             awardButton.disabled = true;
             carryButton.disabled = true;
             const sessionId = currentSessionId;
-            const session = golfSessions[sessionId];
+            const session = golfSessionById(sessionId);
             const hole = currentPinHole;
             if (!session || pinResultFor(session, hole)) {
                 awardButton.disabled = false;
@@ -3120,11 +3228,11 @@
 
             try {
                 await saveGolfAndPointChanges(sessionId, {});
-                addActivity('admin', '🌲', `CLOSEST TO THE PIN — Hole ${hole}: NOBODY HIT THE GREEN. The pot doubles from ${stake} to ${nextStake} points each at the next par 3.`);
+                logGolfActivity(sessionId, '🌲', `CLOSEST TO THE PIN — Hole ${hole}: NOBODY HIT THE GREEN. The pot doubles from ${stake} to ${nextStake} points each at the next par 3.`);
                 alert(`🌲 Nobody hit the green on Hole ${hole}.\n📍 The next par 3 is now worth ${nextStake} points from every other golfer.`);
                 finishPinEntry(sessionId);
             } catch (error) {
-                golfSessions[sessionId] = sessionBefore;
+                restoreGolfSession(sessionId, sessionBefore);
                 awardButton.disabled = false;
                 carryButton.disabled = false;
                 alert('❌ Carryover was not saved: ' + error.message);
@@ -3137,7 +3245,7 @@
         // Unchecking reverses the charge and re-applies the score rule.
         // ============================================================
         async function toggleThreePutt(sessionId, teamIndex, hole, checkbox) {
-            const session = golfSessions[sessionId];
+            const session = golfSessionById(sessionId);
             if (!session) return;
             checkbox.disabled = true;
             const team = session.teams[teamIndex];
@@ -3163,13 +3271,13 @@
 
             try {
                 await saveGolfAndPointChanges(sessionId, deltas);
-                logGolfActivities(activityMessages);
+                logGolfActivities(activityMessages, sessionId);
                 openScoreModal(sessionId);
                 alert(checkbox.checked
                     ? `🥔 THREE-PUTT — ${team.players.join(' & ')} each paid 2 points to GOD.`
                     : '↩️ Three-putt removed. The hole payout has been corrected.');
             } catch (error) {
-                golfSessions[sessionId] = sessionBefore;
+                restoreGolfSession(sessionId, sessionBefore);
                 checkbox.checked = !checkbox.checked;
                 openScoreModal(sessionId);
                 alert('❌ Three-putt issue was not saved: ' + error.message);
@@ -3222,6 +3330,165 @@
                 Number(b[0] === viewer) - Number(a[0] === viewer)
             );
         }
+
+        // ============================================================
+        // YEAR VII GOLF TEST DRIVE — fully local, deliberately isolated
+        // from Firebase, the real golf ledger, and the real Drawing of Lots.
+        // ============================================================
+        function sandboxPointSummary() {
+            const order = LOTS_PLAYERS.concat('GOD');
+            return order
+                .filter(name => golfSandboxPlayers[name])
+                .map(name => `${name}: <strong>${golfSandboxPlayers[name].points}</strong>`)
+                .join(' · ');
+        }
+
+        function startGolfSandbox(courseKey) {
+            const course = GOLF_COURSES[courseKey];
+            if (!course) return;
+            golfSandboxCourseKey = courseKey;
+            golfSandboxSession = {
+                id: GOLF_SANDBOX_ID,
+                title: `PRACTICE — ${course.name.split(' - ')[0]}`,
+                courseKey,
+                courseName: course.name,
+                pars: course.pars.slice(),
+                created: new Date().toISOString(),
+                teams: [
+                    { name: 'Practice Team A', players: ['Andrew', 'Evan'], scores: {} },
+                    { name: 'Practice Team B', players: ['Ian', 'Zack'], scores: {} },
+                    { name: 'Practice Team C', players: ['Brian', 'Alex'], scores: {} }
+                ]
+            };
+            golfSandboxPlayers = {};
+            LOTS_PLAYERS.forEach(name => {
+                golfSandboxPlayers[name] = { points: 30, powerUps: {} };
+            });
+            golfSandboxPlayers.GOD = { points: 0, powerUps: {} };
+            golfSandboxEvents = [{
+                emoji: '🧪',
+                message: 'Practice round created locally. Nothing here can reach the real ledger.'
+            }];
+            golfSandboxLots = LOTS_SEGMENTS.map(() => ({ revealed: false, sealed: false }));
+            renderGolfSandbox();
+            const consoleEl = document.getElementById('golfSandboxConsole');
+            if (consoleEl && consoleEl.scrollIntoView) {
+                consoleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function renderGolfSandbox() {
+            const consoleEl = document.getElementById('golfSandboxConsole');
+            if (!consoleEl) return;
+            if (!golfSandboxSession) {
+                consoleEl.style.display = 'none';
+                consoleEl.innerHTML = '';
+                return;
+            }
+
+            const course = GOLF_COURSES[golfSandboxCourseKey];
+            const lotsHtml = golfSandboxLots.map((state, index) => {
+                const ready = index === 0 || golfSandboxLots[index - 1].sealed;
+                const pairs = lotsPairs(LOTS_PLAYERS, index);
+                let status = '<span class="lots-chip locked">🔒 LOCKED</span>';
+                let teams = '<div class="lots-badge mystery">🎭 MOCK TEAMS SEALED</div>';
+                let action = '<div class="lots-note">Seal the previous practice nine to unlock this one.</div>';
+
+                if (state.revealed) {
+                    status = state.sealed
+                        ? '<span class="lots-chip sealed">⛳ SEALED</span>'
+                        : '<span class="lots-chip revealed">MOCK REVEAL</span>';
+                    teams = pairs.map(pair => `<div class="lots-badge flip">${pair[0]} &amp; ${pair[1]}</div>`).join('');
+                    action = state.sealed
+                        ? '<div class="lots-note">This practice nine is sealed. The next mock drawing is unlocked.</div>'
+                        : `<button class="lots-btn confirm" onclick="sealGolfSandboxLots(${index})">✅ SEAL &amp; UNLOCK NEXT</button>`;
+                } else if (ready) {
+                    status = '<span class="lots-chip ready">READY TO TEST</span>';
+                    action = `<button class="lots-btn reveal" onclick="revealGolfSandboxLots(${index})">🎭 REVEAL MOCK TEAMS</button>`;
+                }
+
+                return `<div class="lots-seg">
+                    <div class="lots-seg-head"><span class="lots-seg-title">${LOTS_SEGMENTS[index]}</span>${status}</div>
+                    <div class="lots-teams">${teams}</div>
+                    <div class="lots-actions">${action}</div>
+                </div>`;
+            }).join('');
+
+            const events = golfSandboxEvents.length
+                ? golfSandboxEvents.map(event => `<div class="lots-note" style="text-align:left; margin:4px 0;">${event.emoji} ${event.message}</div>`).join('')
+                : '<div class="lots-note">No practice events yet.</div>';
+
+            consoleEl.style.display = 'block';
+            consoleEl.innerHTML = `
+                <div style="text-align:center;">
+                    <div class="sandbox-badge">SAFE LOCAL SANDBOX</div>
+                    <h3 style="margin:0 0 4px;">🧪 ${course.name}</h3>
+                    <div class="lots-note">Mock teams only. No Firebase writes. No real partners revealed. Reset whenever you want.</div>
+                </div>
+                <div class="sandbox-points">${LOTS_PLAYERS.concat('GOD').map(name =>
+                    `<span class="sandbox-point">${name}: <strong>${golfSandboxPlayers[name].points}</strong></span>`
+                ).join('')}</div>
+                <div class="pp-vote-row" style="margin:10px 0;">
+                    <button class="transfer-btn" onclick="openGolfSandboxScorecard()">🏌️ OPEN PRACTICE SCORECARD</button>
+                    <button class="transfer-btn" onclick="resetGolfSandbox()" style="background:linear-gradient(45deg,#b45309,#d97706);">♻️ RESET TEST</button>
+                </div>
+                <button class="pp-chip" onclick="endGolfSandbox()" style="display:block; margin:0 auto 14px;">✕ END TEST DRIVE</button>
+                <div class="pp-label" style="color:#d4af37; margin-bottom:7px;">MOCK TEAM-UNLOCK TEST</div>
+                ${lotsHtml}
+                <div class="pp-label" style="color:#d4af37; margin:12px 0 6px;">PRACTICE ACTIVITY</div>
+                ${events}`;
+        }
+
+        function openGolfSandboxScorecard() {
+            if (!golfSandboxSession) return;
+            openScoreModal(GOLF_SANDBOX_ID);
+        }
+
+        function revealGolfSandboxLots(index) {
+            if (!golfSandboxLots[index]) return;
+            const ready = index === 0 || golfSandboxLots[index - 1].sealed;
+            if (!ready || golfSandboxLots[index].revealed) return;
+            golfSandboxLots[index].revealed = true;
+            golfSandboxEvents.unshift({
+                emoji: '🎭',
+                message: `${LOTS_SEGMENTS[index]} mock teams revealed. These are practice pairs, not the real drawing.`
+            });
+            renderGolfSandbox();
+        }
+
+        function sealGolfSandboxLots(index) {
+            if (!golfSandboxLots[index] || !golfSandboxLots[index].revealed) return;
+            golfSandboxLots[index].sealed = true;
+            golfSandboxEvents.unshift({
+                emoji: '✅',
+                message: `${LOTS_SEGMENTS[index]} practice nine sealed; the next mock drawing is now unlocked.`
+            });
+            renderGolfSandbox();
+        }
+
+        function resetGolfSandbox() {
+            if (!golfSandboxCourseKey) return;
+            startGolfSandbox(golfSandboxCourseKey);
+        }
+
+        function endGolfSandbox() {
+            if (isGolfSandbox(currentSessionId)) {
+                document.getElementById('scoreModal').style.display = 'none';
+                currentSessionId = null;
+            }
+            golfSandboxSession = null;
+            golfSandboxPlayers = {};
+            golfSandboxEvents = [];
+            golfSandboxLots = [];
+            renderGolfSandbox();
+        }
+
+        window.startGolfSandbox = startGolfSandbox;
+        window.openGolfSandboxScorecard = openGolfSandboxScorecard;
+        window.revealGolfSandboxLots = revealGolfSandboxLots;
+        window.sealGolfSandboxLots = sealGolfSandboxLots;
+        window.resetGolfSandbox = resetGolfSandbox;
+        window.endGolfSandbox = endGolfSandbox;
 
         function lotsSegState(i) {
             const seg = (lotsData && lotsData.segments && lotsData.segments[i]) || {};
