@@ -6807,7 +6807,7 @@ window.retakePicture = retakePicture;
 window.uploadProof = uploadProof;
 
 // Insulting Pig Name System
-const pigInsults = [
+var pigInsults = [
     'BARON VON BACONFAT', 'LORD OF THE STY', 'THE UNWASHED', 'DISGRACED SOMMELIER',
     'MUD ARISTOCRAT', 'SIR SQUEALS-A-LOT', 'DUKE OF DOUBLE BOGEY', 'VISCOUNT SWILL',
     'HIS ROTUNDITY', 'THE VELVET HOG', 'EARL OF LARD', 'AMBASSADOR OF FILTH',
@@ -6821,12 +6821,19 @@ const pigInsults = [
     'DEACON OF THE TROUGH', 'LORD SNIFFINGTON', 'THE PICKLED PEER', 'GENERAL HOGWASH'
 ];
 
-let playerInsults = {}; // Store current insults for each player
-let lastInsultUpdate = 0; // Track when insults were last updated
-const INSULT_ROTATION_HOURS = 3; // Change insults every 3 hours
-let isUpdatingInsults = false; // Prevent infinite loops
+var playerInsults = {}; // Store current insults for each player
+var lastInsultUpdate = 0; // Track when insults were last updated
+var INSULT_ROTATION_HOURS = 3; // Change insults every 3 hours
+var isUpdatingInsults = false; // Prevent infinite loops
 
 function getPlayerInsult(playerName) {
+    // Several Firebase callbacks can fire before the large legacy script has
+    // finished assigning this comedy deck. Return a harmless placeholder
+    // during that tiny window instead of breaking the Handler controls.
+    if (!Array.isArray(pigInsults) || !playerInsults) {
+        return 'MYSTERY MEAT';
+    }
+
     // Ensure lastInsultUpdate is initialized
     if (typeof lastInsultUpdate === 'undefined' || lastInsultUpdate === null) {
         lastInsultUpdate = 0;

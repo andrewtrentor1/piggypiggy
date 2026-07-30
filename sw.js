@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v35-handler-session';
+const CACHE_NAME = 'mbe-pig-points-v36-handler-ready';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -15,10 +15,10 @@ const urlsToCache = [
   '/js/features/season.js',
   '/js/features/push.js',
   '/js/features/launch-gate.js',
-  '/js/features/launch-gate.js?v=35',
+  '/js/features/launch-gate.js?v=36',
   '/consolidated-styles.css',
   '/mbe-theme.css',
-  '/mbe-theme.css?v=35',
+  '/mbe-theme.css?v=36',
   '/firebase-config.js',
   '/danger-zone.mp3',
   '/manifest.json'
