@@ -35,18 +35,10 @@
 
     function handlerIsInside() {
         try {
-            const handlerFlag = localStorage.getItem(HANDLER_KEY) === 'true';
-            const gatePass = localStorage.getItem(GATE_HANDLER_KEY) === 'true';
-            if (gatePass && !handlerFlag) {
-                // A normal admin logout is also an exit from the maintenance
-                // tunnel. Clear the companion restore flags before another page
-                // can silently resurrect the Handler session.
-                localStorage.removeItem(GATE_HANDLER_KEY);
-                localStorage.removeItem('hamHandlerPlayerLoggedIn');
-                localStorage.removeItem('hamHandlerCurrentPlayer');
-                return false;
-            }
-            return handlerFlag && gatePass;
+            // The dedicated pass is deliberately separate from Firebase auth:
+            // a signed-out Firebase player may still be the password-authenticated
+            // Ham Handler. Every real logout path clears this pass explicitly.
+            return localStorage.getItem(GATE_HANDLER_KEY) === 'true';
         } catch (_) {
             return false;
         }

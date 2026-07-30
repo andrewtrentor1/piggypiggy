@@ -363,6 +363,9 @@ function toggleBookkeeper() {
         // Log out
         isBookkeeperLoggedIn = false;
         localStorage.removeItem('bookkeeperLoggedIn');
+        localStorage.removeItem('mbeLaunchHandler');
+        localStorage.removeItem('hamHandlerPlayerLoggedIn');
+        localStorage.removeItem('hamHandlerCurrentPlayer');
         document.getElementById('bookkeeperCard').style.display = 'none';
         document.getElementById('loginSection').style.display = 'block';
         alert('👋 Ham Handler logged out!');
@@ -784,19 +787,22 @@ function checkHamHandlerLoginState() {
     }
 }
 
-// Initialize login state
-checkBypassLoginState();
-checkHamHandlerLoginState();
-checkLoginState();
+// Initialize only after this entire script has evaluated. Calling the Ham
+// Handler UI synchronously here used to reach later `let` declarations while
+// they were still in the temporal dead zone, breaking early admin sessions.
+document.addEventListener('DOMContentLoaded', () => {
+    checkBypassLoginState();
+    checkHamHandlerLoginState();
+    checkLoginState();
 
-// Ensure UI is updated after login state is restored
-setTimeout(() => {
-    if (isPlayerLoggedIn) {
-        updatePlayerUI();
-        updateStatusBar();
-        console.log(`🔐 Login state confirmed: ${currentPlayer} is logged in`);
-    }
-}, 500);
+    setTimeout(() => {
+        if (isPlayerLoggedIn) {
+            updatePlayerUI();
+            updateStatusBar();
+            console.log(`🔐 Login state confirmed: ${currentPlayer} is logged in`);
+        }
+    }, 500);
+});
 
 // Initialize HOGWASH cooldowns - will be called after Firebase is ready
 
@@ -1108,6 +1114,7 @@ function logoutPlayer() {
                 currentPlayer = '';
                 isBookkeeperLoggedIn = false;
                 localStorage.removeItem('bookkeeperLoggedIn');
+                localStorage.removeItem('mbeLaunchHandler');
                 localStorage.removeItem('hamHandlerPlayerLoggedIn');
                 localStorage.removeItem('hamHandlerCurrentPlayer');
                 localStorage.removeItem('firebaseAuthLoggedIn');
@@ -1298,6 +1305,7 @@ function clearBypassLogin() {
         
         // Clear all localStorage
         localStorage.removeItem('bookkeeperLoggedIn');
+        localStorage.removeItem('mbeLaunchHandler');
         localStorage.removeItem('hamHandlerPlayerLoggedIn');
         localStorage.removeItem('hamHandlerCurrentPlayer');
         localStorage.removeItem('firebaseAuthLoggedIn');
@@ -1432,6 +1440,7 @@ function clearBypassLogin() {
     currentPlayer = '';
     isBookkeeperLoggedIn = false;
     localStorage.removeItem('bookkeeperLoggedIn');
+    localStorage.removeItem('mbeLaunchHandler');
     
     // Sign out from Firebase Auth if logged in
     if (window.firebaseAuth.currentUser) {
