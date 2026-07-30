@@ -1,8 +1,8 @@
 // ============================================================
 // MBE SEASON ENGINE — Year VI → Year VII transition
-// - Season banner + countdown to Year VII (Fri Jul 31 2026, noon Central)
-// - START YEAR VII: archives Year VI (players, golf, activities) to
-//   archive/year6, resets points to 30 (rulebook), flips season/current
+// - Season banner + countdown to Year VII (Fri Jul 31 2026, 2 PM Central)
+// - START YEAR VII: atomically archives every live Year VI ledger to
+//   archive/year6, resets the full clubhouse, and flips season/current
 // - Random Daily Danger Zone scheduler (opt-in via settings node)
 // Loaded on index.html and golf.html. Plain script; waits for the
 // window.firebase* globals set by the module init on each page.
@@ -11,7 +11,7 @@
 (function () {
     'use strict';
 
-    const YEAR7_EPOCH = Date.parse('2026-07-31T17:00:00Z'); // noon CDT
+    const YEAR7_EPOCH = Date.parse('2026-07-31T14:00:00-05:00'); // 2 PM CDT
     const ROSTER = ['Andrew', 'Evan', 'Ian', 'Zack', 'Brian', 'Alex'];
 
     let season = null;          // season/current node value (null = Year VI)
@@ -183,7 +183,7 @@
                 '<div class="cd-cell"><div class="cd-num">' + fmt(m) + '</div><div class="cd-unit">min</div></div>' +
                 '<div class="cd-cell"><div class="cd-num">' + fmt(s) + '</div><div class="cd-unit">sec</div></div>' +
                 '</div>' +
-                '<div class="cd-sub">High Noon Central &middot; Friday, July the 31st &middot; MMXXVI</div>' +
+                '<div class="cd-sub">2:00 PM Central &middot; Friday, July the 31st &middot; MMXXVI</div>' +
                 '</div>';
         } else {
             inner += '<div class="season-armed">⚖️ THE HOUR HAS COME. The Ham Handler must open the books.</div>';
@@ -211,12 +211,12 @@
 
         const early = Date.now() < YEAR7_EPOCH;
         let warn = '🐷 COMMENCE YEAR VII?\n\nThis will, in one ceremony:\n' +
-            '• Archive ALL Year VI data (points, golf rounds, the entire activity feed) to the permanent vault\n' +
+            '• Archive ALL Year VI data (points, golf, games, debts, photos, and the feed) to the permanent vault\n' +
             '• Reset every member to 30 points (per the Rulebook) and GOD to 0\n' +
-            '• Clear the golf ledger and activity feed for a fresh year\n' +
+            '• Clear every live game ledger for a completely fresh year\n' +
             '• FORGIVE all outstanding Year VI drink debts by decree\n\n' +
             'Nothing is deleted — Year VI lives forever in the vault.';
-        if (early) warn += '\n\n⚠️ NOTE: The official hour (noon Central, July 31) has NOT yet arrived. You are starting EARLY.';
+        if (early) warn += '\n\n⚠️ NOTE: The public unlock (2:00 PM Central, July 31) has NOT yet arrived. You are preparing the books behind the sealed gate.';
         if (!confirm(warn)) return;
 
         const oath = prompt('To swear the oath and open Year VII, type: OINK');
@@ -228,73 +228,107 @@
         const db = window.firebaseDB;
         const ref = window.firebaseRef;
         try {
-            // 1) read everything we are about to archive
-            const [playersSnap, golfSnap, actSnap, cooldownSnap] = await Promise.all([
-                window.firebaseGet(ref(db, 'players')),
-                window.firebaseGet(ref(db, 'golfSessions')),
-                window.firebaseGet(ref(db, 'activities')),
-                window.firebaseGet(ref(db, 'hogwashCooldowns'))
-            ]);
-            const players = playersSnap.val() || {};
-            const golf = golfSnap.val() || {};
-            const acts = actSnap.val() || {};
+            // 1) read the complete live clubhouse so every Year VI state can be
+            // recovered. The following root update is atomic: archive + reset
+            // all succeed together, or Firebase changes nothing.
+            const rootSnap = await window.firebaseGet(ref(db));
+            const root = rootSnap.val() || {};
+            const players = root.players || {};
+            const golf = root.golfSessions || {};
+            const acts = root.activities || {};
 
             const standings = Object.entries(players)
                 .filter(([n]) => n !== 'GOD')
                 .map(([n, v]) => ({ name: n, points: (v && v.points) || 0 }))
                 .sort((a, b) => b.points - a.points);
 
-            // 2) write the archive
+            const archivedAt = new Date().toISOString();
             const archive = {
                 label: 'Year VI — Wabasha WI 2025',
-                archivedAt: new Date().toISOString(),
+                archivedAt,
                 finalStandings: standings,
                 mvp: standings.length ? standings[0].name : null,
                 pig: standings.length ? standings[standings.length - 1].name : null,
                 players: players,
                 golfSessions: golf,
                 activities: acts,
-                hogwashCooldowns: cooldownSnap.val() || null
+                hogwashCooldowns: root.hogwashCooldowns || null,
+                seasonData: {
+                    tribunal: root.tribunal || null,
+                    oracle: root.oracle || null,
+                    secretSwine: root.secretSwine || null,
+                    drinkAssignments: root.drinkAssignments || null,
+                    drinkAcknowledgments: root.drinkAcknowledgments || null,
+                    drinkClearances: root.drinkClearances || null,
+                    drinkProofs: root.drinkProofs || null,
+                    moments: root.moments || null,
+                    notifications: root.notifications || null,
+                    teams: root.teams || null,
+                    alexDangerZoneSystem: root.alexDangerZoneSystem || null,
+                    alexDrinkSystem: root.alexDrinkSystem || null,
+                    dangerZone: root.dangerZone || null,
+                    dangerZoneSchedule: root.dangerZoneSchedule || null,
+                    settings: root.settings || null
+                }
             };
-            await window.firebaseSet(ref(db, 'archive/year6'), archive);
 
-            // 3) verify the archive actually landed before touching anything
-            const verify = await window.firebaseGet(ref(db, 'archive/year6/archivedAt'));
-            if (!verify.val()) throw new Error('Archive write could not be verified — ABORTING, nothing was reset.');
-
-            // 4) the reset
             const freshPlayers = {};
             ROSTER.forEach((n) => {
                 freshPlayers[n] = { points: 30, powerUps: { giveDrinks: 0, mulligans: 0, reverseMulligans: 0 } };
             });
             freshPlayers['GOD'] = { points: 0, powerUps: { giveDrinks: 0, mulligans: 0, reverseMulligans: 0 } };
-            await window.firebaseSet(ref(db, 'players'), freshPlayers);
-            await window.firebaseSet(ref(db, 'golfSessions'), null);
-            await window.firebaseSet(ref(db, 'activities'), null);
-            await window.firebaseSet(ref(db, 'hogwashCooldowns'), null);
-
-            // 5) flip the season
-            await window.firebaseSet(ref(db, 'season/current'), {
-                year: 7,
-                label: 'Year VII — 2026',
-                startedAt: new Date().toISOString()
-            });
-
-            // 6) first entry in the fresh ledger
             const id = Date.now() + '_1';
-            await window.firebaseSet(ref(db, 'activities/' + id), {
+            const firstActivity = {
                 id: id,
                 type: 'admin',
                 emoji: '🎊',
-                message: '🎊 YEAR VII HAS OFFICIALLY CONVENED. All members reset to 30 points. Year VI debts forgiven. The Hog hungers anew.',
-                timestamp: new Date().toISOString()
+                message: '🎊 YEAR VII BOOKS PREPARED. All members reset to 30 points. Year VI is sealed. Public clubhouse opens at 2 PM Central.',
+                timestamp: archivedAt
+            };
+
+            // 2) one atomic archive + reset across every live game ledger
+            await window.firebaseUpdate(ref(db), {
+                'archive/year6': archive,
+                players: freshPlayers,
+                golfSessions: null,
+                activities: { [id]: firstActivity },
+                hogwashCooldowns: null,
+                tribunal: null,
+                oracle: null,
+                secretSwine: null,
+                drinkAssignments: null,
+                drinkAcknowledgments: null,
+                drinkClearances: null,
+                drinkProofs: null,
+                moments: null,
+                notifications: null,
+                teams: null,
+                alexDangerZoneSystem: null,
+                alexDrinkSystem: null,
+                dangerZone: null,
+                dangerZoneSchedule: null,
+                settings: null,
+                'season/current': {
+                    year: 7,
+                    label: 'Year VII — 2026',
+                    preparedAt: archivedAt,
+                    unlocksAt: new Date(YEAR7_EPOCH).toISOString()
+                }
             });
 
-            if (window.mbeNotify) window.mbeNotify('season', '🎊 YEAR VII HAS CONVENED', 'The books are open. All members reset to 30 points. Year VI debts forgiven. In Lardo Veritas.');
-            alert('🎊 YEAR VII IS OPEN.\n\nYear VI has been sealed in the vault. Everyone starts at 30 points.\n\nIn Lardo Veritas.');
+            // 3) verify both sides of the atomic transition
+            const [archiveVerify, seasonVerify] = await Promise.all([
+                window.firebaseGet(ref(db, 'archive/year6/archivedAt')),
+                window.firebaseGet(ref(db, 'season/current/year'))
+            ]);
+            if (!archiveVerify.val() || seasonVerify.val() !== 7) {
+                throw new Error('The Year VII transition could not be verified.');
+            }
+
+            alert('🎊 YEAR VII IS PREPARED.\n\nYear VI is sealed in the vault. Everyone starts at 30 points, and every live game ledger is clean.\n\nThe public gate stays sealed until 2:00 PM Central.');
         } catch (e) {
             console.error('❌ Year VII start failed:', e);
-            alert('❌ Year VII start failed: ' + e.message + '\n\nIf the archive step failed, NOTHING was reset.');
+            alert('❌ Year VII start failed: ' + e.message + '\n\nThe transition is atomic: if it failed, NOTHING was reset.');
         }
     }
     window.startYearSeven = startYearSeven;

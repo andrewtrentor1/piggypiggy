@@ -223,10 +223,19 @@ function initializeFirebase() {
             // Clear the Firebase auth login flag
             localStorage.removeItem('firebaseAuthLoggedIn');
             
-            // If Evan logs out, also remove Ham Handler privileges
+            // A password-only Ham Handler session does not require Firebase
+            // player authentication. Preserve it while the launch gate's
+            // maintenance tunnel is active; normal logout still removes the
+            // bookkeeper flag and immediately reseals the pre-launch app.
             if (isBookkeeperLoggedIn && localStorage.getItem('bookkeeperLoggedIn') === 'true') {
-                isBookkeeperLoggedIn = false;
-                localStorage.removeItem('bookkeeperLoggedIn');
+                if (localStorage.getItem('mbeLaunchHandler') === 'true') {
+                    isBookkeeperLoggedIn = true;
+                    isPlayerLoggedIn = true;
+                    currentPlayer = 'Evan';
+                } else {
+                    isBookkeeperLoggedIn = false;
+                    localStorage.removeItem('bookkeeperLoggedIn');
+                }
             }
             
             console.log('🔐 Player signed out');
