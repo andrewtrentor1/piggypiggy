@@ -188,6 +188,36 @@
             margin-bottom: 20px;
         }
 
+        .year6-vault-notice {
+            margin: 0 0 20px;
+            padding: 18px;
+            border: 2px dashed #d4af37;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #102d20, #1a3b2b);
+            color: #fff4ca;
+            text-align: center;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        .year6-vault-notice strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #f2d67c;
+            font-size: 1.1rem;
+            letter-spacing: 0.03em;
+        }
+
+        .year6-vault-notice p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        #year6Section[data-vault-status="restoring"] .winner-card,
+        #year6Section[data-vault-status="restoring"] .stat-card {
+            filter: grayscale(0.55);
+            opacity: 0.72;
+        }
+
         /* Mobile responsiveness */
         @media (max-width: 768px) {
             body {
@@ -280,11 +310,15 @@
         <p class="history-tap-note">Tap a year to unseal the evidence. The court accepts no appeals.</p>
         
         <!-- Year 6 - final ledger, then served from archive/year6 -->
-        <div class="year-section">
-            <div class="year-header">
+        <div class="year-section" id="year6Section">
+            <div class="year-header" id="year6Header">
                 🎯 Year 6 - Wabasha WI 2025 - Final Ledger 🎯
             </div>
             <div class="year-content">
+                <div class="year6-vault-notice" id="year6RecoveryNotice" hidden>
+                    <strong>THE 2025 TROPHY VAULT IS BEING RESTORED</strong>
+                    <p>The fresh 2026 ledger is intentionally not being passed off as last year's results. The Ham Handler is wrestling the paperwork; no fake trophies will be awarded.</p>
+                </div>
                 <div class="winner-section">
                     <div class="winner-card mvp-card">
                         <div class="winner-emoji">👑</div>
@@ -585,6 +619,7 @@
         let currentPlayer = '';
         let players = {};
         let archivedYear6 = null;
+        let currentSeason = null;
 
         // Phone number to player name mapping (same as index.html)
         const phoneToPlayer = {
@@ -637,6 +672,13 @@
             const archiveRef = window.firebaseRef(window.firebaseDB, 'archive/year6');
             window.firebaseOnValue(archiveRef, (snapshot) => {
                 archivedYear6 = snapshot.exists() ? snapshot.val() : null;
+                updateCurrentYearStats();
+                updateCurrentStandings();
+            });
+
+            const seasonRef = window.firebaseRef(window.firebaseDB, 'season/current');
+            window.firebaseOnValue(seasonRef, (snapshot) => {
+                currentSeason = snapshot.exists() ? snapshot.val() : null;
                 updateCurrentYearStats();
                 updateCurrentStandings();
             });
@@ -929,7 +971,46 @@
             console.log('🏆 Current standings updated - Leader:', currentLeader, 'Pig:', currentPig, 'All tied:', allSamePoints);
         }
 
+        function isYear6VaultUnavailable() {
+            return !!(currentSeason && Number(currentSeason.year) >= 7 && !archivedYear6);
+        }
+
+        function syncYear6VaultState() {
+            const unavailable = isYear6VaultUnavailable();
+            const section = document.getElementById('year6Section');
+            const header = document.getElementById('year6Header');
+            const notice = document.getElementById('year6RecoveryNotice');
+
+            if (section) {
+                if (unavailable) {
+                    section.setAttribute('data-vault-status', 'restoring');
+                } else {
+                    section.removeAttribute('data-vault-status');
+                }
+            }
+            if (header) {
+                header.textContent = unavailable
+                    ? 'Year 6 - Wabasha WI 2025 - Trophy Vault Restoring'
+                    : 'Year 6 - Wabasha WI 2025 - Final Ledger';
+            }
+            if (notice) notice.hidden = !unavailable;
+
+            if (!unavailable || !section) return unavailable;
+
+            section.querySelectorAll('.winner-name').forEach((element) => {
+                element.textContent = 'VAULT SEALED';
+            });
+            section.querySelectorAll('.winner-card p').forEach((element) => {
+                element.textContent = 'Awaiting the authenticated 2025 ledger';
+            });
+            section.querySelectorAll('.stat-number').forEach((element) => {
+                element.textContent = '\u2014';
+            });
+            return true;
+        }
+
         function updateCurrentYearStats() {
+            if (syncYear6VaultState()) return;
             const sourceActivities = archivedYear6 && archivedYear6.activities
                 ? Object.values(archivedYear6.activities)
                 : activities;
@@ -951,6 +1032,7 @@
         }
 
         function updateCurrentStandings() {
+            if (syncYear6VaultState()) return;
             let standings;
             if (archivedYear6 && Array.isArray(archivedYear6.finalStandings) && archivedYear6.finalStandings.length) {
                 standings = archivedYear6.finalStandings
@@ -967,7 +1049,7 @@
             const leader = standings[0];
             const pig = standings[standings.length - 1];
             const allTied = leader[1] === pig[1];
-            const firstYear = document.querySelector('.year-section');
+            const firstYear = document.getElementById('year6Section');
             if (!firstYear) return;
             const mvpName = firstYear.querySelector('.mvp-card .winner-name');
             const mvpDesc = firstYear.querySelector('.mvp-card p');

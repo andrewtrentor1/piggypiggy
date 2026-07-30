@@ -1,7 +1,7 @@
 // MBE PIG POINTS - Service Worker
 // Handles offline support, caching, and push notifications
 
-const CACHE_NAME = 'mbe-pig-points-v36-handler-ready';
+const CACHE_NAME = 'mbe-pig-points-v37-vault-safety';
 const urlsToCache = [
   '/',
   '/index.html',
