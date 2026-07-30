@@ -87,15 +87,20 @@
         renderCard();
     };
 
-    // ---------- top-of-page alarm banner (site-wide nag) ----------
+    // ---------- top-of-page alarm banner ----------
     function removeBanner() {
         const b = document.getElementById('summonsBanner');
         if (b) b.remove();
     }
 
     function renderBanner(state) {
-        if (state === 'enabled' || state === 'unsupported') { removeBanner(); return; }
-        if (sessionStorage.getItem('summonsBannerDismissed')) return;
+        // A blocked browser cannot be repaired from this banner. Keep the
+        // explicit setup card available, but do not nag on every page load.
+        if (state === 'enabled' || state === 'unsupported' || state === 'blocked') {
+            removeBanner();
+            return;
+        }
+        if (localStorage.getItem('summonsBannerDismissed')) return;
         let banner = document.getElementById('summonsBanner');
         if (!banner) {
             banner = document.createElement('div');
@@ -113,7 +118,7 @@
         banner.onclick = () => window.mbeEnablePush();
         banner.querySelector('.summons-dismiss').onclick = (e) => {
             e.stopPropagation();
-            sessionStorage.setItem('summonsBannerDismissed', '1');
+            localStorage.setItem('summonsBannerDismissed', '1');
             removeBanner();
         };
     }
