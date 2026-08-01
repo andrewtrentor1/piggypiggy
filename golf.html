@@ -1175,7 +1175,7 @@
             </div>
 
             <div class="pin-stake-card" id="pinStakeInfo">
-                5 points from every other player
+                1 point from every other player
             </div>
 
             <button class="transfer-btn" id="awardPinBtn" onclick="awardPinPoints()">📍 CROWN THE MARKSMAN</button>
@@ -1333,7 +1333,7 @@
                 <div class="course-preview-rules">
                     🐦 Birdie: +2 each · 🙏 Par: +1 each ·
                     🐷 Double bogey or 3-putt: −2 each ·
-                    📍 CTP: 5 from every other golfer; nobody on green doubles the next par 3
+                    📍 CTP: 1 from every other golfer; nobody on green doubles the next par 3
                 </div>
                 <button class="transfer-btn" onclick="startGolfSandbox('${courseKey}')" style="margin-top:12px; width:100%;">
                     🧪 TEST DRIVE THIS COURSE
@@ -1364,7 +1364,7 @@
             return diff > 0 ? `+${diff}` : `${diff}`;
         }
 
-        const BASE_PIN_STAKE = 5;
+        const BASE_PIN_STAKE = 1;
 
         function holeRuleOutcome(session, team, hole) {
             const par = Array.isArray(session.pars) ? Number(session.pars[hole - 1]) : 0;

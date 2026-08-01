@@ -296,7 +296,7 @@
             <p id="playerPoints" style="font-size: 1.3em; color: #daa520; font-weight: bold;"></p>
         </div>
 
-        <!-- Alex's Special Drink Assignment Section -->
+        <!-- Earned drink power-ups; Alex also sees his separate Danger Zone perk -->
         <div id="alexDrinkSection"></div>
 
         <!-- Point Transfer Form -->
@@ -772,44 +772,6 @@
         </div>
     </div>
     
-    <!-- Alex's Drink Assignment Modal -->
-    <div class="modal" id="drinkAssignmentModal">
-        <div class="modal-content">
-            <span class="close" onclick="closeDrinkAssignmentModal()">&times;</span>
-            <h2 id="drinkAssignmentTitle">🍻 ASSIGN DRINKS 🍻</h2>
-            <p style="text-align: center; margin-bottom: 20px;">
-                Available Drinks: <strong id="availableDrinks">0</strong><br>
-                <small style="color: #666;">Assign drinks to keep the boys accountable!</small>
-            </p>
-            
-            <div id="drinkPlayerList" style="max-height: 300px; overflow-y: auto;">
-                <!-- Player list will be populated by JavaScript -->
-            </div>
-            
-            <!-- Alex's Message Input -->
-            <div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #4CAF50;">
-                <label for="alexMessage" style="display: block; font-weight: bold; margin-bottom: 8px; color: #4CAF50;">
-                    📝 Your Message to the Group:
-                </label>
-                <textarea id="alexMessage" placeholder="Send a message with your drink assignment... (optional)" 
-                          style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical; font-family: inherit;"
-                          maxlength="200"></textarea>
-                <small style="color: #666; font-size: 0.9em;">
-                    💬 This message will be shown to everyone along with the drink assignments (200 characters max)
-                </small>
-            </div>
-            
-            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #ddd;">
-                <p style="margin: 10px 0; font-weight: bold;">
-                    Total Drinks to Assign: <span id="totalDrinksToAssign">0</span>
-                </p>
-                <button class="transfer-btn" onclick="assignAlexDrinks()" style="background: linear-gradient(45deg, #4CAF50, #45a049); width: 100%;">
-                    🍺 ASSIGN DRINKS 🍺
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Drink Assignment Alert Modal -->
     <div class="modal" id="drinkAssignmentAlert">
         <div class="modal-content drink-assignment-alert">
@@ -944,7 +906,7 @@
     <script src="js/ui/modals.js"></script>
     
     <!-- Main JavaScript (reduced) -->
-    <script src="script.js?v=38"></script>
+    <script src="script.js?v=39"></script>
     <script src="js/features/push.js"></script>
     <script src="js/features/season.js"></script>
 </body>

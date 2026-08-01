@@ -11,7 +11,8 @@
 setTimeout(() => {
     initializeFirebase();
     // Firebase test connection is available via window.testFirebaseConnection() for debugging
-    // Initialize Alex's drink system after Firebase is ready
+    // Initialize shared drink alerts and Alex's remaining Danger Zone perk.
+    // The retired hourly drink-credit system is intentionally not started.
     setTimeout(() => {
         initializeAlexDrinkSystem();
         initializeProofRequestSystem();
@@ -1340,24 +1341,17 @@ function updatePlayerUI() {
         }
     });
     
-    // Update drink assignment section
+    // Everyone, including Alex, assigns only drinks actually won from HOGWASH.
+    // Alex keeps the separate Danger Zone perk, but no longer receives an
+    // hourly pool of free drink assignments.
     const drinkSection = document.getElementById('alexDrinkSection');
     if (drinkSection) {
-        if (currentPlayer === 'Alex') {
-            // Alex has his own special system
-            if (window.firebaseDB) {
-                loadAlexDrinkCredits();
-                loadAlexDangerZoneCredits();
-            }
-            updateAlexDrinkUI();
-        } else {
-            // Check if current player has giveDrinks power-ups
-            const playerData = players[currentPlayer];
-            const giveDrinksCount = playerData?.powerUps?.giveDrinks || 0;
-            
-            if (giveDrinksCount > 0) {
-                // Show power-up drink assignment section
-                drinkSection.innerHTML = `
+        const playerData = players[currentPlayer];
+        const giveDrinksCount = playerData?.powerUps?.giveDrinks || 0;
+        let drinkSectionHtml = '';
+
+        if (giveDrinksCount > 0) {
+            drinkSectionHtml += `
                     <div style="text-align: center; margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #FF9800, #F57C00); border-radius: 10px;">
                         <h4 style="color: white; margin: 0 0 10px 0;">🍺 POWER-UP DRINKS 🍺</h4>
                         <p style="color: white; margin: 5px 0;">Available Drinks: <strong>${giveDrinksCount}</strong></p>
@@ -1370,11 +1364,13 @@ function updatePlayerUI() {
                         </p>
                     </div>
                 `;
-            } else {
-                // Clear the section if no drinks available
-                drinkSection.innerHTML = '';
-            }
         }
+
+        if (currentPlayer === 'Alex') {
+            drinkSectionHtml += showAlexDrinkButton();
+        }
+
+        drinkSection.innerHTML = drinkSectionHtml;
     }
     
     // Update status bar
@@ -1638,23 +1634,25 @@ function playPreviousSong() {
 }
 
 function toggleShuffle() {
+    const activePlaylist = getCurrentPlaylist();
+    const currentSong = activePlaylist[currentSongIndex] || playlist[0];
     isShuffled = !isShuffled;
     
     if (isShuffled) {
-        // Shuffle the playlist
-        shuffledPlaylist = [...playlist];
-        for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
+        // Keep the playing song stable, then randomize the entire upcoming
+        // queue. This makes NEXT visibly honor shuffle without interrupting
+        // the song that is already playing.
+        const upcomingSongs = playlist.filter(song => !currentSong || song.file !== currentSong.file);
+        for (let i = upcomingSongs.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
+            [upcomingSongs[i], upcomingSongs[j]] = [upcomingSongs[j], upcomingSongs[i]];
         }
-        
-        // Find current song in shuffled playlist
-        const currentSong = playlist[currentSongIndex];
-        currentSongIndex = shuffledPlaylist.findIndex(s => s.file === currentSong.file);
+        shuffledPlaylist = currentSong ? [currentSong, ...upcomingSongs] : upcomingSongs;
+        currentSongIndex = 0;
     } else {
-        // Find current song in regular playlist
-        const currentSong = shuffledPlaylist[currentSongIndex];
-        currentSongIndex = playlist.findIndex(s => s.file === currentSong.file);
+        currentSongIndex = currentSong
+            ? Math.max(0, playlist.findIndex(song => song.file === currentSong.file))
+            : 0;
     }
     
     updateJukeboxDisplay();
@@ -1686,6 +1684,7 @@ function updateJukeboxDisplay() {
     // Update button states
     const shuffleBtn = document.querySelector('#jukeboxModal .shuffle-btn');
     if (shuffleBtn) {
+        shuffleBtn.textContent = isShuffled ? '🔀 SHUFFLE: ON' : '🔀 SHUFFLE: OFF';
         shuffleBtn.style.opacity = isShuffled ? '1' : '0.75';
         shuffleBtn.style.background = isShuffled ?
             'linear-gradient(172deg, #e8cd74, #b68e2e)' :
@@ -1739,7 +1738,7 @@ function showJukeboxModal() {
             <!-- Playback Options -->
             <div style="margin: 12px 0; display: flex; justify-content: center; gap: 8px;">
                 <button onclick="toggleShuffle()" class="transfer-btn shuffle-btn" style="min-width: 104px; background: ${isShuffled ? 'linear-gradient(172deg, #e8cd74, #b68e2e)' : 'rgba(212,175,55,0.08)'}; color: ${isShuffled ? '#1d150a' : '#c9bc9c'}; border: 1px solid rgba(212,175,55,0.35); opacity: ${isShuffled ? '1' : '0.75'};">
-                    🔀 SHUFFLE
+                    ${isShuffled ? '🔀 SHUFFLE: ON' : '🔀 SHUFFLE: OFF'}
                 </button>
                 <button onclick="toggleRepeatOne()" class="transfer-btn repeat-btn" style="min-width: 104px; background: ${isRepeatOne ? 'linear-gradient(172deg, #e8cd74, #b68e2e)' : 'rgba(212,175,55,0.08)'}; color: ${isRepeatOne ? '#1d150a' : '#c9bc9c'}; border: 1px solid rgba(212,175,55,0.35); opacity: ${isRepeatOne ? '1' : '0.75'};">
                     🔁 REPEAT
@@ -2433,16 +2432,10 @@ window.testAudioOnly = testAudioOnly;
 
 // Alex's Drink Assignment System
 function initializeAlexDrinkSystem() {
-    console.log('🍺 Initializing Alex drink assignment system...');
-    
-    // Load Alex's drink credits from Firebase
-    loadAlexDrinkCredits();
+    console.log('🍺 Initializing shared drink alerts and Alex Danger Zone...');
     
     // Load Alex's Danger Zone credits from Firebase
     loadAlexDangerZoneCredits();
-    
-    // Set up drink refill timer (every hour)
-    setInterval(refillAlexDrinks, 60 * 60 * 1000); // Every hour
     
     // Set up Danger Zone refill timer (every 2 hours)
     setInterval(refillAlexDangerZones, ALEX_DANGER_ZONE_COOLDOWN_MS); // Every 2 hours
@@ -2671,32 +2664,13 @@ function isWithinDangerZoneHours() {
 }
 
 function showAlexDrinkButton() {
-    // Only show for Alex when he's logged in
+    // Alex's old hourly drink-credit panel is retired. He now uses the same
+    // HOGWASH giveDrinks power-up flow as everyone else.
     if (isPlayerLoggedIn && currentPlayer === 'Alex') {
-        const nextRefillTime = getNextDrinkRefillCountdown();
         const nextDangerZoneTime = getNextDangerZoneRefillCountdown();
         const isDangerZoneAvailable = isWithinDangerZoneHours();
         
         return `
-            <div style="text-align: center; margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #4CAF50, #45a049); border-radius: 10px;">
-                <h4 style="color: white; margin: 0 0 10px 0;">🍺 ALEX'S DRINK ASSIGNMENT 🍺</h4>
-                <p style="color: white; margin: 5px 0;">Available Drinks: <strong>${alexDrinkCredits}</strong></p>
-                <button class="transfer-btn" onclick="showDrinkAssignmentModal()" style="background: linear-gradient(45deg, #FF9800, #F57C00); color: white; font-weight: bold;">
-                    🍻 ASSIGN DRINKS 🍻
-                </button>
-                <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.2); border-radius: 5px;">
-                    <div style="font-size: 0.9em; color: #E8F5E8; margin-bottom: 3px;">
-                        ⏰ Next Drink Delivery:
-                    </div>
-                    <div id="alexDrinkCountdown" style="font-size: 1.1em; color: #FFEB3B; font-weight: bold;">
-                        ${nextRefillTime}
-                    </div>
-                </div>
-                <p style="font-size: 0.8em; color: #E8F5E8; margin: 8px 0 0 0;">
-                    You get 10 drinks per hour (max 20). Keep the boys accountable! 🍺
-                </p>
-            </div>
-            
             <div style="text-align: center; margin: 20px 0; padding: 15px; background: linear-gradient(45deg, #8B0000, #A52A2A); border-radius: 10px;">
                 <h4 style="color: white; margin: 0 0 10px 0;">💀 ALEX'S DANGER ZONE 💀</h4>
                 <p style="color: white; margin: 5px 0;">Available Initiations: <strong>${alexDangerZoneCredits}</strong></p>
@@ -2817,15 +2791,9 @@ function initiateDangerZone() {
 }
 
 function updateAlexDrinkUI() {
-    // Update the drink button if it exists
-    const alexDrinkSection = document.getElementById('alexDrinkSection');
-    if (alexDrinkSection) {
-        alexDrinkSection.innerHTML = showAlexDrinkButton();
-        
-        // Start live countdown timer if Alex is logged in
-        if (isPlayerLoggedIn && currentPlayer === 'Alex') {
-            startAlexDrinkCountdownTimer();
-        }
+    if (isPlayerLoggedIn && currentPlayer === 'Alex') {
+        updatePlayerUI();
+        startAlexDrinkCountdownTimer();
     }
 }
 
@@ -3683,13 +3651,9 @@ function showAlexDrinkAssignmentModal() {
     document.getElementById('drinkAssignmentModal').style.display = 'flex';
 }
 
-// Unified function that routes to the correct modal based on player
+// Everyone—including Alex—uses the normal earned-drink power-up flow.
 function showDrinkAssignmentModal() {
-    if (currentPlayer === 'Alex') {
-        showAlexDrinkAssignmentModal();
-    } else {
-        showPowerUpDrinkAssignmentModal();
-    }
+    showPowerUpDrinkAssignmentModal();
 }
 
 function closeDrinkAssignmentModal() {
@@ -3697,12 +3661,7 @@ function closeDrinkAssignmentModal() {
 }
 
 function assignDrinks() {
-    // Route to correct assignment function based on current player
-    if (currentPlayer === 'Alex') {
-        assignAlexDrinks();
-    } else {
-        assignPowerUpDrinks();
-    }
+    assignPowerUpDrinks();
 }
 
 function assignPowerUpDrinks() {
@@ -4329,14 +4288,14 @@ function resetSlotMachine() {
 // Mechanics here must mirror executeHogwashOutcome() exactly.
 const FATE_CODEX = {
     drink:            { odds: '17.5%', decree: 'You take <strong>1–5 drinks</strong>, as the Pig Gods measure. And beware: roughly one Chalice in seven is bottomless — you <strong>FINISH your drink</strong>.' },
-    win:              { odds: '17.5%', decree: 'You seize <strong>2–6 points</strong> directly from GOD\'s coffers. GOD notices. GOD keeps a list.' },
-    lose:             { odds: '17.5%', decree: 'The House collects <strong>2–6 points</strong> from you, paid to GOD. Squealing does not reduce the amount.' },
+    win:              { odds: '17.5%', decree: 'You seize <strong>1–5 points</strong> directly from GOD\'s coffers. GOD notices. GOD keeps a list.' },
+    lose:             { odds: '17.5%', decree: 'The House collects <strong>1–5 points</strong> from you, paid to GOD. Squealing does not reduce the amount.' },
     give_drinks:      { odds: '17.5%', decree: 'You gain the power to assign <strong>1–5 drinks</strong> to your fellow hogs, whenever you choose. Stored in your Satchel until poured.' },
     danger:           { odds: '10%', decree: '<strong>EVERY phone in the Order screams at once.</strong> All members report to the dice. Nobody is safe, including you. This is the fate that ruins lunches.' },
-    double:           { odds: '7.5%', decree: 'The Devil offers a choice: take <strong>+2 points and scurry</strong>, or flip his coin — <strong>+6 points</strong> on heads, <strong>−5</strong> on tails. Greed is a ladder.' },
+    double:           { odds: '7.5%', decree: 'The Devil offers a choice: take <strong>+2 points and scurry</strong>, or flip his coin — <strong>+5 points</strong> on heads, <strong>−5</strong> on tails. Greed is a ladder.' },
     mulligan:         { odds: '5%', decree: 'You earn a <strong>MULLIGAN</strong> — one of your own golf shots, erased from history as if it never happened. Stored in your Satchel; invoke it on the course.' },
     reverse_mulligan: { odds: '5%', decree: 'You earn a <strong>REVERSE MULLIGAN</strong> — the power to UNMAKE an enemy\'s finest shot and force the re-hit. Stored in your Satchel. Savor it.' },
-    jackpot:          { odds: '2.5%', decree: 'The Sovereign Beast itself. You seize <strong>12 points from GOD</strong> and <strong>3 drinks to bestow</strong>. Your name is spoken with reverence until someone else hits one.' }
+    jackpot:          { odds: '2.5%', decree: 'The Sovereign Beast itself. You seize <strong>5 points from GOD</strong> and <strong>3 drinks to bestow</strong>. Your name is spoken with reverence until someone else hits one.' }
 };
 
 function showFateCodex(type) {
@@ -5827,7 +5786,7 @@ function executeHogwashOutcome(selectedOutcome) {
             break;
             
         case 'win':
-            const winPoints = Math.floor(Math.random() * 5) + 2;
+            const winPoints = Math.floor(Math.random() * 5) + 1;
             players[playerName].points += winPoints;
             players['GOD'].points -= winPoints;
             savePlayers();
@@ -5840,7 +5799,7 @@ function executeHogwashOutcome(selectedOutcome) {
             break;
             
         case 'lose':
-            const losePoints = Math.floor(Math.random() * 5) + 2;
+            const losePoints = Math.floor(Math.random() * 5) + 1;
             players[playerName].points -= losePoints;
             players['GOD'].points += losePoints;
             savePlayers();
@@ -5887,11 +5846,11 @@ function executeHogwashOutcome(selectedOutcome) {
             break;
 
         case 'jackpot':
-            players[playerName].points += 12;
-            players['GOD'].points -= 12;
+            players[playerName].points += 5;
+            players['GOD'].points -= 5;
             players[playerName].powerUps.giveDrinks += 3;
             savePlayers();
-            resultText = `🐗 THE HOG ITSELF appears! ${playerName} seizes 12 points from GOD and 3 DRINKS to bestow! ALL HAIL!`;
+            resultText = `🐗 THE HOG ITSELF appears! ${playerName} seizes 5 points from GOD and 3 DRINKS to bestow! ALL HAIL!`;
             outcome = {
                 type: 'jackpot',
                 title: '🐗 THE HOG ITSELF 🐗',
@@ -5913,7 +5872,7 @@ function executeHogwashOutcome(selectedOutcome) {
                         🐁 TAKE 2 &amp; SCURRY
                     </button>
                     <button class="transfer-btn" onclick="resolveTemptation('greed')" style="min-width: 130px; background: linear-gradient(160deg, #4a2360, #2c1440); color: #e6c9ff; border: 1px solid rgba(186,104,200,0.5);">
-                        😈 FLIP: +6 or −5
+                        😈 FLIP: +5 or −5
                     </button>
                 </div>`;
             const temptModal = document.querySelector('.hogwash-result');
@@ -5969,10 +5928,10 @@ function resolveTemptation(choice) {
     } else {
         const won = Math.random() < 0.5;
         if (won) {
-            players[playerName].points += 6;
-            players['GOD'].points -= 6;
+            players[playerName].points += 5;
+            players['GOD'].points -= 5;
             color = '#f2d67c';
-            resultText = `${playerName} FLIPPED THE DEVIL'S COIN and WON 6 points from GOD! 😈🎉 Greed pays... this time.`;
+            resultText = `${playerName} FLIPPED THE DEVIL'S COIN and WON 5 points from GOD! 😈🎉 Greed pays... this time.`;
         } else {
             players[playerName].points -= 5;
             players['GOD'].points += 5;
